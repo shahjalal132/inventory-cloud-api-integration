@@ -42,7 +42,17 @@ class Update_Inventory {
     }
 
     public function atebol_update_product_inventory() {
-        return $this->update_stock_by_sku( '9781801064590', 10 );
+
+        /**
+         * TODO: Get SKU/ISBN from database LIMIT 1 or more
+         * TODO: Get Product Stock from api by SKU/ISBN
+         * TODO: Update WooCommerce Product stock by SKU/ISBN
+         */
+
+        $product_sku   = '9781801064590';
+        $product_stock = 15;
+
+        return $this->update_stock_by_sku( $product_sku, $product_stock );
     }
 
     /**
