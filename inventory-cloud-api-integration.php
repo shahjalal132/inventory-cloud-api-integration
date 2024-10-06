@@ -15,6 +15,11 @@
 
 defined( "ABSPATH" ) || exit( "Direct Access Not Allowed" );
 
+// Define plugin base NAME
+if ( !defined( 'PLUGIN_BASENAME' ) ) {
+    define( 'PLUGIN_BASENAME', plugin_basename( __FILE__ ) );
+}
+
 // Define plugin base path
 if ( !defined( 'PLUGIN_BASE_PATH' ) ) {
     define( 'PLUGIN_BASE_PATH', untrailingslashit( plugin_dir_path( __FILE__ ) ) );

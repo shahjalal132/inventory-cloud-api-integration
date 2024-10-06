@@ -16,5 +16,6 @@ class Autoloader {
         I18n::get_instance();
         Enqueue_Assets::get_instance();
         Update_Inventory::get_instance();
+        Admin_Menu::get_instance();
     }
 }
