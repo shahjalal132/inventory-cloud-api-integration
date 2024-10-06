@@ -20,10 +20,17 @@ class Update_Inventory {
     }
 
     public function register_api_endpoints() {
+
         // server status
         register_rest_route( 'atebol/v1', '/server-status', [
             'methods'  => 'GET',
             'callback' => [ $this, 'atebol_server_status' ],
+        ] );
+
+        // server status
+        register_rest_route( 'atebol/v1', '/update-inventory', [
+            'methods'  => 'GET',
+            'callback' => [ $this, 'atebol_update_product_inventory' ],
         ] );
     }
 
@@ -32,6 +39,10 @@ class Update_Inventory {
             'success' => true,
             'message' => 'Server is up and running.',
         ], 200 );
+    }
+
+    public function atebol_update_product_inventory() {
+        return $this->update_stock_by_sku( '9781801064590', 10 );
     }
 
     /**
