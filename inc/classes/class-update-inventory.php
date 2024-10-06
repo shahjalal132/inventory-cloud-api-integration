@@ -27,7 +27,13 @@ class Update_Inventory {
             'callback' => [ $this, 'server_status' ],
         ] );
 
-        // server status
+        // insert item number to db
+        register_rest_route( 'atebol/v1', '/insert-item-number-stock-db', [
+            'methods'  => 'GET',
+            'callback' => [ $this, 'insert_item_number_db' ],
+        ] );
+
+        // update woocommerce product stock
         register_rest_route( 'atebol/v1', '/update-woo-product-stock', [
             'methods'  => 'GET',
             'callback' => [ $this, 'update_woo_product_stock' ],
@@ -36,6 +42,20 @@ class Update_Inventory {
 
     public function server_status() {
         return 'Server is up and running';
+    }
+
+    public function insert_item_number_db() {
+        return $this->insert_item_number_db_from_api();
+    }
+
+    public function insert_item_number_db_from_api() {
+
+        // get api resposne
+        $api_response = $this->fetch_stock_value_from_db();
+        // decode api response
+        $api_response_decode = json_decode( $api_response, true );
+        // extract data
+        $data = $api_response_decode['Data'];
     }
 
     public function update_woo_product_stock() {
@@ -124,5 +144,38 @@ class Update_Inventory {
                 }
             }
         }
+    }
+
+    public function fetch_stock_value_from_db() {
+
+        // get api credentials
+        $base_url = get_option( 'inv_cloud_base_url' );
+        $token    = get_option( 'inv_cloud_token' );
+
+        $payload = [
+            "ItemNumber" => "",
+        ];
+
+        $curl = curl_init();
+        curl_setopt_array( $curl, array(
+            CURLOPT_URL            => $base_url . '/public-api/ic/item/inventorysearch',
+            CURLOPT_RETURNTRANSFER => true,
+            CURLOPT_ENCODING       => '',
+            CURLOPT_MAXREDIRS      => 10,
+            CURLOPT_TIMEOUT        => 0,
+            CURLOPT_FOLLOWLOCATION => true,
+            CURLOPT_HTTP_VERSION   => CURL_HTTP_VERSION_1_1,
+            CURLOPT_CUSTOMREQUEST  => 'POST',
+            CURLOPT_POSTFIELDS     => json_encode( $payload ),
+            CURLOPT_HTTPHEADER     => array(
+                "Authorization: Bearer $token",
+                "Content-Type: application/json",
+            ),
+        ) );
+
+        $response = curl_exec( $curl );
+
+        curl_close( $curl );
+        return $response;
     }
 }
