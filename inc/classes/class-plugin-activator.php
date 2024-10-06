@@ -17,6 +17,7 @@ class Plugin_Activator {
         $sql             = "CREATE TABLE IF NOT EXISTS $table_name (
             id INT AUTO_INCREMENT,
             item_number VARCHAR(255) NOT NULL,
+            quantity INT NOT NULL,
             status VARCHAR(255) NOT NULL,
             created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
             updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
