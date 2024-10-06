@@ -50,12 +50,41 @@ class Update_Inventory {
 
     public function insert_item_number_db_from_api() {
 
-        // get api resposne
+        // get api response
         $api_response = $this->fetch_stock_value_from_db();
         // decode api response
         $api_response_decode = json_decode( $api_response, true );
         // extract data
         $data = $api_response_decode['Data'];
+
+        if ( $data ) {
+
+            global $wpdb;
+            // get table name
+            $table_name = $wpdb->prefix . 'sync_item_number';
+            // truncate table
+            $wpdb->query( 'TRUNCATE TABLE ' . $table_name );
+
+            foreach ( $data as $item ) {
+                // extract data
+                $item_number = $item['ItemNumber'];
+                $quantity    = $item['TotalQty'];
+
+                // insert data
+                $wpdb->insert(
+                    $table_name,
+                    [
+                        "item_number" => $item_number,
+                        "quantity"    => intval( $quantity ),
+                        "status"      => 'pending',
+                    ]
+                );
+            }
+
+            return 'Item number and quantity inserted successfully';
+        } else {
+            return 'Data not found';
+        }
     }
 
     public function update_woo_product_stock() {
