@@ -16,7 +16,7 @@ class Update_Inventory {
 
     public function setup_hooks() {
         add_action( 'rest_api_init', [ $this, 'register_api_endpoints' ] );
-        // add_action('woocommerce_update_product_stock', [$this, 'update_stock_by_sku'], 10, 2);
+        add_action( 'woocommerce_thankyou', [ $this, 'check_update_product_remaining_stock' ] );
     }
 
     public function register_api_endpoints() {
@@ -24,24 +24,21 @@ class Update_Inventory {
         // server status
         register_rest_route( 'atebol/v1', '/server-status', [
             'methods'  => 'GET',
-            'callback' => [ $this, 'atebol_server_status' ],
+            'callback' => [ $this, 'server_status' ],
         ] );
 
         // server status
-        register_rest_route( 'atebol/v1', '/update-inventory', [
+        register_rest_route( 'atebol/v1', '/update-woo-product-stock', [
             'methods'  => 'GET',
-            'callback' => [ $this, 'atebol_update_product_inventory' ],
+            'callback' => [ $this, 'update_woo_product_stock' ],
         ] );
     }
 
-    public function atebol_server_status() {
-        return new \WP_REST_Response( [
-            'success' => true,
-            'message' => 'Server is up and running.',
-        ], 200 );
+    public function server_status() {
+        return 'Server is up and running';
     }
 
-    public function atebol_update_product_inventory() {
+    public function update_woo_product_stock() {
 
         /**
          * TODO: Get SKU/ISBN from database LIMIT 1 or more
@@ -52,7 +49,7 @@ class Update_Inventory {
         $product_sku   = '9781801064590';
         $product_stock = 15;
 
-        return $this->update_stock_by_sku( $product_sku, $product_stock );
+        return $this->update_woo_product_stock_by_sku( $product_sku, $product_stock );
     }
 
     /**
@@ -62,7 +59,7 @@ class Update_Inventory {
      * @param int $new_stock_quantity The new stock quantity.
      * @return string
      */
-    public function update_stock_by_sku( $product_sku, $new_stock_quantity ) {
+    public function update_woo_product_stock_by_sku( $product_sku, $new_stock_quantity ) {
 
         // Get the product ID by SKU
         $product_id = wc_get_product_id_by_sku( $product_sku );
@@ -102,6 +99,30 @@ class Update_Inventory {
             // log SKU not found error (optional)
             $this->put_program_logs( 'No product found with the given SKU: ' . $product_sku );
             return 'No product found with the given SKU!';
+        }
+    }
+
+    public function check_update_product_remaining_stock( $order_id ) {
+
+        // Get the order object
+        $order = wc_get_order( $order_id );
+
+        if ( $order ) {
+            $order_items = $order->get_items();
+            foreach ( $order_items as $item ) {
+                $product = $item->get_product();
+
+                if ( $product && $product->get_manage_stock() ) { // Ensure stock is managed for the product
+                    $product_sku   = $product->get_sku();
+                    $product_stock = $product->get_stock_quantity(); // Get remaining stock
+
+                    // Log the product SKU and remaining stock
+                    $this->put_program_logs( 'Product SKU: ' . $product_sku . ' - Remaining stock: ' . $product_stock );
+                } else {
+                    // Log if stock is not managed for this product
+                    $this->put_program_logs( 'Stock management is disabled for product: ' . $product->get_name() );
+                }
+            }
         }
     }
 }
