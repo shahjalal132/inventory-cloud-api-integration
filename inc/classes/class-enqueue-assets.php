@@ -6,11 +6,13 @@
 
 namespace BOILERPLATE\Inc;
 
+use BOILERPLATE\Inc\Traits\Program_Logs;
 use BOILERPLATE\Inc\Traits\Singleton;
 
 class Enqueue_Assets {
 
     use Singleton;
+    use Program_Logs;
 
     public function __construct() {
         $this->setup_hooks();
@@ -31,6 +33,7 @@ class Enqueue_Assets {
      */
     public function enqueue_admin_assets( $page_now ) {
         // enqueue admin css
+        wp_enqueue_style( "wpb-admin-css", PLUGIN_ASSETS_DIR_URL . "/css/admin-style.css", [], time(), "all" );
 
         /**
          * enqueue admin js
@@ -38,8 +41,12 @@ class Enqueue_Assets {
          * When you need to enqueue admin assets.
          * first check if the current page is you want to enqueue page
          */
-        if ( 'options-general.php' === $page_now ) {
-            wp_enqueue_script( "wpb-admin-js", PLUGIN_ASSETS_DIR_URL . "/js/admin-script.js", [ 'jquery' ], time(), true ); // replace time() to version number when in production
+        if ( 'settings_page_inventory-cloud-options' === $page_now ) {
+            wp_enqueue_script( "wpb-admin-js", PLUGIN_ASSETS_DIR_URL . "/js/admin-script.js", [ 'jquery' ], time(), true );
+            wp_localize_script( 'wpb-admin-js', 'invCloudAjax', [
+                'ajax_url' => admin_url( 'admin-ajax.php' ),
+                'nonce'    => wp_create_nonce( 'inv_cloud_nonce' ),
+            ] );
         }
     }
 
@@ -49,10 +56,10 @@ class Enqueue_Assets {
      */
     public function enqueue_public_assets() {
         // enqueue public css
-        wp_enqueue_style( "wpb-public-css", PLUGIN_PUBLIC_ASSETS_URL . "/css/public-style.css", [], time(), "all" ); // replace time() to version number when in production
+        wp_enqueue_style( "wpb-public-css", PLUGIN_PUBLIC_ASSETS_URL . "/css/public-style.css", [], time(), "all" );
 
         // enqueue public js    
-        wp_enqueue_script( "wpb-public-js", PLUGIN_PUBLIC_ASSETS_URL . "/js/public-script.js", [], time(), true ); // replace time() to version number when in production
+        wp_enqueue_script( "wpb-public-js", PLUGIN_PUBLIC_ASSETS_URL . "/js/public-script.js", [], time(), true );
     }
 
 }

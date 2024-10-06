@@ -1,1 +1,9 @@
-/* Admin Styles CSS Codes */
+.inv-cloud-wrapper {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+.inv-cloud-mt-30 {
+  margin-top: 30px;
+}
