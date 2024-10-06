@@ -1,8 +1,9 @@
 (function ($) {
   $(document).ready(function () {
     $("#inv-cloud-save-btn").on("click", function () {
-      var apiBaseUrl = $("#inv-cloud-base-url").val();
-      var apiToken = $("#inv-cloud-token").val();
+      let apiBaseUrl = $("#inv-cloud-base-url").val();
+      let apiToken = $("#inv-cloud-token").val();
+      let updateQuantity = $("#inv-cloud-update_quantity").val();
 
       $.ajax({
         url: invCloudAjax.ajax_url,
@@ -11,6 +12,7 @@
           action: "save_inventory_cloud_options",
           api_base_url: apiBaseUrl,
           api_token: apiToken,
+          update_quantity: updateQuantity,
           nonce: invCloudAjax.nonce,
         },
         success: function (response) {

@@ -89,16 +89,35 @@ class Update_Inventory {
 
     public function update_woo_product_stock() {
 
-        /**
-         * TODO: Get SKU/ISBN from database LIMIT 1 or more
-         * TODO: Get Product Stock from api by SKU/ISBN
-         * TODO: Update WooCommerce Product stock by SKU/ISBN
-         */
+        // get how many items to update
+        $limit = get_option( 'inv_cloud_update_quantity' );
 
-        $product_sku   = '9781801064590';
-        $product_stock = 15;
+        global $wpdb;
+        $table_name = $wpdb->prefix . 'sync_item_number';
+        $query      = "SELECT item_number, quantity FROM $table_name WHERE status = 'pending' LIMIT $limit";
+        $items      = $wpdb->get_results( $query );
 
-        return $this->update_woo_product_stock_by_sku( $product_sku, $product_stock );
+        if ( $items ) {
+            foreach ( $items as $item ) {
+                $sku   = $item->item_number;
+                $stock = $item->quantity;
+                $this->update_woo_product_stock_by_sku( $sku, $stock );
+                // update status completed
+                $wpdb->update(
+                    $table_name,
+                    [
+                        "status" => 'completed',
+                    ],
+                    [
+                        "item_number" => $sku,
+                    ]
+                );
+            }
+
+            return 'Stock updated successfully';
+        } else {
+            return 'No items found';
+        }
     }
 
     /**
@@ -136,17 +155,23 @@ class Update_Inventory {
                 $product->save();
 
                 // Log the success message (optional, using your Program_Logs trait)
-                $this->put_program_logs( 'Stock updated successfully for SKU: ' . $product_sku . ' to quantity: ' . $new_stock_quantity );
+                // $this->put_program_logs( 'Stock updated successfully for SKU: ' . $product_sku . ' to quantity: ' . $new_stock_quantity );
+                $success_message = sprintf( 'Stock updated successfully for SKU: %s to quantity: %s', $product_sku, $new_stock_quantity );
+                update_option( 'inv_cloud_message', $success_message );
 
                 return 'Stock updated successfully!';
             } else {
                 // log product not found error (optional)
-                $this->put_program_logs( 'Product not found for SKU: ' . $product_sku );
+                // $this->put_program_logs( 'Product not found for SKU: ' . $product_sku );
+                $not_found_message = sprintf( 'Product not found for SKU: %s', $product_sku );
+                update_option( 'inv_cloud_message', $not_found_message );
                 return 'Product not found!';
             }
         } else {
             // log SKU not found error (optional)
-            $this->put_program_logs( 'No product found with the given SKU: ' . $product_sku );
+            // $this->put_program_logs( 'No product found with the given SKU: ' . $product_sku );
+            $message = sprintf( 'No product found with the given SKU: %s', $product_sku );
+            update_option( 'inv_cloud_message', $message );
             return 'No product found with the given SKU!';
         }
     }
