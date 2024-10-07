@@ -38,7 +38,7 @@ class Update_Inventory {
         // insert item number to db
         register_rest_route( 'atebol/v1', '/insert-item-number-stock-db', [
             'methods'  => 'GET',
-            'callback' => [ $this, 'insert_item_number_db' ],
+            'callback' => [ $this, 'insert_item_number_to_db' ],
         ] );
 
         // update woocommerce product stock
@@ -52,11 +52,11 @@ class Update_Inventory {
         return 'Server is up and running';
     }
 
-    public function insert_item_number_db() {
-        return $this->insert_item_number_db_from_api();
+    public function insert_item_number_to_db() {
+        return $this->insert_item_number_to_db_from_api();
     }
 
-    public function insert_item_number_db_from_api() {
+    public function insert_item_number_to_db_from_api() {
 
         // get api response
         $api_response = $this->fetch_stock_value_from_api();
@@ -128,13 +128,6 @@ class Update_Inventory {
         }
     }
 
-    /**
-     * Update stock quantity for a product by SKU.
-     *
-     * @param string $product_sku The product SKU.
-     * @param int $new_stock_quantity The new stock quantity.
-     * @return string
-     */
     public function update_woo_product_stock_by_sku( $product_sku, $new_stock_quantity ) {
 
         // Get the product ID by SKU
@@ -198,11 +191,47 @@ class Update_Inventory {
                     $product_sku   = $product->get_sku();
                     $product_stock = $product->get_stock_quantity(); // Get remaining stock
 
-                    // Log the product SKU and remaining stock
-                    $this->put_program_logs( 'Product SKU: ' . $product_sku . ' - Remaining stock: ' . $product_stock );
+                    // fetch single item from api
+                    $single_item = $this->fetch_single_item_from_api( $product_sku );
+                    // decode single item
+                    $single_item_decode = json_decode( $single_item, true );
+
+                    if ( isset( $single_item_decode['Data'] ) ) {
+                        $payload = [];
+
+                        foreach ( $single_item_decode['Data'] as $data_item ) {
+                            $payload[] = [
+                                'ItemNumber'   => intval( $data_item['ItemNumber'] ),
+                                'AdjustType'   => 0,
+                                'AdjustReason' => 'Cycle Count',
+                                'SiteName'     => $data_item['SiteName'],
+                                'LocationCode' => $data_item['LocationCode'],
+                                'Quantity'     => floatval( $product_stock ),
+                            ];
+                        }
+
+                        // put payload to log
+                        // $this->put_program_logs( 'Payload: ' . json_encode( $payload ) );
+
+                        // update inventory to api
+                        $update_inventory = $this->update_inventory_to_api( $payload );
+                        // put update inventory response to log
+                        // $this->put_program_logs( 'Update Inventory: ' . $update_inventory );
+
+                        // Log the product SKU and remaining stock
+                        $message = sprintf( 'Product SKU: %s - Remaining stock: %s', $product_sku, $product_stock );
+                        update_option( 'inv_cloud_message', $message );
+                        // $this->put_program_logs( $message );
+                    } else {
+                        $not_found_message = sprintf( 'No data found for SKU: %s', $product_sku );
+                        update_option( 'inv_cloud_message', $not_found_message );
+                        // $this->put_program_logs( $not_found_message );
+                    }
                 } else {
                     // Log if stock is not managed for this product
-                    $this->put_program_logs( 'Stock management is disabled for product: ' . $product->get_name() );
+                    $stock_management_disabled_message = sprintf( 'Stock management is disabled for product: %s', $product->get_name() );
+                    update_option( 'inv_cloud_message', $stock_management_disabled_message );
+                    // $this->put_program_logs( $stock_management_disabled_message );
                 }
             }
         }
@@ -257,6 +286,32 @@ class Update_Inventory {
             CURLOPT_HTTPHEADER     => array(
                 "Content-Type: application/json",
                 "Authorization: Bearer $this->token",
+            ),
+        ) );
+
+        $response = curl_exec( $curl );
+
+        curl_close( $curl );
+        return $response;
+
+    }
+
+    public function update_inventory_to_api( $payload ) {
+
+        $curl = curl_init();
+        curl_setopt_array( $curl, array(
+            CURLOPT_URL            => $this->api_base_url . '/public-api/transactions/item/adjust',
+            CURLOPT_RETURNTRANSFER => true,
+            CURLOPT_ENCODING       => '',
+            CURLOPT_MAXREDIRS      => 10,
+            CURLOPT_TIMEOUT        => 0,
+            CURLOPT_FOLLOWLOCATION => true,
+            CURLOPT_HTTP_VERSION   => CURL_HTTP_VERSION_1_1,
+            CURLOPT_CUSTOMREQUEST  => 'POST',
+            CURLOPT_POSTFIELDS     => json_encode( $payload ),
+            CURLOPT_HTTPHEADER     => array(
+                "Authorization: Bearer $this->token",
+                "Content-Type: application/json",
             ),
         ) );
 
