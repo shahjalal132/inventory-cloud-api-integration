@@ -10,13 +10,21 @@ class Update_Inventory {
     use Singleton;
     use Program_Logs;
 
+    private $api_base_url;
+    private $token;
+
     public function __construct() {
         $this->setup_hooks();
     }
 
     public function setup_hooks() {
+
         add_action( 'rest_api_init', [ $this, 'register_api_endpoints' ] );
         add_action( 'woocommerce_thankyou', [ $this, 'check_update_product_remaining_stock' ] );
+
+        // get api credentials
+        $this->api_base_url = get_option( 'inv_cloud_base_url' );
+        $this->token        = get_option( 'inv_cloud_token' );
     }
 
     public function register_api_endpoints() {
@@ -51,7 +59,7 @@ class Update_Inventory {
     public function insert_item_number_db_from_api() {
 
         // get api response
-        $api_response = $this->fetch_stock_value_from_db();
+        $api_response = $this->fetch_stock_value_from_api();
         // decode api response
         $api_response_decode = json_decode( $api_response, true );
         // extract data
@@ -200,11 +208,7 @@ class Update_Inventory {
         }
     }
 
-    public function fetch_stock_value_from_db() {
-
-        // get api credentials
-        $base_url = get_option( 'inv_cloud_base_url' );
-        $token    = get_option( 'inv_cloud_token' );
+    public function fetch_stock_value_from_api() {
 
         $payload = [
             "ItemNumber" => "",
@@ -212,7 +216,7 @@ class Update_Inventory {
 
         $curl = curl_init();
         curl_setopt_array( $curl, array(
-            CURLOPT_URL            => $base_url . '/public-api/ic/item/inventorysearch',
+            CURLOPT_URL            => $this->api_base_url . '/public-api/ic/item/inventorysearch',
             CURLOPT_RETURNTRANSFER => true,
             CURLOPT_ENCODING       => '',
             CURLOPT_MAXREDIRS      => 10,
@@ -222,7 +226,7 @@ class Update_Inventory {
             CURLOPT_CUSTOMREQUEST  => 'POST',
             CURLOPT_POSTFIELDS     => json_encode( $payload ),
             CURLOPT_HTTPHEADER     => array(
-                "Authorization: Bearer $token",
+                "Authorization: Bearer $this->token",
                 "Content-Type: application/json",
             ),
         ) );
@@ -231,5 +235,35 @@ class Update_Inventory {
 
         curl_close( $curl );
         return $response;
+    }
+
+    public function fetch_single_item_from_api( $item_number ) {
+
+        $payload = [
+            "ItemNumber" => intval( $item_number ),
+        ];
+
+        $curl = curl_init();
+        curl_setopt_array( $curl, array(
+            CURLOPT_URL            => $this->api_base_url . '/public-api/ic/item/inventorysearch',
+            CURLOPT_RETURNTRANSFER => true,
+            CURLOPT_ENCODING       => '',
+            CURLOPT_MAXREDIRS      => 10,
+            CURLOPT_TIMEOUT        => 0,
+            CURLOPT_FOLLOWLOCATION => true,
+            CURLOPT_HTTP_VERSION   => CURL_HTTP_VERSION_1_1,
+            CURLOPT_CUSTOMREQUEST  => 'POST',
+            CURLOPT_POSTFIELDS     => json_encode( $payload ),
+            CURLOPT_HTTPHEADER     => array(
+                "Content-Type: application/json",
+                "Authorization: Bearer $this->token",
+            ),
+        ) );
+
+        $response = curl_exec( $curl );
+
+        curl_close( $curl );
+        return $response;
+
     }
 }

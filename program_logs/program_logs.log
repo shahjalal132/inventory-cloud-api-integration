@@ -1,0 +1,32 @@
+
+{
+    "Data": [
+        {
+            "ItemNumber": "9781785620485",
+            "ItemDescription": "Tudur Budr: Arswyd!",
+            "ItemType": 2147483635,
+            "SiteName": "C1",
+            "LocationCode": "A3",
+            "TotalQty": 299,
+            "CheckedOutQty": 0,
+            "AlternateItemNumber": ""
+        },
+        {
+            "ItemNumber": "9781785620485",
+            "ItemDescription": "Tudur Budr: Arswyd!",
+            "ItemType": 2147483635,
+            "SiteName": "CLLC",
+            "LocationCode": "CLLC",
+            "TotalQty": 50,
+            "CheckedOutQty": 0,
+            "AlternateItemNumber": ""
+        }
+    ],
+    "Messages": [],
+    "TotalRecordsLongCount": 2,
+    "HasSuccessWithMoreDataRemaining": false,
+    "HasError": false,
+    "HasMessage": false,
+    "HasHttpError": false
+} - 2024-10-07 05:55:09
+
