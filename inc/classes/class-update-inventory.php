@@ -77,42 +77,64 @@ class Update_Inventory {
 
     public function insert_item_number_to_db_from_api() {
 
-        // get api response
-        $api_response = $this->fetch_stock_value_from_api();
-        // decode api response
-        $api_response_decode = json_decode( $api_response, true );
-        // extract data
-        $data = $api_response_decode['Data'];
-
-        if ( $data ) {
-
-            global $wpdb;
-            // get table name
-            $table_name = $wpdb->prefix . 'sync_item_number';
-            // truncate table
-            $wpdb->query( 'TRUNCATE TABLE ' . $table_name );
-
-            foreach ( $data as $item ) {
-                // extract data
-                $item_number = $item['ItemNumber'];
-                $quantity    = $item['TotalQty'];
-
-                // insert data
-                $wpdb->insert(
-                    $table_name,
-                    [
-                        "item_number" => $item_number,
-                        "quantity"    => intval( $quantity ),
-                        "status"      => 'pending',
-                    ]
-                );
+        global $wpdb;
+        // get table name
+        $table_name = $wpdb->prefix . 'sync_item_number';
+    
+        // truncate table (optional, uncomment if needed)
+        $wpdb->query( 'TRUNCATE TABLE ' . $table_name );
+    
+        // Loop through multiple API pages (10 in this case)
+        for( $i = 0; $i < 10; $i++ ) {
+    
+            // Fetch the API response for each page
+            $api_response_items = $this->fetch_all_inventory_item_from_api( $i );
+            // Decode the API response
+            $api_response_items_decode = json_decode( $api_response_items, true );
+    
+            // Check if data exists in the API response
+            if( isset($api_response_items_decode['Data']) && $api_response_items_decode['Data'] ) {
+                
+                $data = $api_response_items_decode['Data'];
+    
+                // Loop through each item in the data
+                foreach( $data as $item ) {
+    
+                    if( array_key_exists('TotalAvailable', $item) ) {                        
+                        // Extract data
+                        $item_number = $item['ItemNumber'];
+                        $quantity    = $item['TotalAvailable'];
+    
+                        $message = sprintf( 'Item number: %s, quantity: %s', $item_number, $quantity );
+                        // $this->put_program_logs( $message );
+    
+                        // Insert data into the database
+                        $wpdb->insert(
+                            $table_name,
+                            [
+                                "item_number" => $item_number,
+                                "quantity"    => intval( $quantity ),
+                                "status"      => 'pending',
+                            ]
+                        );
+    
+                    } else {
+                        // Log if 'ItemNumber' or 'TotalAvailable' is missing
+                        $message = sprintf( 'Not found Item number: %s', $item['ItemNumber'] ?? 'Unknown' );
+                        // $this->put_program_logs( $message );
+                    }
+                }
+    
+            } else {
+                // Log if no data is found for the current page
+                $this->put_program_logs( "Data not found for page $i" );
             }
-
-            return 'Item number and quantity inserted successfully';
-        } else {
-            return 'Data not found';
         }
-    }
+    
+        // Return a success message after all iterations are complete
+        return 'Item number and quantity inserted successfully for all pages';
+    
+    }    
 
     public function update_woo_product_stock() {
 
@@ -311,6 +333,37 @@ class Update_Inventory {
         $response = curl_exec( $curl );
 
         curl_close( $curl );
+        return $response;
+
+    }
+
+    public function fetch_all_inventory_item_from_api($pageNumber) {
+
+        $payload = [
+            "PageSize" => 100,
+            "PageNumber" => intval($pageNumber),
+        ];
+
+        $curl = curl_init();
+        curl_setopt_array($curl, array(
+        CURLOPT_URL =>  $this->api_base_url . '/public-api/ic/item/advancedinventorysearch',
+        CURLOPT_RETURNTRANSFER => true,
+        CURLOPT_ENCODING => '',
+        CURLOPT_MAXREDIRS => 10,
+        CURLOPT_TIMEOUT => 0,
+        CURLOPT_FOLLOWLOCATION => true,
+        CURLOPT_HTTP_VERSION => CURL_HTTP_VERSION_1_1,
+        CURLOPT_CUSTOMREQUEST => 'POST',
+        CURLOPT_POSTFIELDS =>json_encode($payload),
+        CURLOPT_HTTPHEADER => array(
+            "Authorization: Bearer $this->token",
+            "Content-Type: application/json"
+        ),
+        ));
+
+        $response = curl_exec($curl);
+
+        curl_close($curl);
         return $response;
 
     }
