@@ -46,6 +46,25 @@ class Update_Inventory {
             'methods'  => 'GET',
             'callback' => [ $this, 'update_woo_product_stock' ],
         ] );
+
+        // check db stock items
+        register_rest_route( 'atebol/v1', '/check-items', [
+            'methods'  => 'GET',
+            'callback' => [ $this, 'check_items' ],
+        ] );
+    }
+
+    public function check_items() {
+        return $this->check_db_items();
+    }
+
+    public function check_db_items(){
+        global $wpdb;
+        $table_name = $wpdb->prefix . 'sync_item_number';
+        // $query = "SELECT COUNT(*) FROM $table_name";
+        $query = "SELECT COUNT(*) FROM $table_name WHERE status = 'pending'";
+        $items = $wpdb->get_results( $query );
+        return $items;
     }
 
     public function server_status() {
