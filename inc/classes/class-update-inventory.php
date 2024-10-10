@@ -85,7 +85,7 @@ class Update_Inventory {
         $wpdb->query( 'TRUNCATE TABLE ' . $table_name );
     
         // Loop through multiple API pages (10 in this case)
-        for( $i = 0; $i < 10; $i++ ) {
+        for( $i = 0; $i <= 10; $i++ ) {
     
             // Fetch the API response for each page
             $api_response_items = $this->fetch_all_inventory_item_from_api( $i );
@@ -340,7 +340,7 @@ class Update_Inventory {
     public function fetch_all_inventory_item_from_api($pageNumber) {
 
         $payload = [
-            "PageSize" => 100,
+            "PageSize" => 500,
             "PageNumber" => intval($pageNumber),
         ];
 
