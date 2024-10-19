@@ -31,26 +31,30 @@ class Update_Inventory {
 
         // server status
         register_rest_route( 'atebol/v1', '/server-status', [
-            'methods'  => 'GET',
-            'callback' => [ $this, 'server_status' ],
+            'methods'             => 'GET',
+            'callback'            => [ $this, 'server_status' ],
+            'permission_callback' => '__return_true',
         ] );
 
         // insert item number to db
         register_rest_route( 'atebol/v1', '/insert-item-number-stock-db', [
-            'methods'  => 'GET',
-            'callback' => [ $this, 'insert_item_number_to_db' ],
+            'methods'             => 'GET',
+            'callback'            => [ $this, 'insert_item_number_to_db' ],
+            'permission_callback' => '__return_true',
         ] );
 
         // update woocommerce product stock
         register_rest_route( 'atebol/v1', '/update-woo-product-stock', [
-            'methods'  => 'GET',
-            'callback' => [ $this, 'update_woo_product_stock' ],
+            'methods'             => 'GET',
+            'callback'            => [ $this, 'update_woo_product_stock' ],
+            'permission_callback' => '__return_true',
         ] );
 
         // check db stock items
         register_rest_route( 'atebol/v1', '/check-items', [
-            'methods'  => 'GET',
-            'callback' => [ $this, 'check_items' ],
+            'methods'             => 'GET',
+            'callback'            => [ $this, 'check_items' ],
+            'permission_callback' => '__return_true',
         ] );
     }
 
@@ -58,7 +62,7 @@ class Update_Inventory {
         return $this->check_db_items();
     }
 
-    public function check_db_items(){
+    public function check_db_items() {
         global $wpdb;
         $table_name = $wpdb->prefix . 'sync_item_number';
         // $query = "SELECT COUNT(*) FROM $table_name";
@@ -80,34 +84,34 @@ class Update_Inventory {
         global $wpdb;
         // get table name
         $table_name = $wpdb->prefix . 'sync_item_number';
-    
+
         // truncate table (optional, uncomment if needed)
         $wpdb->query( 'TRUNCATE TABLE ' . $table_name );
-    
+
         // Loop through multiple API pages (10 in this case)
-        for( $i = 0; $i <= 10; $i++ ) {
-    
+        for ( $i = 0; $i <= 10; $i++ ) {
+
             // Fetch the API response for each page
             $api_response_items = $this->fetch_all_inventory_item_from_api( $i );
             // Decode the API response
             $api_response_items_decode = json_decode( $api_response_items, true );
-    
+
             // Check if data exists in the API response
-            if( isset($api_response_items_decode['Data']) && $api_response_items_decode['Data'] ) {
-                
+            if ( isset( $api_response_items_decode['Data'] ) && $api_response_items_decode['Data'] ) {
+
                 $data = $api_response_items_decode['Data'];
-    
+
                 // Loop through each item in the data
-                foreach( $data as $item ) {
-    
-                    if( array_key_exists('TotalAvailable', $item) ) {                        
+                foreach ( $data as $item ) {
+
+                    if ( array_key_exists( 'TotalAvailable', $item ) ) {
                         // Extract data
                         $item_number = $item['ItemNumber'];
                         $quantity    = $item['TotalAvailable'];
-    
+
                         $message = sprintf( 'Item number: %s, quantity: %s', $item_number, $quantity );
                         // $this->put_program_logs( $message );
-    
+
                         // Insert data into the database
                         $wpdb->insert(
                             $table_name,
@@ -117,24 +121,24 @@ class Update_Inventory {
                                 "status"      => 'pending',
                             ]
                         );
-    
+
                     } else {
                         // Log if 'ItemNumber' or 'TotalAvailable' is missing
                         $message = sprintf( 'Not found Item number: %s', $item['ItemNumber'] ?? 'Unknown' );
                         // $this->put_program_logs( $message );
                     }
                 }
-    
+
             } else {
                 // Log if no data is found for the current page
-                $this->put_program_logs( "Data not found for page $i" );
+                // $this->put_program_logs( "Data not found for page $i" );
             }
         }
-    
+
         // Return a success message after all iterations are complete
         return 'Item number and quantity inserted successfully for all pages';
-    
-    }    
+
+    }
 
     public function update_woo_product_stock() {
 
@@ -337,33 +341,33 @@ class Update_Inventory {
 
     }
 
-    public function fetch_all_inventory_item_from_api($pageNumber) {
+    public function fetch_all_inventory_item_from_api( $pageNumber ) {
 
         $payload = [
-            "PageSize" => 500,
-            "PageNumber" => intval($pageNumber),
+            "PageSize"   => 500,
+            "PageNumber" => intval( $pageNumber ),
         ];
 
         $curl = curl_init();
-        curl_setopt_array($curl, array(
-        CURLOPT_URL =>  $this->api_base_url . '/public-api/ic/item/advancedinventorysearch',
-        CURLOPT_RETURNTRANSFER => true,
-        CURLOPT_ENCODING => '',
-        CURLOPT_MAXREDIRS => 10,
-        CURLOPT_TIMEOUT => 0,
-        CURLOPT_FOLLOWLOCATION => true,
-        CURLOPT_HTTP_VERSION => CURL_HTTP_VERSION_1_1,
-        CURLOPT_CUSTOMREQUEST => 'POST',
-        CURLOPT_POSTFIELDS =>json_encode($payload),
-        CURLOPT_HTTPHEADER => array(
-            "Authorization: Bearer $this->token",
-            "Content-Type: application/json"
-        ),
-        ));
+        curl_setopt_array( $curl, array(
+            CURLOPT_URL            => $this->api_base_url . '/public-api/ic/item/advancedinventorysearch',
+            CURLOPT_RETURNTRANSFER => true,
+            CURLOPT_ENCODING       => '',
+            CURLOPT_MAXREDIRS      => 10,
+            CURLOPT_TIMEOUT        => 0,
+            CURLOPT_FOLLOWLOCATION => true,
+            CURLOPT_HTTP_VERSION   => CURL_HTTP_VERSION_1_1,
+            CURLOPT_CUSTOMREQUEST  => 'POST',
+            CURLOPT_POSTFIELDS     => json_encode( $payload ),
+            CURLOPT_HTTPHEADER     => array(
+                "Authorization: Bearer $this->token",
+                "Content-Type: application/json",
+            ),
+        ) );
 
-        $response = curl_exec($curl);
+        $response = curl_exec( $curl );
 
-        curl_close($curl);
+        curl_close( $curl );
         return $response;
 
     }
