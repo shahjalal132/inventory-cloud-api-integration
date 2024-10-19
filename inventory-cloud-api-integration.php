@@ -6,7 +6,7 @@
  * Plugin URI:  https://github.com/shahjalal132/inventory-cloud-api-integration
  * Author:      Shah jalal
  * Author URI:  https://github.com/shahjalal132
- * Description: WordPress Plugin Boilerplate.
+ * Description: Update inventory in woocommerce and store bidirectionally
  * Version:     1.0.0
  * text-domain: inventory-cloud
  * Domain Path: /languages
