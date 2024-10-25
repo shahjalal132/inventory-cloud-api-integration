@@ -16,7 +16,7 @@ class Plugin_Activator {
         $charset_collate = $wpdb->get_charset_collate();
         $sql             = "CREATE TABLE IF NOT EXISTS $table_name (
             id INT AUTO_INCREMENT,
-            item_number VARCHAR(255) NOT NULL,
+            item_number VARCHAR(255) UNIQUE NOT NULL,
             quantity INT NOT NULL,
             status VARCHAR(255) NOT NULL,
             created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,

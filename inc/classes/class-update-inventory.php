@@ -115,15 +115,27 @@ class Update_Inventory {
                             $message = sprintf( 'Item number: %s, quantity: %s', $item_number, $quantity );
                             // $this->put_program_logs( $message );
 
+                            $sql = $wpdb->prepare(
+                                "INSERT INTO $table_name (item_number, quantity, status) VALUES (%s, %s, %s)
+                                ON DUPLICATE KEY UPDATE quantity = %s, status = %s",
+                                $item_number,
+                                intval( $quantity ),
+                                'pending',
+                                intval( $quantity ),
+                                'pending'
+                            );
+
+                            $wpdb->query( $sql );
+
                             // Insert data into the database
-                            $wpdb->insert(
+                            /* $wpdb->insert(
                                 $table_name,
                                 [
                                     "item_number" => $item_number,
                                     "quantity"    => intval( $quantity ),
                                     "status"      => 'pending',
                                 ]
-                            );
+                            ); */
 
                         } else {
                             // Log if 'ItemNumber' or 'TotalAvailable' is missing
@@ -135,7 +147,6 @@ class Update_Inventory {
                 } else {
                     // Log if no data is found for the current page
                     // $this->put_program_logs( "Data not found for page $i" );
-                    return "Data not found for page $i";
                 }
             }
 
