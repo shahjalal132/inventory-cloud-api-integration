@@ -12,6 +12,7 @@ class Update_Inventory {
 
     private $api_base_url;
     private $token;
+    private $update_inventory_enable_disable;
 
     public function __construct() {
         $this->setup_hooks();
@@ -23,8 +24,9 @@ class Update_Inventory {
         add_action( 'woocommerce_thankyou', [ $this, 'check_update_product_remaining_stock' ] );
 
         // get api credentials
-        $this->api_base_url = get_option( 'inv_cloud_base_url' );
-        $this->token        = get_option( 'inv_cloud_token' );
+        $this->api_base_url                    = get_option( 'inv_cloud_base_url' );
+        $this->token                           = get_option( 'inv_cloud_token' );
+        $this->update_inventory_enable_disable = get_option( 'inv_cloud_update_inventory' );
     }
 
     public function register_api_endpoints() {
@@ -81,95 +83,107 @@ class Update_Inventory {
 
     public function insert_item_number_to_db_from_api() {
 
-        global $wpdb;
-        // get table name
-        $table_name = $wpdb->prefix . 'sync_item_number';
+        if ( 'enable' === $this->update_inventory_enable_disable ) {
+            global $wpdb;
+            // get table name
+            $table_name = $wpdb->prefix . 'sync_item_number';
 
-        // truncate table (optional, uncomment if needed)
-        $wpdb->query( 'TRUNCATE TABLE ' . $table_name );
+            // truncate table (optional, uncomment if needed)
+            $wpdb->query( 'TRUNCATE TABLE ' . $table_name );
 
-        // Loop through multiple API pages (10 in this case)
-        for ( $i = 0; $i <= 10; $i++ ) {
+            // Loop through multiple API pages (10 in this case)
+            for ( $i = 0; $i <= 10; $i++ ) {
 
-            // Fetch the API response for each page
-            $api_response_items = $this->fetch_all_inventory_item_from_api( $i );
-            // Decode the API response
-            $api_response_items_decode = json_decode( $api_response_items, true );
+                // Fetch the API response for each page
+                $api_response_items = $this->fetch_all_inventory_item_from_api( $i );
+                // Decode the API response
+                $api_response_items_decode = json_decode( $api_response_items, true );
 
-            // Check if data exists in the API response
-            if ( isset( $api_response_items_decode['Data'] ) && $api_response_items_decode['Data'] ) {
+                // Check if data exists in the API response
+                if ( isset( $api_response_items_decode['Data'] ) && !empty( $api_response_items_decode['Data'] ) ) {
 
-                $data = $api_response_items_decode['Data'];
+                    $data = $api_response_items_decode['Data'];
 
-                // Loop through each item in the data
-                foreach ( $data as $item ) {
+                    // Loop through each item in the data
+                    foreach ( $data as $item ) {
 
-                    if ( array_key_exists( 'TotalAvailable', $item ) ) {
-                        // Extract data
-                        $item_number = $item['ItemNumber'];
-                        $quantity    = $item['TotalAvailable'];
+                        if ( array_key_exists( 'TotalAvailable', $item ) ) {
+                            // Extract data
+                            $item_number = $item['ItemNumber'];
+                            $quantity    = $item['TotalAvailable'];
 
-                        $message = sprintf( 'Item number: %s, quantity: %s', $item_number, $quantity );
-                        // $this->put_program_logs( $message );
+                            $message = sprintf( 'Item number: %s, quantity: %s', $item_number, $quantity );
+                            // $this->put_program_logs( $message );
 
-                        // Insert data into the database
-                        $wpdb->insert(
-                            $table_name,
-                            [
-                                "item_number" => $item_number,
-                                "quantity"    => intval( $quantity ),
-                                "status"      => 'pending',
-                            ]
-                        );
+                            // Insert data into the database
+                            $wpdb->insert(
+                                $table_name,
+                                [
+                                    "item_number" => $item_number,
+                                    "quantity"    => intval( $quantity ),
+                                    "status"      => 'pending',
+                                ]
+                            );
 
-                    } else {
-                        // Log if 'ItemNumber' or 'TotalAvailable' is missing
-                        $message = sprintf( 'Not found Item number: %s', $item['ItemNumber'] ?? 'Unknown' );
-                        // $this->put_program_logs( $message );
+                        } else {
+                            // Log if 'ItemNumber' or 'TotalAvailable' is missing
+                            $message = sprintf( 'Not found Item number: %s', $item['ItemNumber'] ?? 'Unknown' );
+                            // $this->put_program_logs( $message );
+                        }
                     }
+
+                } else {
+                    // Log if no data is found for the current page
+                    // $this->put_program_logs( "Data not found for page $i" );
+                    return "Data not found for page $i";
                 }
-
-            } else {
-                // Log if no data is found for the current page
-                // $this->put_program_logs( "Data not found for page $i" );
             }
-        }
 
-        // Return a success message after all iterations are complete
-        return 'Item number and quantity inserted successfully for all pages';
+            // Return a success message after all iterations are complete
+            return 'Item number and quantity inserted successfully for all pages';
+
+        } else {
+            return 'Update inventory is disabled';
+        }
 
     }
 
     public function update_woo_product_stock() {
 
-        // get how many items to update
-        $limit = get_option( 'inv_cloud_update_quantity' );
+        if ( 'enable' === $this->update_inventory_enable_disable ) {
 
-        global $wpdb;
-        $table_name = $wpdb->prefix . 'sync_item_number';
-        $query      = "SELECT item_number, quantity FROM $table_name WHERE status = 'pending' LIMIT $limit";
-        $items      = $wpdb->get_results( $query );
+            // get how many items to update
+            $limit = get_option( 'inv_cloud_update_quantity' );
 
-        if ( $items ) {
-            foreach ( $items as $item ) {
-                $sku   = $item->item_number;
-                $stock = $item->quantity;
-                $this->update_woo_product_stock_by_sku( $sku, $stock );
-                // update status completed
-                $wpdb->update(
-                    $table_name,
-                    [
-                        "status" => 'completed',
-                    ],
-                    [
-                        "item_number" => $sku,
-                    ]
-                );
+            global $wpdb;
+            $table_name = $wpdb->prefix . 'sync_item_number';
+            $query      = "SELECT item_number, quantity FROM $table_name WHERE status = 'pending' LIMIT $limit";
+            $items      = $wpdb->get_results( $query );
+
+            if ( $items ) {
+                foreach ( $items as $item ) {
+                    $sku   = $item->item_number;
+                    $stock = $item->quantity;
+                    $this->update_woo_product_stock_by_sku( $sku, $stock );
+                    // update status completed
+                    $wpdb->update(
+                        $table_name,
+                        [
+                            "status" => 'completed',
+                        ],
+                        [
+                            "item_number" => $sku,
+                        ]
+                    );
+                }
+
+                return 'Stock updated successfully';
+            } else {
+                return 'No items found';
             }
 
-            return 'Stock updated successfully';
         } else {
-            return 'No items found';
+            return 'Update inventory is disabled';
         }
     }
 
