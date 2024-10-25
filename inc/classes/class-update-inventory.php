@@ -89,7 +89,7 @@ class Update_Inventory {
             $table_name = $wpdb->prefix . 'sync_item_number';
 
             // truncate table (optional, uncomment if needed)
-            $wpdb->query( 'TRUNCATE TABLE ' . $table_name );
+            // $wpdb->query( 'TRUNCATE TABLE ' . $table_name );
 
             // Loop through multiple API pages (10 in this case)
             for ( $i = 0; $i <= 10; $i++ ) {
