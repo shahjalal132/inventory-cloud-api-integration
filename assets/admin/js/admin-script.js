@@ -4,6 +4,7 @@
       let apiBaseUrl = $("#inv-cloud-base-url").val();
       let apiToken = $("#inv-cloud-token").val();
       let updateQuantity = $("#inv-cloud-update_quantity").val();
+      let updateInventory = $("input[name='update-inventory']:checked").val();
 
       $.ajax({
         url: invCloudAjax.ajax_url,
@@ -13,6 +14,7 @@
           api_base_url: apiBaseUrl,
           api_token: apiToken,
           update_quantity: updateQuantity,
+          update_inventory: updateInventory,
           nonce: invCloudAjax.nonce,
         },
         success: function (response) {
