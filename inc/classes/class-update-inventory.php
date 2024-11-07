@@ -60,15 +60,22 @@ class Update_Inventory {
         ] );
     }
 
-    public function check_items() {
-        return $this->check_db_items();
+    public function check_items( $request ) {
+        $status = $request->get_param( 'status' );
+        return $this->check_db_items( $status );
     }
 
-    public function check_db_items() {
+    public function check_db_items( $status = 'pending' ) {
         global $wpdb;
         $table_name = $wpdb->prefix . 'sync_item_number';
-        // $query = "SELECT COUNT(*) FROM $table_name";
-        $query = "SELECT COUNT(*) FROM $table_name WHERE status = 'pending'";
+
+        // If a status is provided, use it in the query; otherwise, count all items
+        if ( $status ) {
+            $query = $wpdb->prepare( "SELECT COUNT(*) as count FROM $table_name WHERE status = %s", $status );
+        } else {
+            $query = "SELECT COUNT(*) as count FROM $table_name";
+        }
+
         $items = $wpdb->get_results( $query );
         return $items;
     }
@@ -109,8 +116,18 @@ class Update_Inventory {
 
                         if ( array_key_exists( 'TotalAvailable', $item ) ) {
                             // Extract data
-                            $item_number = $item['ItemNumber'];
-                            $quantity    = $item['TotalAvailable'];
+                            $item_number  = $item['ItemNumber'];
+                            $quantity     = $item['TotalAvailable'];
+                            $locationCode = $item['LocationCode'];
+
+                            // Check if $locationCode is CLLC than ignore it
+                            if ( 'CLLC' === $locationCode ) {
+                                continue;
+                            }
+
+                            // message for non CLLC locations
+                            $locationCodeMessage = sprintf( 'Item number: %s, quantity: %s, location: %s', $item_number, $quantity, $locationCode );
+                            // $this->put_program_logs( $locationCodeMessage );
 
                             $message = sprintf( 'Item number: %s, quantity: %s', $item_number, $quantity );
                             // $this->put_program_logs( $message );
