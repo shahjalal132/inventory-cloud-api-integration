@@ -21,7 +21,8 @@ class Update_Inventory {
     public function setup_hooks() {
 
         add_action( 'rest_api_init', [ $this, 'register_api_endpoints' ] );
-        add_action( 'woocommerce_thankyou', [ $this, 'check_update_product_remaining_stock' ] );
+        // add_action( 'woocommerce_thankyou', [ $this, 'check_update_product_remaining_stock' ] );
+        add_action( 'woocommerce_thankyou', [ $this, 'remove_stock_from_inventory_cloud' ] );
 
         // get api credentials
         $this->api_base_url                    = get_option( 'inv_cloud_base_url' );
@@ -324,33 +325,74 @@ class Update_Inventory {
         }
     }
 
-    public function fetch_stock_value_from_api() {
+    public function remove_stock_from_inventory_cloud( $order_id ) {
 
-        $payload = [
-            "ItemNumber" => "",
-        ];
+        // Get the order object
+        $order = wc_get_order( $order_id );
 
-        $curl = curl_init();
-        curl_setopt_array( $curl, array(
-            CURLOPT_URL            => $this->api_base_url . '/public-api/ic/item/inventorysearch',
-            CURLOPT_RETURNTRANSFER => true,
-            CURLOPT_ENCODING       => '',
-            CURLOPT_MAXREDIRS      => 10,
-            CURLOPT_TIMEOUT        => 0,
-            CURLOPT_FOLLOWLOCATION => true,
-            CURLOPT_HTTP_VERSION   => CURL_HTTP_VERSION_1_1,
-            CURLOPT_CUSTOMREQUEST  => 'POST',
-            CURLOPT_POSTFIELDS     => json_encode( $payload ),
-            CURLOPT_HTTPHEADER     => array(
-                "Authorization: Bearer $this->token",
-                "Content-Type: application/json",
-            ),
-        ) );
+        // get site url
+        $site_url = site_url();
+        // get customer number
+        $customer_number = $site_url == "https://sebra.cymru" ? "GS 09" : "GA 10";
 
-        $response = curl_exec( $curl );
+        if ( $order ) {
+            // Get the order items
+            $order_items = $order->get_items();
+            foreach ( $order_items as $item ) {
+                // get product
+                $product = $item->get_product();
+                // get product sku
+                $product_sku = $product->get_sku();
+                // get item quantity
+                $product_stock = $item->get_quantity();
 
-        curl_close( $curl );
-        return $response;
+                // fetch single item from api
+                $single_item = $this->fetch_single_item_from_api( $product_sku );
+                // decode single item
+                $single_item_decode = json_decode( $single_item, true );
+
+                if ( isset( $single_item_decode['Data'] ) ) {
+                    // prepare payload
+                    $payload = [];
+
+                    foreach ( $single_item_decode['Data'] as $data_item ) {
+
+                        // get site location
+                        $site_location = $data_item['LocationCode'];
+
+                        // check if $location_code is CLLC ignore it
+                        if ( $site_location === 'CLLC' ) {
+                            continue;
+                        }
+
+                        $payload[] = [
+                            'ItemNumber'     => intval( $data_item['ItemNumber'] ),
+                            'SiteName'       => $data_item['SiteName'],
+                            'LocationCode'   => $site_location,
+                            'CustomerNumber' => $customer_number,
+                            'Quantity'       => floatval( $product_stock ),
+                        ];
+                    }
+
+                    // put payload to log
+                    // $this->put_program_logs( 'Payload: ' . json_encode( $payload ) );
+
+                    // remove inventory to api
+                    $remove_quantity = $this->remove_quantity_from_inventory( $payload );
+                    // put remove inventory response to log
+                    // $this->put_program_logs( 'API Response: ' . $remove_quantity );
+
+                    // Log the product SKU and remaining stock
+                    $message = sprintf( 'Product SKU: %s - Quantity: %s', $product_sku, $product_stock );
+                    update_option( 'inv_cloud_message', $message );
+                    // $this->put_program_logs( $message );
+                } else {
+                    $not_found_message = sprintf( 'No data found for SKU: %s', $product_sku );
+                    update_option( 'inv_cloud_message', $not_found_message );
+                    // $this->put_program_logs( $not_found_message );
+                }
+            }
+        }
     }
 
     public function fetch_single_item_from_api( $item_number ) {
@@ -438,5 +480,30 @@ class Update_Inventory {
         curl_close( $curl );
         return $response;
 
+    }
+
+    public function remove_quantity_from_inventory( $payload ) {
+
+        $curl = curl_init();
+        curl_setopt_array( $curl, array(
+            CURLOPT_URL            => $this->api_base_url . '/public-api/transactions/item/remove',
+            CURLOPT_RETURNTRANSFER => true,
+            CURLOPT_ENCODING       => '',
+            CURLOPT_MAXREDIRS      => 10,
+            CURLOPT_TIMEOUT        => 0,
+            CURLOPT_FOLLOWLOCATION => true,
+            CURLOPT_HTTP_VERSION   => CURL_HTTP_VERSION_1_1,
+            CURLOPT_CUSTOMREQUEST  => 'POST',
+            CURLOPT_POSTFIELDS     => json_encode( $payload ),
+            CURLOPT_HTTPHEADER     => array(
+                "Authorization: Bearer $this->token",
+                "Content-Type: application/json",
+            ),
+        ) );
+
+        $response = curl_exec( $curl );
+
+        curl_close( $curl );
+        return $response;
     }
 }
