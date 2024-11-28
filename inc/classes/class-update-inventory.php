@@ -370,6 +370,7 @@ class Update_Inventory {
                             'SiteName'       => $data_item['SiteName'],
                             'LocationCode'   => $site_location,
                             'CustomerNumber' => $customer_number,
+                            'DateRemoved'    => date( 'Y-m-d' ),
                             'Quantity'       => floatval( $product_stock ),
                         ];
                     }
