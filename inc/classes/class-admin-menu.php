@@ -19,6 +19,12 @@ class Admin_Menu {
         // register wasp settings top label menu
         add_action( 'admin_menu', [ $this, 'wasp_settings_top_menu' ] );
 
+        // register woocommerce order import sub menu
+        add_action( 'admin_menu', [ $this, 'wasp_order_import_sub_menu_page' ] );
+
+        // register sales/return import sub menu
+        add_action( 'admin_menu', [ $this, 'wasp_sales_return_import_sub_menu_page' ] );
+
         // register inventory-cloud-options sub menu
         add_action( 'admin_menu', [ $this, 'wasp_inventory_cloud_settings_sub_menu_page' ] );
 
@@ -86,6 +92,28 @@ class Admin_Menu {
             'manage_options',
             'inventory-cloud-options',
             [ $this, 'wasp_inventory_cloud_sub_menu_page_html' ]
+        );
+    }
+
+    public function wasp_order_import_sub_menu_page() {
+        add_submenu_page(
+            'wasp-settings',
+            'Wasp Order Import',
+            'Wasp Order Import',
+            'manage_options',
+            'wasp-order-import',
+            [ $this, 'wasp_order_import_sub_menu_page_html' ]
+        );
+    }
+
+    public function wasp_sales_return_import_sub_menu_page() {
+        add_submenu_page(
+            'wasp-settings',
+            'Wasp Sales/Return Import',
+            'Wasp Sales/Return Import',
+            'manage_options',
+            'wasp-sales-return-import',
+            [ $this, 'wasp_sales_return_import_sub_menu_page_html' ]
         );
     }
 
@@ -160,6 +188,14 @@ class Admin_Menu {
         <h4><?= esc_html( $site_url . '/wp-json/atebol/v1/update-woo-product-stock' ); ?></h4>
 
         <?php
+    }
+
+    public function wasp_order_import_sub_menu_page_html() {
+        include_once PLUGIN_BASE_PATH . '/templates/menus/wasp-order-import.php';
+    }
+
+    public function wasp_sales_return_import_sub_menu_page_html() {
+        include_once PLUGIN_BASE_PATH . '/templates/menus/wasp-sales-return-import.php';
     }
 
     public function instant_update_inventory_callback() {

@@ -4,6 +4,10 @@
   text-align: center;
 }
 
+.wasp-inv-card-link{
+    text-decoration: none;
+}
+
 .wasp-inv-container {
   max-width: 1000px;
   margin: 0 auto;
