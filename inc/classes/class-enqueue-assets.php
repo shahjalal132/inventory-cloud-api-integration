@@ -35,6 +35,7 @@ class Enqueue_Assets {
         // enqueue admin css
         wp_enqueue_style( "wpb-admin-css", PLUGIN_ADMIN_ASSETS_DIR_URL . "/css/admin-style.css", [], time(), "all" );
         wp_enqueue_style( "wasp-top-menu-css", PLUGIN_ADMIN_ASSETS_DIR_URL . "/css/wasp-top-menu.css", [], time(), "all" );
+        wp_enqueue_style( "wasp-options-sub-menu", PLUGIN_ADMIN_ASSETS_DIR_URL . "/css/wasp-options-sub-menu.css", [], time(), "all" );
 
         /**
          * enqueue admin js
