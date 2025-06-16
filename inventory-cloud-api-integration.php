@@ -36,8 +36,8 @@ if ( !defined( 'PLUGIN_ADMIN_ASSETS_DIR_PATH' ) ) {
 }
 
 // Define plugin admin assets url
-if ( !defined( 'PLUGIN_ASSETS_DIR_URL' ) ) {
-    define( 'PLUGIN_ASSETS_DIR_URL', untrailingslashit( plugin_dir_url( __FILE__ ) . '/assets/admin' ) );
+if ( !defined( 'PLUGIN_ADMIN_ASSETS_DIR_URL' ) ) {
+    define( 'PLUGIN_ADMIN_ASSETS_DIR_URL', untrailingslashit( plugin_dir_url( __FILE__ ) . '/assets/admin' ) );
 }
 
 // Define plugin public assets url

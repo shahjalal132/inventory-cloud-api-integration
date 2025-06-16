@@ -33,7 +33,8 @@ class Enqueue_Assets {
      */
     public function enqueue_admin_assets( $page_now ) {
         // enqueue admin css
-        wp_enqueue_style( "wpb-admin-css", PLUGIN_ASSETS_DIR_URL . "/css/admin-style.css", [], time(), "all" );
+        wp_enqueue_style( "wpb-admin-css", PLUGIN_ADMIN_ASSETS_DIR_URL . "/css/admin-style.css", [], time(), "all" );
+        wp_enqueue_style( "wasp-top-menu-css", PLUGIN_ADMIN_ASSETS_DIR_URL . "/css/wasp-top-menu.css", [], time(), "all" );
 
         /**
          * enqueue admin js
@@ -42,7 +43,7 @@ class Enqueue_Assets {
          * first check if the current page is you want to enqueue page
          */
         if ( 'settings_page_inventory-cloud-options' === $page_now ) {
-            wp_enqueue_script( "wpb-admin-js", PLUGIN_ASSETS_DIR_URL . "/js/admin-script.js", [ 'jquery' ], time(), true );
+            wp_enqueue_script( "wpb-admin-js", PLUGIN_ADMIN_ASSETS_DIR_URL . "/js/admin-script.js", [ 'jquery' ], time(), true );
             wp_localize_script( 'wpb-admin-js', 'invCloudAjax', [
                 'ajax_url' => admin_url( 'admin-ajax.php' ),
                 'nonce'    => wp_create_nonce( 'inv_cloud_nonce' ),

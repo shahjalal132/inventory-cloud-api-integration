@@ -62,20 +62,20 @@ class Admin_Menu {
         return $links;
     }
 
-    public function wasp_settings_top_menu(){
+    public function wasp_settings_top_menu() {
         add_menu_page(
             'Wasp Settings',
             'Wasp Settings',
             'manage_options',
             'wasp-settings',
-            [$this, 'wasp_settings_page_html'],
+            [ $this, 'wasp_settings_page_html' ],
             'dashicons-admin-generic',
             20
         );
     }
 
     public function wasp_settings_page_html() {
-        echo '<h1>Wasp Settings</h1>';
+        include_once PLUGIN_BASE_PATH . '/templates/menus/wasp-top-menu.php';
     }
 
     public function wasp_inventory_cloud_settings_sub_menu_page() {

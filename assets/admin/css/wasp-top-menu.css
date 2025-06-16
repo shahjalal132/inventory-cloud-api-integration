@@ -1,0 +1,97 @@
+.wasp-inv-container-title {
+  font-weight: 600;
+  line-height: 1.25;
+  text-align: center;
+}
+
+.wasp-inv-container {
+  max-width: 1000px;
+  margin: 0 auto;
+}
+
+.wasp-inv-cards-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 24px;
+  margin-top: 20px;
+}
+
+.wasp-inv-card {
+  background: #ffffff;
+  border: 1px solid #e5e7eb;
+  border-radius: 12px;
+  padding: 40px 24px;
+  transition: all 0.3s ease;
+  cursor: pointer;
+  position: relative;
+  overflow: hidden;
+  text-align: center;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+}
+
+.wasp-inv-card:hover {
+  border-color: #135e96;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(19, 94, 150, 0.15);
+}
+
+.wasp-inv-card-icon {
+  width: 80px;
+  height: 80px;
+  margin: 0 auto 24px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 12px;
+  background: rgba(19, 94, 150, 0.1);
+}
+
+.wasp-inv-card-title {
+  font-size: 20px;
+  font-weight: 600;
+  margin-bottom: 16px;
+  color: #1f2937;
+}
+
+.wasp-inv-card-description {
+  font-size: 14px;
+  line-height: 1.6;
+  color: #6b7280;
+}
+
+.wasp-inv-card-description strong {
+  color: #135e96;
+  font-weight: 600;
+}
+
+/* Icon styles */
+.wasp-inv-icon {
+  width: 40px;
+  height: 40px;
+  fill: #135e96;
+}
+
+/* Responsive design */
+@media (max-width: 968px) {
+  .wasp-inv-cards-grid {
+    grid-template-columns: 1fr;
+    gap: 20px;
+  }
+}
+
+@media (max-width: 768px) {
+  .wasp-inv-card {
+    padding: 32px 20px;
+  }
+
+  .wasp-inv-card-icon {
+    width: 70px;
+    height: 70px;
+    margin-bottom: 20px;
+  }
+
+  .wasp-inv-icon {
+    width: 35px;
+    height: 35px;
+  }
+}
