@@ -15,7 +15,14 @@ class Admin_Menu {
     }
 
     public function setup_hooks() {
+
+        // register wasp settings top label menu
+        add_action( 'admin_menu', [ $this, 'wasp_settings_top_menu' ] );
+
+        // register inventory-cloud-options sub menu
         add_action( 'admin_menu', [ $this, 'admin_menu_options_page' ] );
+
+        // add plugin action links
         add_filter( 'plugin_action_links_' . PLUGIN_BASENAME, [ $this, 'add_plugin_action_links' ] );
 
         // Handle AJAX request to save options
@@ -53,6 +60,22 @@ class Admin_Menu {
         $settings_link = '<a href="admin.php?page=inventory-cloud-options">' . __( 'Settings', 'inventory-cloud' ) . '</a>';
         array_unshift( $links, $settings_link );
         return $links;
+    }
+
+    public function wasp_settings_top_menu(){
+        add_menu_page(
+            'Wasp Settings',
+            'Wasp Settings',
+            'manage_options',
+            'wasp-settings',
+            [$this, 'wasp_settings_page_html'],
+            'dashicons-admin-generic',
+            20
+        );
+    }
+
+    public function wasp_settings_page_html() {
+        echo '<h1>Wasp Settings</h1>';
     }
 
     public function admin_menu_options_page() {
