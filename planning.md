@@ -16,3 +16,9 @@ created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
 updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
 PRIMARY KEY (id)
 ```
+
+sales returns import page fields
+
+select: month, year
+input file: csv, xls, xlsx
+button: import

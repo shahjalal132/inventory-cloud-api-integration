@@ -34,8 +34,10 @@ class Enqueue_Assets {
     public function enqueue_admin_assets( $page_now ) {
         // enqueue admin css
         wp_enqueue_style( "wpb-admin-css", PLUGIN_ADMIN_ASSETS_DIR_URL . "/css/admin-style.css", [], time(), "all" );
+
         wp_enqueue_style( "wasp-top-menu-css", PLUGIN_ADMIN_ASSETS_DIR_URL . "/css/wasp-top-menu.css", [], time(), "all" );
-        wp_enqueue_style( "wasp-options-sub-menu", PLUGIN_ADMIN_ASSETS_DIR_URL . "/css/wasp-options-sub-menu.css", [], time(), "all" );
+
+        // $this->put_program_logs( "page now: {$page_now}" );
 
         /**
          * enqueue admin js
@@ -44,11 +46,30 @@ class Enqueue_Assets {
          * first check if the current page is you want to enqueue page
          */
         if ( 'wasp-settings_page_inventory-cloud-options' === $page_now ) {
+            // enqueue css
+            wp_enqueue_style( "wasp-options-sub-menu", PLUGIN_ADMIN_ASSETS_DIR_URL . "/css/wasp-options-sub-menu.css", [], time(), "all" );
 
+            // enqueue js
             wp_enqueue_script( "wpb-admin-js", PLUGIN_ADMIN_ASSETS_DIR_URL . "/js/admin-script.js", [ 'jquery' ], time(), true );
+
+            // localize js
             wp_localize_script( 'wpb-admin-js', 'invCloudAjax', [
                 'ajax_url' => admin_url( 'admin-ajax.php' ),
                 'nonce'    => wp_create_nonce( 'inv_cloud_nonce' ),
+            ] );
+        }
+
+        if ( 'wasp-settings_page_wasp-sales-return-import' === $page_now ) {
+            // enqueue css
+            wp_enqueue_style( "wasp-sales-returns-import", PLUGIN_ADMIN_ASSETS_DIR_URL . "/css/wasp-sales-returns-import.css", [], time(), "all" );
+
+            // enqueue js
+            wp_enqueue_script( "wasp-sales-returns-import-scripts", PLUGIN_ADMIN_ASSETS_DIR_URL . "/js/wasp-sales-returns-import.js", [ 'jquery' ], time(), true );
+
+            // localize js
+            wp_localize_script( 'wasp-sales-returns-import-scripts', 'waspInvAjax', [
+                'ajax_url' => admin_url( 'admin-ajax.php' ),
+                'nonce'    => wp_create_nonce( 'wasp_cloud_nonce' ),
             ] );
         }
     }
