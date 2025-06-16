@@ -86,23 +86,43 @@
       // Simulate import process
       $importBtn.prop("disabled", true).text("Importing...");
 
-      // Simulate server processing (e.g. via AJAX)
-      setTimeout(function () {
-        const monthText = $("#wasp-inv-month option:selected").text();
+      // Prepare FormData object to send file + other fields
+      const formData = new FormData();
+      formData.append("action", "import_sales_returns_data");
+      formData.append("nonce", waspInvAjax.nonce);
+      formData.append("month", month);
+      formData.append("year", year);
+      formData.append("file", file); // Attach the actual file
 
-        alert(
-          `Import completed successfully!\nMonth: ${monthText}\nYear: ${year}\nFile: ${file.name}`
-        );
+      // Send AJAX request with FormData
+      $.ajax({
+        url: waspInvAjax.ajax_url,
+        type: "POST",
+        data: formData,
+        processData: false, // Important for file upload
+        contentType: false, // Important for file upload
+        success: function (response) {
+          if (response.success) {
+            alert(response.data.message);
 
-        // Reset form and UI
-        $form[0].reset();
-        $selectedFile.hide();
-        $fileCustom
-          .find(".wasp-inv-file-text")
-          .text("Click to select file or drag and drop");
-        $fileCustom.find(".wasp-inv-file-types").show();
-        $importBtn.prop("disabled", false).text("Import Data");
-      }, 2000);
+            // Reset form and UI
+            $form[0].reset();
+            $selectedFile.hide();
+            $fileCustom
+              .find(".wasp-inv-file-text")
+              .text("Click to select file or drag and drop");
+            $fileCustom.find(".wasp-inv-file-types").show();
+          } else {
+            alert("There was an error saving the options.");
+          }
+
+          $importBtn.prop("disabled", false).text("Import Data");
+        },
+        error: function () {
+          alert("An error occurred while saving.");
+          $importBtn.prop("disabled", false).text("Import Data");
+        },
+      });
     });
   });
 })(jQuery);
