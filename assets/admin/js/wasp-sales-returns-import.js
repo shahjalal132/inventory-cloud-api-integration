@@ -1,91 +1,108 @@
-const waspInvFileInput = document.getElementById("wasp-inv-fileInput");
-const waspInvFileCustom = document.querySelector(".wasp-inv-file-input-custom");
-const waspInvSelectedFile = document.getElementById("wasp-inv-selectedFile");
-const waspInvImportBtn = document.getElementById("wasp-inv-importBtn");
-const waspInvForm = document.getElementById("wasp-inv-importForm");
+(function ($) {
+  $(document).ready(function () {
+    // Element references
+    const $fileInput = $("#wasp-inv-fileInput"); // Hidden native file input
+    const $fileCustom = $(".wasp-inv-file-input-custom"); // Custom styled drop zone
+    const $selectedFile = $("#wasp-inv-selectedFile"); // Area to display selected file name
+    const $importBtn = $("#wasp-inv-importBtn"); // Submit/Import button
+    const $form = $("#wasp-inv-importForm"); // The form element
 
-// File input handling
-waspInvFileInput.addEventListener("change", function () {
-  if (this.files.length > 0) {
-    const file = this.files[0];
-    const fileName = file.name;
-    const fileSize = (file.size / 1024 / 1024).toFixed(2);
+    // ==============================
+    // Handle File Selection (Browse)
+    // ==============================
+    $fileInput.on("change", function () {
+      if (this.files.length > 0) {
+        const file = this.files[0];
+        const fileName = file.name;
+        const fileSize = (file.size / 1024 / 1024).toFixed(2); // Convert size to MB
 
-    waspInvSelectedFile.innerHTML = `📁 ${fileName} (${fileSize} MB)`;
-    waspInvSelectedFile.style.display = "block";
+        // Show selected file info
+        $selectedFile.html(`📁 ${fileName} (${fileSize} MB)`).show();
 
-    waspInvFileCustom.querySelector(".wasp-inv-file-text").textContent =
-      "File selected";
-    waspInvFileCustom.querySelector(".wasp-inv-file-types").style.display =
-      "none";
-  }
-});
+        // Update custom file box UI
+        $fileCustom.find(".wasp-inv-file-text").text("File selected");
+        $fileCustom.find(".wasp-inv-file-types").hide();
+      }
+    });
 
-// Drag and drop functionality
-waspInvFileCustom.addEventListener("dragover", function (e) {
-  e.preventDefault();
-  this.classList.add("wasp-inv-dragover");
-});
+    // ==============================
+    // Drag & Drop Functionality
+    // ==============================
 
-waspInvFileCustom.addEventListener("dragleave", function (e) {
-  e.preventDefault();
-  this.classList.remove("wasp-inv-dragover");
-});
+    // Highlight drop zone on drag over
+    $fileCustom.on("dragover", function (e) {
+      e.preventDefault();
+      $(this).addClass("wasp-inv-dragover");
+    });
 
-waspInvFileCustom.addEventListener("drop", function (e) {
-  e.preventDefault();
-  this.classList.remove("wasp-inv-dragover");
+    // Remove highlight when dragging leaves the drop zone
+    $fileCustom.on("dragleave", function (e) {
+      e.preventDefault();
+      $(this).removeClass("wasp-inv-dragover");
+    });
 
-  const files = e.dataTransfer.files;
-  if (files.length > 0) {
-    const file = files[0];
-    const allowedTypes = [".csv", ".xls", ".xlsx"];
-    const fileExtension = "." + file.name.split(".").pop().toLowerCase();
+    // Handle file drop
+    $fileCustom.on("drop", function (e) {
+      e.preventDefault();
+      $(this).removeClass("wasp-inv-dragover");
 
-    if (allowedTypes.includes(fileExtension)) {
-      waspInvFileInput.files = files;
-      waspInvFileInput.dispatchEvent(new Event("change"));
-    } else {
-      alert("Please select a valid file format (CSV, XLS, XLSX)");
-    }
-  }
-});
+      const files = e.originalEvent.dataTransfer.files;
+      if (files.length > 0) {
+        const file = files[0];
+        const allowedTypes = [".csv", ".xls", ".xlsx"];
+        const fileExtension = "." + file.name.split(".").pop().toLowerCase();
 
-// Form submission
-waspInvForm.addEventListener("submit", function (e) {
-  e.preventDefault();
+        // Validate file type
+        if (allowedTypes.includes(fileExtension)) {
+          // Assign dropped file to native file input using DataTransfer
+          const dataTransfer = new DataTransfer();
+          dataTransfer.items.add(file);
+          $fileInput[0].files = dataTransfer.files;
 
-  const month = document.getElementById("wasp-inv-month").value;
-  const year = document.getElementById("wasp-inv-year").value;
-  const file = waspInvFileInput.files[0];
+          // Trigger 'change' to update UI
+          $fileInput.trigger("change");
+        } else {
+          alert("Please select a valid file format (CSV, XLS, XLSX)");
+        }
+      }
+    });
 
-  if (!month || !year || !file) {
-    alert("Please fill in all required fields");
-    return;
-  }
+    // ==============================
+    // Form Submission Handling
+    // ==============================
+    $form.on("submit", function (e) {
+      e.preventDefault();
 
-  // Simulate import process
-  waspInvImportBtn.disabled = true;
-  waspInvImportBtn.textContent = "Importing...";
+      const month = $("#wasp-inv-month").val();
+      const year = $("#wasp-inv-year").val();
+      const file = $fileInput[0].files[0];
 
-  setTimeout(() => {
-    alert(
-      `Import completed successfully!\nMonth: ${
-        document.getElementById("wasp-inv-month").options[
-          document.getElementById("wasp-inv-month").selectedIndex
-        ].text
-      }\nYear: ${year}\nFile: ${file.name}`
-    );
+      // Validate required fields
+      if (!month || !year || !file) {
+        alert("Please fill in all required fields");
+        return;
+      }
 
-    // Reset form
-    waspInvForm.reset();
-    waspInvSelectedFile.style.display = "none";
-    waspInvFileCustom.querySelector(".wasp-inv-file-text").textContent =
-      "Click to select file or drag and drop";
-    waspInvFileCustom.querySelector(".wasp-inv-file-types").style.display =
-      "block";
+      // Simulate import process
+      $importBtn.prop("disabled", true).text("Importing...");
 
-    waspInvImportBtn.disabled = false;
-    waspInvImportBtn.textContent = "Import Data";
-  }, 2000);
-});
+      // Simulate server processing (e.g. via AJAX)
+      setTimeout(function () {
+        const monthText = $("#wasp-inv-month option:selected").text();
+
+        alert(
+          `Import completed successfully!\nMonth: ${monthText}\nYear: ${year}\nFile: ${file.name}`
+        );
+
+        // Reset form and UI
+        $form[0].reset();
+        $selectedFile.hide();
+        $fileCustom
+          .find(".wasp-inv-file-text")
+          .text("Click to select file or drag and drop");
+        $fileCustom.find(".wasp-inv-file-types").show();
+        $importBtn.prop("disabled", false).text("Import Data");
+      }, 2000);
+    });
+  });
+})(jQuery);
