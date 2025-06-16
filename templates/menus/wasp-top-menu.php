@@ -4,7 +4,7 @@
 
     <div class="wasp-inv-cards-grid">
         <!-- Order Import Card -->
-        <a href="#" class="wasp-inv-card-link">
+        <a href="<?= esc_url( admin_url( 'admin.php?page=wasp-order-import' ) ); ?>" class="wasp-inv-card-link">
             <div class="wasp-inv-card">
                 <div class="wasp-inv-card-icon">
                     <svg class="wasp-inv-icon" viewBox="0 0 24 24">
@@ -31,7 +31,7 @@
         </a>
 
         <!-- Sales/Return Import Card -->
-        <a href="#" class="wasp-inv-card-link">
+        <a href="<?= esc_url( admin_url( 'admin.php?page=wasp-sales-return-import' ) ); ?>" class="wasp-inv-card-link">
             <div class="wasp-inv-card">
                 <div class="wasp-inv-card-icon">
                     <svg class="wasp-inv-icon" viewBox="0 0 24 24">
@@ -51,7 +51,7 @@
         </a>
 
         <!-- Wasp Options Card -->
-        <a href="#" class="wasp-inv-card-link">
+        <a href="<?= esc_url( admin_url( 'admin.php?page=inventory-cloud-options' ) ); ?>" class="wasp-inv-card-link">
             <div class="wasp-inv-card">
                 <div class="wasp-inv-card-icon">
                     <svg class="wasp-inv-icon" viewBox="0 0 24 24">
