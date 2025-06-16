@@ -20,7 +20,7 @@ class Admin_Menu {
         add_action( 'admin_menu', [ $this, 'wasp_settings_top_menu' ] );
 
         // register inventory-cloud-options sub menu
-        add_action( 'admin_menu', [ $this, 'admin_menu_options_page' ] );
+        add_action( 'admin_menu', [ $this, 'wasp_inventory_cloud_settings_sub_menu_page' ] );
 
         // add plugin action links
         add_filter( 'plugin_action_links_' . PLUGIN_BASENAME, [ $this, 'add_plugin_action_links' ] );
@@ -57,7 +57,7 @@ class Admin_Menu {
 
     // Add settings link on the plugin page
     function add_plugin_action_links( $links ) {
-        $settings_link = '<a href="admin.php?page=inventory-cloud-options">' . __( 'Settings', 'inventory-cloud' ) . '</a>';
+        $settings_link = '<a href="admin.php?page=wasp-settings">' . __( 'Settings', 'inventory-cloud' ) . '</a>';
         array_unshift( $links, $settings_link );
         return $links;
     }
@@ -78,18 +78,18 @@ class Admin_Menu {
         echo '<h1>Wasp Settings</h1>';
     }
 
-    public function admin_menu_options_page() {
+    public function wasp_inventory_cloud_settings_sub_menu_page() {
         add_submenu_page(
-            'options-general.php',
-            'Inventory Cloud Options',
-            'Inventory Cloud Options',
+            'wasp-settings',
+            'Wasp Options',
+            'Wasp Options',
             'manage_options',
             'inventory-cloud-options',
-            [ $this, 'atebol_options_page_html' ]
+            [ $this, 'wasp_inventory_cloud_sub_menu_page_html' ]
         );
     }
 
-    public function atebol_options_page_html() {
+    public function wasp_inventory_cloud_sub_menu_page_html() {
 
         $base_url         = get_option( 'inv_cloud_base_url' );
         $token            = get_option( 'inv_cloud_token' );
