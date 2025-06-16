@@ -1,1 +1,1 @@
-<h2>Sales/Return Import</h2>
+<h1 class="wasp-inv-container-title">Wasp Sales/Return Import</h1>

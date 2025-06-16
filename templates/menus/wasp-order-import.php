@@ -1,1 +1,1 @@
-<h2>Order Import</h2>
+<h1 class="wasp-inv-container-title">Wasp Order Import</h1>

@@ -43,7 +43,8 @@ class Enqueue_Assets {
          * When you need to enqueue admin assets.
          * first check if the current page is you want to enqueue page
          */
-        if ( 'settings_page_inventory-cloud-options' === $page_now ) {
+        if ( 'wasp-settings_page_inventory-cloud-options' === $page_now ) {
+
             wp_enqueue_script( "wpb-admin-js", PLUGIN_ADMIN_ASSETS_DIR_URL . "/js/admin-script.js", [ 'jquery' ], time(), true );
             wp_localize_script( 'wpb-admin-js', 'invCloudAjax', [
                 'ajax_url' => admin_url( 'admin-ajax.php' ),

@@ -126,66 +126,73 @@ class Admin_Menu {
 
         ?>
 
-        <h1>Inventory Cloud Options</h1>
+        <div class="wasp-inv-container">
+            <h1 class="wasp-inv-container-title">Inventory Cloud Options</h1>
 
-        <div class="update-inventory-enabled-disabled inv-cloud-mt-30 inv-cloud-wrapper">
-            <h3>Update Inventory Enable/Disable:</h3>
-            <label>
-                <input type="radio" name="update-inventory" id="update-inventory-enable" value="enable"
-                    <?= $update_inventory === 'enable' ? 'checked' : '' ?>>
-                Enable
-            </label>
+            <div class="wasp-inventory-controller">
+                <h3>Inventory Management Controller</h3>
+                <div class="update-inventory-enabled-disabled inv-cloud-wrapper">
+                    <h4>Update Inventory Enable/Disable:</h4>
+                    <label>
+                        <input type="radio" name="update-inventory" id="update-inventory-enable" value="enable"
+                            <?= $update_inventory === 'enable' ? 'checked' : '' ?>>
+                        Enable
+                    </label>
 
-            <label>
-                <input type="radio" name="update-inventory" id="update-inventory-disable" value="disable"
-                    <?= $update_inventory === 'disable' ? 'checked' : '' ?>>
-                Disable
-            </label>
-        </div>
-
-        <div class="api-base-url inv-cloud-wrapper">
-            <h3>Instant Update Inventory:</h3>
-            <button type="button" id="instant-update-inventory" class="button button-primary">
-                <div class="instant-update-inventory-wrapper">
-                    <span>Update Inventory</span>
-                    <span class="loader-wrapper"></span>
+                    <label>
+                        <input type="radio" name="update-inventory" id="update-inventory-disable" value="disable"
+                            <?= $update_inventory === 'disable' ? 'checked' : '' ?>>
+                        Disable
+                    </label>
                 </div>
-            </button>
+
+                <div class="api-base-url inv-cloud-wrapper">
+                    <h4>Instant Update Inventory:</h4>
+                    <button type="button" id="instant-update-inventory" class="button button-primary">
+                        <div class="instant-update-inventory-wrapper">
+                            <span>Update Inventory</span>
+                            <span class="loader-wrapper"></span>
+                        </div>
+                    </button>
+                </div>
+            </div>
+
+            <div class="wasp-api-credentials">
+                <h3>Api Credentials</h3>
+                <div class="api-base-url inv-cloud-wrapper">
+                    <h4>API Base Url:</h4>
+                    <input type="text" placeholder="https://api.example.com" value="<?= esc_attr( $base_url ) ?>"
+                        name="api-base-url" id="inv-cloud-base-url" class="widefat" style="width: 20%">
+                </div>
+
+                <div class="inv-cloud-wrapper">
+                    <h4>Token:</h4>
+                    <input type="text" placeholder="token" value="<?= esc_attr( $token ) ?>" name="api-token"
+                        id="inv-cloud-token" class="widefat" style="width: 20%">
+                </div>
+
+                <div class="inv-cloud-wrapper">
+                    <h4>Update Quantity:</h4>
+                    <input type="number" placeholder="How many Products update per minute"
+                        value="<?= esc_attr( $update_quantity ) ?>" name="update_quantity" id="inv-cloud-update_quantity"
+                        class="widefat" style="width: 20%">
+                </div>
+
+                <button type="button" id="inv-cloud-save-btn" class="button button-primary">Save</button>
+            </div>
+
+            <?php
+            $site_url = site_url();
+            ?>
+
+            <div class="wasp-endpoints">
+                <h3>API Endpoints</h3>
+
+                <h4><?= esc_html( $site_url . '/wp-json/atebol/v1/server-status' ); ?></h4>
+                <h4><?= esc_html( $site_url . '/wp-json/atebol/v1/insert-item-number-stock-db' ); ?></h4>
+                <h4><?= esc_html( $site_url . '/wp-json/atebol/v1/update-woo-product-stock' ); ?></h4>
+            </div>
         </div>
-
-        <div class="api-base-url inv-cloud-wrapper">
-            <h3>API Base Url:</h3>
-            <input type="text" placeholder="https://api.example.com" value="<?= esc_attr( $base_url ) ?>" name="api-base-url"
-                id="inv-cloud-base-url" class="widefat" style="width: 20%">
-        </div>
-
-        <div class="inv-cloud-wrapper">
-            <h3>Token:</h3>
-            <input type="text" placeholder="token" value="<?= esc_attr( $token ) ?>" name="api-token" id="inv-cloud-token"
-                class="widefat" style="width: 20%">
-        </div>
-
-        <div class="inv-cloud-wrapper">
-            <h3>Update Quantity:</h3>
-            <input type="number" placeholder="How many Products update per minute" value="<?= esc_attr( $update_quantity ) ?>"
-                name="update_quantity" id="inv-cloud-update_quantity" class="widefat" style="width: 20%">
-        </div>
-
-        <button type="button" id="inv-cloud-save-btn" class="button button-primary">Save</button>
-
-        <div class="inv-mt-20"></div>
-        <hr>
-        <div class="inv-mb-20"></div>
-
-        <?php
-        $site_url = site_url();
-        ?>
-
-        <h1>API Endpoints</h1>
-
-        <h4><?= esc_html( $site_url . '/wp-json/atebol/v1/server-status' ); ?></h4>
-        <h4><?= esc_html( $site_url . '/wp-json/atebol/v1/insert-item-number-stock-db' ); ?></h4>
-        <h4><?= esc_html( $site_url . '/wp-json/atebol/v1/update-woo-product-stock' ); ?></h4>
 
         <?php
     }
