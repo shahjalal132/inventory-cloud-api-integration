@@ -19,8 +19,10 @@ class Import_Sales_Returns_Data {
     }
 
     public function save_sales_returns_data() {
+        // check the nonce
         check_ajax_referer( 'wasp_cloud_nonce', 'nonce' );
 
+        // check if the user has the required capability
         if ( !current_user_can( 'manage_options' ) ) {
             wp_send_json_error( [ 'message' => 'Permission denied.' ] );
         }
@@ -30,64 +32,100 @@ class Import_Sales_Returns_Data {
             wp_send_json_error( [ 'message' => 'No valid file was uploaded.' ] );
         }
 
+        // check if the month and year are set
         if ( empty( $_POST['month'] ) || empty( $_POST['year'] ) ) {
             wp_send_json_error( [ 'message' => 'Month and Year are required.' ] );
         }
 
+        // sanitize the year and month
         $year          = sanitize_text_field( $_POST['year'] );
         $month         = sanitize_text_field( $_POST['month'] );
         $date_acquired = date( 'Y-m-t 23:59:59', strtotime( "$year-$month-01" ) );
 
-        require_once plugin_dir_path( __FILE__ ) . 'vendor/autoload.php';
+        $date_message = sprintf( 'Importing data for %s %s and date acquired: %s', $month, $year, $date_acquired );
+        // log message
+        $this->put_program_logs( $date_message );
+
+        // Initialize counters
+        $imported = 0;
+        $skipped = 0;
+
+        // Get database table name
+        global $wpdb;
+        $table = $wpdb->prefix . 'sync_sales_returns_data';
+
+        // require the autoloader
+        require_once PLUGIN_BASE_PATH . '/vendor/autoload.php';
 
         try {
+            // load the spreadsheet
             $spreadsheet = \PhpOffice\PhpSpreadsheet\IOFactory::load( $_FILES['file']['tmp_name'] );
-        } catch (Exception $e) {
+            $spreadsheet->setActiveSheetIndex( 0 );
+        } catch (\Exception $e) {
+            // send an error message
+            $this->put_program_logs( 'Failed to read spreadsheet: ' . $e->getMessage() );
             wp_send_json_error( [ 'message' => 'Failed to read spreadsheet: ' . $e->getMessage() ] );
         }
 
+        // get the active sheet
         $sheet      = $spreadsheet->getActiveSheet();
         $sheetTitle = $sheet->getTitle();
 
+        // log active sheet
+        $sheet_message = sprintf( 'Active sheet: %s', $sheetTitle );
+        $this->put_program_logs( $sheet_message );
+
         // Detect file format by year and sheet name
         if ( $year === '2025' && $sheetTitle === 'Sheet1' ) {
-            $map = [ 'item' => 1, 'customer' => 4, 'quantity' => 8 ]; // B, E, I
+            $map = [
+                'item'        => 1,      // Product No. (Column B)
+                'customer'    => 4,  // Customer (Column E)
+                'quantity'    => 8,  // Quantity (Column I)
+                'description' => 2 // Product Description (Column C)
+            ];
         } elseif ( $year === '2023' && $sheetTitle === 'gwybodaeth' ) {
-            $map = [ 'item' => 1, 'customer' => 5, 'quantity' => 6 ]; // B, F, G
+            $map = [
+                'item'        => 1,
+                'customer'    => 5,
+                'quantity'    => 6,
+                'description' => 2,
+            ];
         } else {
-            wp_send_json_error( [ 'message' => "Unsupported sheet/tab name: '$sheetTitle'. Expected 'Sheet1' or 'gwybodaeth'" ] );
+            // prepare message
+            $error_message = sprintf( 'Unsupported sheet/tab name: %s. Expected %s or %s', $sheetTitle, 'Sheet1', 'gwybodaeth' );
+            // log message
+            $this->put_program_logs( $error_message );
+            wp_send_json_error( [ 'message' => $error_message ] );
         }
 
-        $data = $sheet->toArray( null, true, true, false );
-        if ( empty( $data ) || count( $data ) < 2 ) {
-            wp_send_json_error( [ 'message' => 'The spreadsheet appears to be empty or improperly formatted.' ] );
-        }
+        $highestRow    = $sheet->getHighestRow();
+        $highestColumn = $sheet->getHighestColumn();
 
-        global $wpdb;
-        $table    = $wpdb->prefix . 'sync_sales_returns_data';
-        $imported = 0;
-        $skipped  = 0;
+        // log highest row and column
+        $highest_row_message = sprintf( 'Highest row: %s, Highest column: %s', $highestRow, $highestColumn );
+        $this->put_program_logs( $highest_row_message );
 
-        foreach ( $data as $i => $row ) {
-            if ( $i === 0 )
-                continue; // skip header
+        // Start from row 8 to skip headers and empty rows
+        for ( $row = 8; $row <= $highestRow; $row++ ) {
+            // Convert column indexes to letters
+            $item_col = \PhpOffice\PhpSpreadsheet\Cell\Coordinate::stringFromColumnIndex( $map['item'] + 1 );
+            $customer_col = \PhpOffice\PhpSpreadsheet\Cell\Coordinate::stringFromColumnIndex( $map['customer'] + 1 );
+            $qty_col = \PhpOffice\PhpSpreadsheet\Cell\Coordinate::stringFromColumnIndex( $map['quantity'] + 1 );
+            $desc_col = \PhpOffice\PhpSpreadsheet\Cell\Coordinate::stringFromColumnIndex( $map['description'] + 1 );
 
-            $item_number = trim( $row[$map['item']] ?? '' );
-            $customer    = strtoupper( trim( $row[$map['customer']] ?? '' ) );
-            $qty_raw     = $row[$map['quantity']] ?? null;
+            // get the cell value
+            $item_number = $sheet->getCell( $item_col . $row )->getValue();
+            $customer    = $sheet->getCell( $customer_col . $row )->getValue();
+            $qty         = $sheet->getCell( $qty_col . $row )->getValue();
+            $description = $sheet->getCell( $desc_col . $row )->getValue();
 
-            // Skip if quantity is empty or non-numeric
-            if ( $item_number === '' || !is_numeric( $qty_raw ) ) {
-                $skipped++;
+            // Skip empty rows
+            if ( empty( $item_number ) || empty( $customer ) || empty( $qty ) ) {
                 continue;
             }
 
-            $qty = (float) $qty_raw;
-            if ( $qty == 0 ) {
-                $skipped++;
-                continue;
-            }
-
+            // Convert quantity to float and determine transaction type
+            $qty              = floatval( $qty );
             $transaction_type = ( $qty < 0 ) ? 'RETURN' : 'SALE';
             $customer_number  = ( $customer === 'AMAZON' ) ? 'AZ 11' : 'CLLC 01';
 
@@ -122,12 +160,20 @@ class Import_Sales_Returns_Data {
 
         // Final response
         if ( $imported > 0 ) {
+            // prepare message
+            $message = sprintf( '%s row(s) imported successfully. %s row(s) skipped.', $imported, $skipped );
+            // log message
+            $this->put_program_logs( $message );
             wp_send_json_success( [
-                'message' => "$imported row(s) imported successfully. $skipped row(s) skipped.",
+                'message' => $message,
             ] );
         } else {
+            // prepare message
+            $message = sprintf( 'No rows were imported. %s row(s) were skipped due to missing or invalid data.', $skipped );
+            // log message
+            $this->put_program_logs( $message );
             wp_send_json_error( [
-                'message' => "No rows were imported. $skipped row(s) were skipped due to missing or invalid data.",
+                'message' => $message,
             ] );
         }
     }

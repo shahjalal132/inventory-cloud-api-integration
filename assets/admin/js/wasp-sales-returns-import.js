@@ -113,13 +113,13 @@
               .text("Click to select file or drag and drop");
             $fileCustom.find(".wasp-inv-file-types").show();
           } else {
-            alert("There was an error saving the options.");
+            alert(response.data.message);
           }
 
           $importBtn.prop("disabled", false).text("Import Data");
         },
-        error: function () {
-          alert("An error occurred while saving.");
+        error: function (response) {
+          alert(response.responseJSON.data.message);
           $importBtn.prop("disabled", false).text("Import Data");
         },
       });
