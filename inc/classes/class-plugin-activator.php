@@ -42,6 +42,7 @@ class Plugin_Activator {
             location_code VARCHAR(255) NULL,
             quantity DECIMAL(10,2) NOT NULL,
             type VARCHAR(50) NOT NULL DEFAULT '',
+            format VARCHAR(32) NULL,
             status VARCHAR(255) NOT NULL DEFAULT 'PENDING',
             created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
             updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
