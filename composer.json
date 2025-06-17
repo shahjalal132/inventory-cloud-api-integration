@@ -1,0 +1,8 @@
+{
+    "name": "wasp/inventory-cloud-api-integration",
+    "description": "Wasp Inventory Cloud API Integration",
+    "type": "wordpress-plugin",
+    "require": {
+        "phpoffice/phpspreadsheet": "^4.3"
+    }
+}

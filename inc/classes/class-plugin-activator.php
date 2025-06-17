@@ -41,6 +41,7 @@ class Plugin_Activator {
             site_name VARCHAR(255) NULL,
             location_code VARCHAR(255) NULL,
             quantity DECIMAL(10,2) NOT NULL,
+            type VARCHAR(50) NOT NULL DEFAULT '',
             status VARCHAR(255) NOT NULL DEFAULT 'PENDING',
             created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
             updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
