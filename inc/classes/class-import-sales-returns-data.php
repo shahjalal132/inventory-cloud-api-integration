@@ -66,9 +66,18 @@ class Import_Sales_Returns_Data {
             // load the spreadsheet
             $spreadsheet = \PhpOffice\PhpSpreadsheet\IOFactory::load( $_FILES['file']['tmp_name'] );
             if ( $year === '2023' ) {
-                $spreadsheet->setActiveSheetIndex( 2 );
+                $targetSheetName = 'gwybodaeth';
+            } elseif ( $year === '2025' ) {
+                $targetSheetName = 'Sheet1';
+            }
+            // add more sheet names here as needed
+
+            $actualSheetName = $this->findSheetNameCaseInsensitive( $spreadsheet, $targetSheetName );
+            if ( $actualSheetName !== null ) {
+                $spreadsheet->setActiveSheetIndexByName( $actualSheetName );
             } else {
-                $spreadsheet->setActiveSheetIndex( 0 );
+                // Handle error: sheet not found
+                throw new \Exception( "Sheet not found" );
             }
         } catch (\Exception $e) {
             // send an error message
@@ -157,7 +166,7 @@ class Import_Sales_Returns_Data {
             // prepare message
             $message = sprintf( '%s row(s) imported successfully. %s row(s) skipped.', $imported, $skipped );
             // log message
-            $this->put_program_logs( $message );
+            // $this->put_program_logs( $message );
             wp_send_json_success( [
                 'message' => $message,
             ] );
@@ -189,8 +198,11 @@ class Import_Sales_Returns_Data {
         $map           = [];
         $initial_index = 0;
 
+        // make lower case sheet title
+        $sheetTitle = strtolower( $sheetTitle );
+
         // Add new formats here as needed
-        if ( $year === '2025' && $sheetTitle === 'Sheet1' ) {
+        if ( $year === '2025' && $sheetTitle === 'sheet1' ) {
             $map           = [
                 'item'     => 1,  // Product No. (Column B)
                 'customer' => 4,  // Customer (Column E)
@@ -243,6 +255,15 @@ class Import_Sales_Returns_Data {
             return $matches[1];
         }
         return $value;
+    }
+
+    function findSheetNameCaseInsensitive( $spreadsheet, $targetName ) {
+        foreach ( $spreadsheet->getSheetNames() as $sheetName ) {
+            if ( strtolower( $sheetName ) === strtolower( $targetName ) ) {
+                return $sheetName;
+            }
+        }
+        return null; // Not found
     }
 
 }
