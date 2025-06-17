@@ -40,11 +40,13 @@ class Import_Sales_Returns_Data {
         // sanitize the year and month
         $year          = sanitize_text_field( $_POST['year'] );
         $month         = sanitize_text_field( $_POST['month'] );
-        $date_acquired = gmdate('Y-m-t\T23:59:59\Z', strtotime("$year-$month-01"));
+        $date_acquired = gmdate( 'Y-m-t\T23:59:59\Z', strtotime( "$year-$month-01" ) );
+        // generate format
+        $format = sprintf( "%s - %s", $month, $year );
 
         $date_message = sprintf( 'Importing data for %s %s and date acquired: %s', $month, $year, $date_acquired );
         // log message
-        $this->put_program_logs( $date_message );
+        // $this->put_program_logs( $date_message );
 
         // Initialize counters
         $imported = 0;
@@ -63,10 +65,10 @@ class Import_Sales_Returns_Data {
         try {
             // load the spreadsheet
             $spreadsheet = \PhpOffice\PhpSpreadsheet\IOFactory::load( $_FILES['file']['tmp_name'] );
-            if ($year === '2023') {
-                $spreadsheet->setActiveSheetIndex(2);
+            if ( $year === '2023' ) {
+                $spreadsheet->setActiveSheetIndex( 2 );
             } else {
-                $spreadsheet->setActiveSheetIndex(0);
+                $spreadsheet->setActiveSheetIndex( 0 );
             }
         } catch (\Exception $e) {
             // send an error message
@@ -80,15 +82,15 @@ class Import_Sales_Returns_Data {
 
         // log active sheet
         $sheet_message = sprintf( 'Active sheet: %s', $sheetTitle );
-        $this->put_program_logs( $sheet_message );
+        // $this->put_program_logs( $sheet_message );
 
         // Get column mapping and initial row index based on year and sheet name
-        $mapping_info = $this->get_column_map_and_index($year, $sheetTitle);
-        $map = $mapping_info['map'];
+        $mapping_info  = $this->get_column_map_and_index( $year, $sheetTitle );
+        $map           = $mapping_info['map'];
         $initial_index = $mapping_info['initial_index'];
 
         // If mapping is empty, unsupported format
-        if (empty($map)) {
+        if ( empty( $map ) ) {
             $error_message = sprintf( 'Unsupported sheet/tab name: %s for year %s', $sheetTitle, $year );
             $this->put_program_logs( $error_message );
             wp_send_json_error( [ 'message' => $error_message ] );
@@ -96,10 +98,6 @@ class Import_Sales_Returns_Data {
 
         $highestRow    = $sheet->getHighestRow();
         $highestColumn = $sheet->getHighestColumn();
-
-        // log highest row and column
-        $highest_row_message = sprintf( 'Highest row: %s, Highest column: %s', $highestRow, $highestColumn );
-        $this->put_program_logs( $highest_row_message );
 
         // Start from the initial index to skip headers and empty rows
         for ( $row = $initial_index; $row <= $highestRow; $row++ ) {
@@ -121,6 +119,10 @@ class Import_Sales_Returns_Data {
                 continue;
             }
 
+            // Clean up Excel string values
+            $item_number = $this->clean_excel_value( $item_number );
+            $customer    = $this->clean_excel_value( $customer );
+
             // Convert quantity to float and determine transaction type
             $qty              = floatval( $qty );
             $transaction_type = ( $qty < 0 ) ? 'RETURN' : 'SALE';
@@ -136,12 +138,12 @@ class Import_Sales_Returns_Data {
                 'location_code'   => '',
                 'quantity'        => abs( $qty ),
                 'type'            => $transaction_type,
-                'format'          => $year,
+                'format'          => $format,
                 'status'          => 'PENDING',
             ];
 
             // Insert row into DB using helper
-            $result = $this->insert_sales_return_row($table, $data);
+            $result = $this->insert_sales_return_row( $table, $data );
 
             if ( $result !== false ) {
                 $imported++;
@@ -182,22 +184,22 @@ class Import_Sales_Returns_Data {
      * @param string $sheetTitle
      * @return array [ 'map' => array, 'initial_index' => int ]
      */
-    private function get_column_map_and_index($year, $sheetTitle) {
+    private function get_column_map_and_index( $year, $sheetTitle ) {
         // Default values
-        $map = [];
+        $map           = [];
         $initial_index = 0;
 
         // Add new formats here as needed
-        if ($year === '2025' && $sheetTitle === 'Sheet1') {
-            $map = [
+        if ( $year === '2025' && $sheetTitle === 'Sheet1' ) {
+            $map           = [
                 'item'     => 1,  // Product No. (Column B)
                 'customer' => 4,  // Customer (Column E)
                 'quantity' => 8,  // Quantity (Column I)
                 'cost'     => 6   // Cost (Column G)
             ];
             $initial_index = 8; // Data starts from row 8
-        } elseif ($year === '2023' && $sheetTitle === 'gwybodaeth') {
-            $map = [
+        } elseif ( $year === '2023' && $sheetTitle === 'gwybodaeth' ) {
+            $map           = [
                 'item'     => 1, // Product No. (Column B)
                 'customer' => 5, // Customer (Column F)
                 'quantity' => 6, // Quantity (Column G)
@@ -217,9 +219,9 @@ class Import_Sales_Returns_Data {
      * @param array $data
      * @return bool|int Insert result
      */
-    private function insert_sales_return_row($table, $data) {
+    private function insert_sales_return_row( $table, $data ) {
         global $wpdb;
-        return $wpdb->insert($table, $data, [
+        return $wpdb->insert( $table, $data, [
             '%s', // item_number
             '%f', // cost
             '%s', // date_acquired
@@ -230,7 +232,17 @@ class Import_Sales_Returns_Data {
             '%s', // type
             '%s', // format
             '%s', // status
-        ]);
+        ] );
+    }
+
+    /**
+     * Clean Excel string values like ="9781905255191" to 9781905255191
+     */
+    private function clean_excel_value( $value ) {
+        if ( is_string( $value ) && preg_match( '/^="(.*)"$/', $value, $matches ) ) {
+            return $matches[1];
+        }
+        return $value;
     }
 
 }

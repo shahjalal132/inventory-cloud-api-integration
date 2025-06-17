@@ -36,7 +36,7 @@ class Plugin_Activator {
             id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
             item_number VARCHAR(255) NOT NULL,
             cost DECIMAL(10,2) NOT NULL,
-            date_acquired DATETIME NULL,
+            date_acquired VARCHAR(50) NULL,
             customer_number VARCHAR(255) NULL,
             site_name VARCHAR(255) NULL,
             location_code VARCHAR(255) NULL,
