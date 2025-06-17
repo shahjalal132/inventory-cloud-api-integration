@@ -14,7 +14,7 @@
 .history/
 
 # composer
-vendor
+# vendor
 
 # Built Visual Studio Code Extensions
 *.vsix
