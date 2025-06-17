@@ -32,6 +32,12 @@ class Import_Sales_Returns_Data {
             wp_send_json_error( [ 'message' => 'No valid file was uploaded.' ] );
         }
 
+        // Only accept XLS or XLSX files
+        $file_type = strtolower( pathinfo( $_FILES['file']['name'], PATHINFO_EXTENSION ) );
+        if ( !in_array( $file_type, [ 'xls', 'xlsx' ] ) ) {
+            wp_send_json_error( [ 'message' => 'Only XLS or XLSX files are supported.' ] );
+        }
+
         // check if the month and year are set
         if ( empty( $_POST['month'] ) || empty( $_POST['year'] ) ) {
             wp_send_json_error( [ 'message' => 'Month and Year are required.' ] );
@@ -101,7 +107,7 @@ class Import_Sales_Returns_Data {
         // If mapping is empty, unsupported format
         if ( empty( $map ) ) {
             $error_message = sprintf( 'Unsupported sheet/tab name: %s for year %s', $sheetTitle, $year );
-            $this->put_program_logs( $error_message );
+            // $this->put_program_logs( $error_message );
             wp_send_json_error( [ 'message' => $error_message ] );
         }
 
@@ -166,7 +172,7 @@ class Import_Sales_Returns_Data {
             // prepare message
             $message = sprintf( '%s row(s) imported successfully. %s row(s) skipped.', $imported, $skipped );
             // log message
-            // $this->put_program_logs( $message );
+            $this->put_program_logs( $message );
             wp_send_json_success( [
                 'message' => $message,
             ] );

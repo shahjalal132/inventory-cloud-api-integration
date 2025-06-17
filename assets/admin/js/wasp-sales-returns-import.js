@@ -49,7 +49,7 @@
       const files = e.originalEvent.dataTransfer.files;
       if (files.length > 0) {
         const file = files[0];
-        const allowedTypes = [".csv", ".xls", ".xlsx"];
+        const allowedTypes = [".xls", ".xlsx"];
         const fileExtension = "." + file.name.split(".").pop().toLowerCase();
 
         // Validate file type
@@ -62,7 +62,7 @@
           // Trigger 'change' to update UI
           $fileInput.trigger("change");
         } else {
-          alert("Please select a valid file format (CSV, XLS, XLSX)");
+          alert("Please select a valid file format (XLS, XLSX)");
         }
       }
     });

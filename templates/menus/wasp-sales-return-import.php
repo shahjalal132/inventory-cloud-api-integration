@@ -41,9 +41,9 @@
                 <div class="wasp-inv-file-input-custom" onclick="document.getElementById('wasp-inv-fileInput').click()">
                     <div class="wasp-inv-file-icon">📄</div>
                     <div class="wasp-inv-file-text">Click to select file or drag and drop</div>
-                    <div class="wasp-inv-file-types">Supported formats: CSV, XLS, XLSX</div>
+                    <div class="wasp-inv-file-types">Supported formats: XLS, XLSX</div>
                 </div>
-                <input type="file" id="wasp-inv-fileInput" name="file" accept=".csv,.xls,.xlsx" required>
+                <input type="file" id="wasp-inv-fileInput" name="file" accept=".xls,.xlsx" required>
                 <div class="wasp-inv-selected-file" id="wasp-inv-selectedFile"></div>
             </div>
         </div>
