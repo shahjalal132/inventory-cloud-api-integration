@@ -29,8 +29,9 @@
                 <label for="wasp-inv-year">Year</label>
                 <select id="wasp-inv-year" name="year" required>
                     <option value="">Select Year</option>
-                    <option value="2023">2023</option>
-                    <option value="2025">2025</option>
+                    <?php for ($y = 2020; $y <= 2030; $y++): ?>
+                        <option value="<?= $y ?>"><?= $y ?></option>
+                    <?php endfor; ?>
                 </select>
             </div>
         </div>

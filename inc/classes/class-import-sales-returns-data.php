@@ -71,10 +71,10 @@ class Import_Sales_Returns_Data {
         try {
             // load the spreadsheet
             $spreadsheet = \PhpOffice\PhpSpreadsheet\IOFactory::load( $_FILES['file']['tmp_name'] );
-            if ( $year === '2023' ) {
+            if ( $year >= 2020 && $year <= 2023 ) {
                 $targetSheetName = 'gwybodaeth';
-            } elseif ( $year === '2025' ) {
-                $targetSheetName = 'Sheet1';
+            } elseif ( $year > 2023 && $year <= 2030 ) {
+                $targetSheetName = 'sheet1';
             }
             // add more sheet names here as needed
 
@@ -195,6 +195,9 @@ class Import_Sales_Returns_Data {
     /**
      * Get the column mapping and initial row index based on year and sheet name.
      *
+     * For years 2020-2023 (inclusive), use the 2023 (old) format.
+     * For years 2024-2030 (inclusive), use the 2025 (new) format.
+     *
      * @param string $year
      * @param string $sheetTitle
      * @return array [ 'map' => array, 'initial_index' => int ]
@@ -204,24 +207,27 @@ class Import_Sales_Returns_Data {
         $map           = [];
         $initial_index = 0;
 
-        // make lower case sheet title
+        // Normalize year to integer
+        $year       = intval( $year );
         $sheetTitle = strtolower( $sheetTitle );
 
-        // Add new formats here as needed
-        if ( $year === '2025' && $sheetTitle === 'sheet1' ) {
-            $map           = [
-                'item'     => 1,  // Product No. (Column B)
-                'customer' => 4,  // Customer (Column E)
-                'quantity' => 8,  // Quantity (Column I)
-                'cost'     => 6   // Cost (Column G)
-            ];
-            $initial_index = 8; // Data starts from row 8
-        } elseif ( $year === '2023' && $sheetTitle === 'gwybodaeth' ) {
+        // 2023 (old) format: years 2020-2023 (inclusive)
+        if ( $year >= 2020 && $year <= 2023 && $sheetTitle === 'gwybodaeth' ) {
             $map           = [
                 'item'     => 1, // Product No. (Column B)
                 'customer' => 5, // Customer (Column F)
                 'quantity' => 6, // Quantity (Column G)
-                'cost'     => 3  // Cost (Column D)
+                'cost'     => 7  // Cost (Column H)
+            ];
+            $initial_index = 8; // Data starts from row 8
+        }
+        // 2025 (new) format: years 2024-2030 (inclusive)
+        elseif ( $year > 2023 && $year <= 2030 && $sheetTitle === 'sheet1' ) {
+            $map           = [
+                'item'     => 1,  // Product No. (Column B)
+                'customer' => 4,  // Customer (Column E)
+                'quantity' => 8,  // Quantity (Column I)
+                'cost'     => 9   // Cost (Column J)
             ];
             $initial_index = 8; // Data starts from row 8
         }
