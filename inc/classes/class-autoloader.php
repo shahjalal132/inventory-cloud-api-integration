@@ -19,5 +19,6 @@ class Autoloader {
         Admin_Menu::get_instance();
         Import_Sales_Returns_Data::get_instance();
         Wasp_Rest_Api::get_instance();
+        Order_Import::get_instance();
     }
 }

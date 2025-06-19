@@ -72,6 +72,20 @@ class Enqueue_Assets {
                 'nonce'    => wp_create_nonce( 'wasp_cloud_nonce' ),
             ] );
         }
+
+        if ( 'wasp-settings_page_wasp-order-import' === $page_now ) {
+            // enqueue css
+            wp_enqueue_style( "wasp-order-import", PLUGIN_ADMIN_ASSETS_DIR_URL . "/css/wasp-order-import.css", [], time(), "all" );
+
+            // enqueue js
+            wp_enqueue_script( "wasp-order-import-scripts", PLUGIN_ADMIN_ASSETS_DIR_URL . "/js/wasp-order-import.js", [ 'jquery' ], time(), true );
+
+            // localize js
+            wp_localize_script( 'wasp-order-import-scripts', 'waspInvAjax', [
+                'ajax_url' => admin_url( 'admin-ajax.php' ),
+                'nonce'    => wp_create_nonce( 'wasp_cloud_nonce' ),
+            ] );
+        }
     }
 
     /**
