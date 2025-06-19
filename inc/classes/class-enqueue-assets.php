@@ -81,7 +81,7 @@ class Enqueue_Assets {
             wp_enqueue_script( "wasp-order-import-scripts", PLUGIN_ADMIN_ASSETS_DIR_URL . "/js/wasp-order-import.js", [ 'jquery' ], time(), true );
 
             // localize js
-            wp_localize_script( 'wasp-order-import-scripts', 'waspInvAjax', [
+            wp_localize_script( 'wasp-order-import-scripts', 'waspInvOrderAjax', [
                 'ajax_url' => admin_url( 'admin-ajax.php' ),
                 'nonce'    => wp_create_nonce( 'wasp_cloud_nonce' ),
             ] );

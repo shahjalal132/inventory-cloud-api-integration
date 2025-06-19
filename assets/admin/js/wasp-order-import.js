@@ -58,10 +58,10 @@
       $importBtn.prop("disabled", true).text("Importing...");
       const formData = new FormData();
       formData.append("action", "wasp_import_woocommerce_orders");
-      formData.append("nonce", waspOrderImportAjax.nonce);
+      formData.append("nonce", waspInvOrderAjax.nonce);
       formData.append("file", file);
       $.ajax({
-        url: waspOrderImportAjax.ajax_url,
+        url: waspInvOrderAjax.ajax_url,
         type: "POST",
         data: formData,
         processData: false,

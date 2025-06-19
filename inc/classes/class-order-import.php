@@ -31,8 +31,26 @@ class Order_Import {
             wp_send_json_error([ 'message' => 'Only CSV files are supported.' ]);
         }
 
-        // You can add further CSV validation/processing here
-        // For now, just return success
+        // require the autoloader for PhpSpreadsheet
+        require_once PLUGIN_BASE_PATH . '/vendor/autoload.php';
+
+        try {
+            $reader = new \PhpOffice\PhpSpreadsheet\Reader\Csv();
+            $spreadsheet = $reader->load($file['tmp_name']);
+            $sheet = $spreadsheet->getActiveSheet();
+            $rows = $sheet->toArray();
+
+            // Log the first 20 records (skip header)
+            $max = min(20, count($rows) - 1);
+            for ($i = 1; $i <= $max; $i++) {
+                $row = $rows[$i];
+                $this->put_program_logs(json_encode($row));
+            }
+        } catch (\Exception $e) {
+            $this->put_program_logs('Failed to read CSV: ' . $e->getMessage());
+            wp_send_json_error([ 'message' => 'Failed to read CSV: ' . $e->getMessage() ]);
+        }
+
         wp_send_json_success([ 'message' => 'CSV file uploaded successfully!' ]);
     }
 
