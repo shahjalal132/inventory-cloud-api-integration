@@ -63,7 +63,7 @@ class Import_Sales_Returns_Data {
         $table = $wpdb->prefix . 'sync_sales_returns_data';
 
         // Truncate the table before import (for testing)
-        $this->truncate_table( $table );
+        // $this->truncate_table( $table );
 
         // require the autoloader
         require_once PLUGIN_BASE_PATH . '/vendor/autoload.php';

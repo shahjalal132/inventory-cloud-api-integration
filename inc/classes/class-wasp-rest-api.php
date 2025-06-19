@@ -45,6 +45,14 @@ class Wasp_Rest_Api {
             ] );
         } );
 
+        // Register the REST API endpoint for status summary
+        add_action( 'rest_api_init', function () {
+            register_rest_route( 'atebol/v1', '/sales-returns-status', [
+                'methods'             => 'GET',
+                'callback'            => [ $this, 'handle_sales_returns_status' ],
+                'permission_callback' => '__return_true',
+            ] );
+        } );
 
     }
 
@@ -516,6 +524,46 @@ class Wasp_Rest_Api {
                 ];
             }
         }
+    }
+
+    /**
+     * Get sales returns status summary or filtered count
+     */
+    public function handle_sales_returns_status( $request ) {
+        global $wpdb;
+        $table = $wpdb->prefix . 'sync_sales_returns_data';
+
+        $status = $request->get_param( 'status' );
+        if ( $status !== null ) {
+            $status = strtoupper( $status );
+        }
+        $valid_statuses = [ 'PENDING', 'IGNORED', 'ERROR', 'COMPLETED', 'READY' ];
+
+        if ( $status && in_array( $status, $valid_statuses ) ) {
+            $count = $wpdb->get_var( $wpdb->prepare( "SELECT COUNT(*) FROM $table WHERE status = %s", $status ) );
+            return new \WP_REST_Response( [
+                'status' => $status,
+                'count'  => intval( $count ),
+            ], 200 );
+        }
+
+        // If no status filter, return all counts
+        $total     = $wpdb->get_var( "SELECT COUNT(*) FROM $table" );
+        $pending   = $wpdb->get_var( "SELECT COUNT(*) FROM $table WHERE status = 'PENDING'" );
+        $ignored   = $wpdb->get_var( "SELECT COUNT(*) FROM $table WHERE status = 'IGNORED'" );
+        $error     = $wpdb->get_var( "SELECT COUNT(*) FROM $table WHERE status = 'ERROR'" );
+        $completed = $wpdb->get_var( "SELECT COUNT(*) FROM $table WHERE status = 'COMPLETED'" );
+        $ready     = $wpdb->get_var( "SELECT COUNT(*) FROM $table WHERE status = 'READY'" );
+
+        return new \WP_REST_Response( [
+            'message'   => 'Sales returns status summary',
+            'total'     => intval( $total ),
+            'pending'   => intval( $pending ),
+            'ignored'   => intval( $ignored ),
+            'error'     => intval( $error ),
+            'completed' => intval( $completed ),
+            'ready'     => intval( $ready ),
+        ], 200 );
     }
 
 }
