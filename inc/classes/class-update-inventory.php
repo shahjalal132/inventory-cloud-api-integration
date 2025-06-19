@@ -25,7 +25,7 @@ class Update_Inventory {
         add_action( 'woocommerce_thankyou', [ $this, 'remove_stock_from_inventory_cloud' ] );
 
         // get api credentials
-        $this->api_base_url                    = get_option( 'inv_cloud_base_url' );
+        $this->api_base_url                    = get_option( 'inv_cloud_base_url' ) ?? 'https://atebol.waspinventorycloud.com';
         $this->token                           = get_option( 'inv_cloud_token' );
         $this->update_inventory_enable_disable = get_option( 'inv_cloud_update_inventory' );
     }
