@@ -201,119 +201,106 @@ class Wasp_Rest_Api {
      * import sales returns data
      */
     public function handle_import_sales_returns( $request ) {
-
         global $wpdb;
         $table = $wpdb->prefix . 'sync_sales_returns_data';
 
-        // Get limit from query param, default 10, max 100
+        // get limit from query param, default 10, max 100
         $limit = intval( $request->get_param( 'limit' ) );
         if ( $limit <= 0 )
             $limit = 10;
         if ( $limit > 100 )
             $limit = 100;
 
-        // Get all PENDING items with limit
-        $pending_items = $wpdb->get_results( $wpdb->prepare( "SELECT * FROM $table WHERE status = 'PENDING' LIMIT %d", $limit ) );
-        if ( empty( $pending_items ) ) {
-            return new \WP_REST_Response( [ 'message' => 'No pending items found.' ], 200 );
+        // Get all READY items with limit
+        $ready_items = $wpdb->get_results( $wpdb->prepare( "SELECT * FROM $table WHERE status = 'READY' LIMIT %d", $limit ) );
+        if ( empty( $ready_items ) ) {
+            return new \WP_REST_Response( [ 'message' => 'No items found.' ], 200 );
         }
 
-        // Initialize counters
-        $total_processed = 0;
-        $sale_success    = 0;
-        $sale_error      = 0;
-        $return_success  = 0;
-        $return_error    = 0;
-        $results         = [];
+        // Prepare payloads
+        $add_payload    = [];
+        $remove_payload = [];
+        $add_ids        = [];
+        $remove_ids     = [];
+        $add_count      = 0;
+        $remove_count   = 0;
 
-        foreach ( $pending_items as $item ) {
-            $total_processed++;
-
-            if ( strtoupper( $item->type ) === 'SALE' ) {
-                // Transaction Remove
-                $payload    = [
-                    [
-                        'ItemNumber'     => $item->item_number,
-                        'CustomerNumber' => $item->customer_number,
-                        'SiteName'       => $item->site_name,
-                        'LocationCode'   => $item->location_code,
-                        'Quantity'       => $item->quantity,
-                        'DateRemoved'    => $item->date_acquired,
-                    ],
+        foreach ( $ready_items as $item ) {
+            if ( strtoupper( $item->type ) === 'RETURN' ) {
+                $add_payload[] = [
+                    'ItemNumber'     => $item->item_number,
+                    'Cost'           => $item->cost,
+                    'DateAcquired'   => $item->date_acquired,
+                    'CustomerNumber' => $item->customer_number,
+                    'SiteName'       => $item->site_name,
+                    'LocationCode'   => $item->location_code,
+                    'Quantity'       => $item->quantity,
                 ];
-                $api_result = $this->transaction_remove_api( $this->token, $payload );
-
-                // Track success/error for SALE transactions
-                if ( $api_result['result'] === 'success' ) {
-                    $sale_success++;
-                    // Update status to COMPLETED for successful transactions
-                    $wpdb->update( $table, [ 'status' => 'COMPLETED' ], [ 'id' => $item->id ] );
-                } else {
-                    $sale_error++;
-                    // Update status to ERROR for failed transactions
-                    $wpdb->update( $table, [ 'status' => 'ERROR' ], [ 'id' => $item->id ] );
-                }
-
-            } elseif ( strtoupper( $item->type ) === 'RETURN' ) {
-                // Transaction Add
-                $payload    = [
-                    [
-                        'ItemNumber'     => $item->item_number,
-                        'Cost'           => $item->cost,
-                        'DateAcquired'   => $item->date_acquired,
-                        'CustomerNumber' => $item->customer_number,
-                        'SiteName'       => $item->site_name,
-                        'LocationCode'   => $item->location_code,
-                        'Quantity'       => $item->quantity,
-                    ],
+                $add_ids[]     = $item->id;
+                $add_count++;
+            } elseif ( strtoupper( $item->type ) === 'SALE' ) {
+                $remove_payload[] = [
+                    'ItemNumber'     => $item->item_number,
+                    'CustomerNumber' => $item->customer_number,
+                    'SiteName'       => $item->site_name,
+                    'LocationCode'   => $item->location_code,
+                    'Quantity'       => $item->quantity,
+                    'DateRemoved'    => $item->date_acquired,
                 ];
-                $api_result = $this->transaction_add_api( $this->token, $payload );
-
-                // Track success/error for RETURN transactions
-                if ( $api_result['result'] === 'success' ) {
-                    $return_success++;
-                    // Update status to COMPLETED for successful transactions
-                    $wpdb->update( $table, [ 'status' => 'COMPLETED' ], [ 'id' => $item->id ] );
-                } else {
-                    $return_error++;
-                    // Update status to ERROR for failed transactions
-                    $wpdb->update( $table, [ 'status' => 'ERROR' ], [ 'id' => $item->id ] );
-                }
-            } else {
-                $results[] = [ 'item' => $item->item_number, 'result' => 'Unknown type' ];
-                continue;
+                $remove_ids[]     = $item->id;
+                $remove_count++;
             }
+        }
 
-            $results[] = array_merge( [ 'item' => $item->item_number ], $api_result );
+        $results       = [];
+        $add_result    = null;
+        $remove_result = null;
+
+        // Call add API to add items
+        if ( !empty( $add_payload ) ) {
+            $add_result     = $this->transaction_add_api( $this->token, $add_payload );
+            $results['add'] = $add_result;
+            // update status to COMPLETED or ERROR for each item
+            $new_status = ( $add_result['result'] === 'success' ) ? 'COMPLETED' : 'ERROR';
+            foreach ( $add_ids as $id ) {
+                $wpdb->update( $table, [ 'status' => $new_status ], [ 'id' => $id ] );
+            }
+        }
+
+        // Call remove API to remove items
+        if ( !empty( $remove_payload ) ) {
+            $remove_result     = $this->transaction_remove_api( $this->token, $remove_payload );
+            $results['remove'] = $remove_result;
+            // update status to COMPLETED or ERROR for each item
+            $new_status = ( $remove_result['result'] === 'success' ) ? 'COMPLETED' : 'ERROR';
+            foreach ( $remove_ids as $id ) {
+                $wpdb->update( $table, [ 'status' => $new_status ], [ 'id' => $id ] );
+            }
         }
 
         // Prepare summary message
         $summary_message = sprintf(
-            'Total %d Items processed. %d Item (remove) %d Item (add) %d Item return Error',
-            $total_processed,
-            $sale_success,
-            $return_success,
-            ( $sale_error + $return_error )
+            'Total %d Items processed. %d Items (remove) %d Items (add).',
+            count( $ready_items ),
+            $remove_count,
+            $add_count
         );
 
         // Determine HTTP status code
-        $http_status = 200; // Default success
-        if ( ( $sale_error + $return_error ) > 0 ) {
-            $http_status = 207; // Multi-Status (some succeeded, some failed)
+        $http_status = 200;
+        if ( ( $add_result && $add_result['result'] === 'error' ) || ( $remove_result && $remove_result['result'] === 'error' ) ) {
+            $http_status = 207;
         }
-        if ( ( $sale_success + $return_success ) === 0 ) {
-            $http_status = 500; // All failed
+        if ( ( $add_result && $add_result['result'] === 'error' && $add_count > 0 ) && ( $remove_result && $remove_result['result'] === 'error' && $remove_count > 0 ) ) {
+            $http_status = 500;
         }
 
         return new \WP_REST_Response( [
             'message' => $summary_message,
             'summary' => [
-                'total_processed' => $total_processed,
-                'sale_success'    => $sale_success,
-                'sale_error'      => $sale_error,
-                'return_success'  => $return_success,
-                'return_error'    => $return_error,
-                'total_errors'    => ( $sale_error + $return_error ),
+                'total_processed' => count( $ready_items ),
+                'remove_count'    => $remove_count,
+                'add_count'       => $add_count,
             ],
             'results' => $results,
         ], $http_status );
