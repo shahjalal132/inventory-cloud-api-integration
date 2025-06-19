@@ -54,11 +54,19 @@ class Wasp_Rest_Api {
         // Get all PENDING items with limit
         $pending_items = $wpdb->get_results( $wpdb->prepare( "SELECT * FROM $table WHERE status = 'PENDING' LIMIT %d", $limit ) );
         if ( empty( $pending_items ) ) {
-            return [ 'message' => 'No pending items found.' ];
+            return new \WP_REST_Response( [ 'message' => 'No pending items found.' ], 200 );
         }
 
+        // Initialize counters
+        $total_processed = 0;
+        $sale_success = 0;
+        $sale_error = 0;
+        $return_success = 0;
+        $return_error = 0;
         $results = [];
+
         foreach ( $pending_items as $item ) {
+            $total_processed++;
 
             if ( strtoupper( $item->type ) === 'SALE' ) {
                 // Transaction Remove
@@ -74,6 +82,17 @@ class Wasp_Rest_Api {
                 ];
                 $api_result = $this->transaction_remove_api( $this->token, $payload );
 
+                // Track success/error for SALE transactions
+                if ( $api_result['result'] === 'success' ) {
+                    $sale_success++;
+                    // Update status to COMPLETED for successful transactions
+                    $wpdb->update( $table, [ 'status' => 'COMPLETED' ], [ 'id' => $item->id ] );
+                } else {
+                    $sale_error++;
+                    // Update status to ERROR for failed transactions
+                    $wpdb->update( $table, [ 'status' => 'ERROR' ], [ 'id' => $item->id ] );
+                }
+
             } elseif ( strtoupper( $item->type ) === 'RETURN' ) {
                 // Transaction Add
                 $payload    = [
@@ -88,6 +107,17 @@ class Wasp_Rest_Api {
                     ],
                 ];
                 $api_result = $this->transaction_add_api( $this->token, $payload );
+
+                // Track success/error for RETURN transactions
+                if ( $api_result['result'] === 'success' ) {
+                    $return_success++;
+                    // Update status to COMPLETED for successful transactions
+                    $wpdb->update( $table, [ 'status' => 'COMPLETED' ], [ 'id' => $item->id ] );
+                } else {
+                    $return_error++;
+                    // Update status to ERROR for failed transactions
+                    $wpdb->update( $table, [ 'status' => 'ERROR' ], [ 'id' => $item->id ] );
+                }
             } else {
                 $results[] = [ 'item' => $item->item_number, 'result' => 'Unknown type' ];
                 continue;
@@ -96,7 +126,36 @@ class Wasp_Rest_Api {
             $results[] = array_merge( [ 'item' => $item->item_number ], $api_result );
         }
 
-        return [ 'results' => $results ];
+        // Prepare summary message
+        $summary_message = sprintf(
+            'Total %d Items processed. %d Item (remove) %d Item (add) %d Item return Error',
+            $total_processed,
+            $sale_success,
+            $return_success,
+            ($sale_error + $return_error)
+        );
+
+        // Determine HTTP status code
+        $http_status = 200; // Default success
+        if ( ($sale_error + $return_error) > 0 ) {
+            $http_status = 207; // Multi-Status (some succeeded, some failed)
+        }
+        if ( ($sale_success + $return_success) === 0 ) {
+            $http_status = 500; // All failed
+        }
+
+        return new \WP_REST_Response( [
+            'message' => $summary_message,
+            'summary' => [
+                'total_processed' => $total_processed,
+                'sale_success'    => $sale_success,
+                'sale_error'      => $sale_error,
+                'return_success'  => $return_success,
+                'return_error'    => $return_error,
+                'total_errors'    => ($sale_error + $return_error)
+            ],
+            'results' => $results
+        ], $http_status );
     }
 
     /**
@@ -140,7 +199,7 @@ class Wasp_Rest_Api {
             $response_data = json_decode( $response_body, true );
 
             // Check if API response indicates success
-            $is_success = false;
+            $is_success    = false;
             $error_message = 'Unknown error';
 
             if ( isset( $response_data['Data']['ResultList'][0] ) ) {
@@ -211,7 +270,7 @@ class Wasp_Rest_Api {
             $response_data = json_decode( $response_body, true );
 
             // Check if API response indicates success
-            $is_success = false;
+            $is_success    = false;
             $error_message = 'Unknown error';
 
             if ( isset( $response_data['Data']['ResultList'][0] ) ) {
