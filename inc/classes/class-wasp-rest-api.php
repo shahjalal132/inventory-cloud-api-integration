@@ -26,14 +26,26 @@ class Wasp_Rest_Api {
     }
 
     public function setup_hooks() {
+
         // Register the REST API endpoint
         add_action( 'rest_api_init', function () {
             register_rest_route( 'wasp/v1', '/import-sales-returns', [
-                'methods'             => 'POST',
+                'methods'             => 'GET',
                 'callback'            => [ $this, 'handle_import_sales_returns' ],
                 'permission_callback' => '__return_true', // Adjust as needed
             ] );
         } );
+
+        // Register the REST API endpoint
+        add_action( 'rest_api_init', function () {
+            register_rest_route( 'wasp/v1', '/set-site-name-location-code', [
+                'methods'             => 'GET',
+                'callback'            => [ $this, 'handle_set_site_name_location_code' ],
+                'permission_callback' => '__return_true', // Adjust as needed
+            ] );
+        } );
+
+
     }
 
     /**
@@ -59,11 +71,11 @@ class Wasp_Rest_Api {
 
         // Initialize counters
         $total_processed = 0;
-        $sale_success = 0;
-        $sale_error = 0;
-        $return_success = 0;
-        $return_error = 0;
-        $results = [];
+        $sale_success    = 0;
+        $sale_error      = 0;
+        $return_success  = 0;
+        $return_error    = 0;
+        $results         = [];
 
         foreach ( $pending_items as $item ) {
             $total_processed++;
@@ -132,15 +144,15 @@ class Wasp_Rest_Api {
             $total_processed,
             $sale_success,
             $return_success,
-            ($sale_error + $return_error)
+            ( $sale_error + $return_error )
         );
 
         // Determine HTTP status code
         $http_status = 200; // Default success
-        if ( ($sale_error + $return_error) > 0 ) {
+        if ( ( $sale_error + $return_error ) > 0 ) {
             $http_status = 207; // Multi-Status (some succeeded, some failed)
         }
-        if ( ($sale_success + $return_success) === 0 ) {
+        if ( ( $sale_success + $return_success ) === 0 ) {
             $http_status = 500; // All failed
         }
 
@@ -152,7 +164,118 @@ class Wasp_Rest_Api {
                 'sale_error'      => $sale_error,
                 'return_success'  => $return_success,
                 'return_error'    => $return_error,
-                'total_errors'    => ($sale_error + $return_error)
+                'total_errors'    => ( $sale_error + $return_error ),
+            ],
+            'results' => $results,
+        ], $http_status );
+    }
+
+    public function handle_set_site_name_location_code( $request ) {
+        global $wpdb;
+        $table = $wpdb->prefix . 'sync_sales_returns_data';
+
+        // get limit from query param, default 10, max 100
+        $limit = intval( $request->get_param( 'limit' ) );
+        if ( $limit <= 0 )
+            $limit = 10;
+        if ( $limit > 100 )
+            $limit = 100;
+
+        // get all items with limit where status is ERROR
+        $error_items = $wpdb->get_results( $wpdb->prepare( "SELECT * FROM $table WHERE status = 'ERROR' LIMIT %d", $limit ) );
+        if ( empty( $error_items ) ) {
+            return new \WP_REST_Response( [ 'message' => 'No ERROR status items found.' ], 200 );
+        }
+
+        // Initialize counters
+        $total_processed = 0;
+        $success_count = 0;
+        $error_count = 0;
+        $results = [];
+
+        foreach ( $error_items as $item ) {
+            $total_processed++;
+
+            // call to api by item number to get item details
+            $api_result = $this->get_item_details_api( $this->token, $item->item_number );
+
+            if ( $api_result['result'] === 'success' ) {
+                $response_data = json_decode( $api_result['api_response'], true );
+
+                // extract SiteName and LocationCode from the first result
+                if ( isset( $response_data['Data'][0] ) ) {
+                    $first_item = $response_data['Data'][0];
+                    $site_name = $first_item['SiteName'] ?? '';
+                    $location_code = $first_item['LocationCode'] ?? '';
+
+                    // update site_name, location_code and status to PENDING
+                    $update_result = $wpdb->update(
+                        $table,
+                        [
+                            'site_name'     => $site_name,
+                            'location_code' => $location_code,
+                            'status'        => 'PENDING'
+                        ],
+                        [ 'id' => $item->id ]
+                    );
+
+                    if ( $update_result !== false ) {
+                        $success_count++;
+                        $results[] = [
+                            'item' => $item->item_number,
+                            'result' => 'success',
+                            'site_name' => $site_name,
+                            'location_code' => $location_code
+                        ];
+                    } else {
+                        $error_count++;
+                        $results[] = [
+                            'item' => $item->item_number,
+                            'result' => 'error',
+                            'error_message' => 'Database update failed'
+                        ];
+                    }
+                } else {
+                    $error_count++;
+                    $results[] = [
+                        'item' => $item->item_number,
+                        'result' => 'error',
+                        'error_message' => 'No item data found in API response'
+                    ];
+                }
+            } else {
+                $error_count++;
+                $results[] = [
+                    'item' => $item->item_number,
+                    'result' => 'error',
+                    'error_message' => $api_result['error_message'] ?? 'API call failed'
+                ];
+            }
+        }
+
+        // Prepare summary message
+        $summary_message = sprintf(
+            'Total %d Items processed. %d Items updated successfully. %d Items failed.',
+            $total_processed,
+            $success_count,
+            $error_count
+        );
+
+        // Determine HTTP status code
+        $http_status = 200; // Default success
+        if ( $error_count > 0 ) {
+            $http_status = 207; // Multi-Status (some succeeded, some failed)
+        }
+        if ( $success_count === 0 ) {
+            $http_status = 500; // All failed
+        }
+
+        return new \WP_REST_Response( [
+            'message' => $summary_message,
+            'summary' => [
+                'total_processed' => $total_processed,
+                'success_count'   => $success_count,
+                'error_count'     => $error_count
             ],
             'results' => $results
         ], $http_status );
@@ -280,6 +403,77 @@ class Wasp_Rest_Api {
                 } else {
                     $error_message = $result['Message'] ?? 'API returned error';
                 }
+            }
+
+            if ( $is_success ) {
+                return [
+                    'status_code'  => $status_code,
+                    'result'       => 'success',
+                    'api_response' => $response_body,
+                ];
+            } else {
+                return [
+                    'status_code'   => $status_code,
+                    'result'        => 'error',
+                    'error_message' => $error_message,
+                    'api_response'  => $response_body,
+                ];
+            }
+        }
+    }
+
+    /**
+     * Call the item inventory search API
+     */
+    private function get_item_details_api( $token, $item_number ) {
+        // if token and item_number are empty, return error
+        if ( empty( $token ) || empty( $item_number ) ) {
+            return [
+                'status_code'   => 400,
+                'result'        => 'error',
+                'error_message' => 'Token and item number are required',
+            ];
+        }
+
+        // prepare api url
+        $api_url = sprintf( "%s/public-api/ic/item/inventorysearch", $this->api_base_url );
+
+        // prepare payload
+        $payload = [
+            'ItemNumber' => $item_number
+        ];
+
+        // call api
+        $response = wp_remote_post( $api_url, [
+            'headers' => [
+                'Content-Type'  => 'application/json',
+                'Authorization' => $token,
+            ],
+            'body'    => json_encode( $payload ),
+            'timeout' => $this->timeout,
+        ] );
+
+        // retrieve response status code
+        $status_code = wp_remote_retrieve_response_code( $response );
+
+        if ( is_wp_error( $response ) ) {
+            return [
+                'status_code'   => $status_code,
+                'result'        => 'error',
+                'error_message' => $response->get_error_message(),
+            ];
+        } else {
+            $response_body = wp_remote_retrieve_body( $response );
+            $response_data = json_decode( $response_body, true );
+
+            // Check if API response indicates success
+            $is_success = false;
+            $error_message = 'Unknown error';
+
+            if ( isset( $response_data['Data'] ) && !empty( $response_data['Data'] ) ) {
+                $is_success = true;
+            } else {
+                $error_message = 'No data found for item';
             }
 
             if ( $is_success ) {
