@@ -136,11 +136,36 @@ class Wasp_Rest_Api {
                 'error_message' => $response->get_error_message(),
             ];
         } else {
-            return [
-                'status_code'  => $status_code,
-                'result'       => 'success',
-                'api_response' => wp_remote_retrieve_body( $response ),
-            ];
+            $response_body = wp_remote_retrieve_body( $response );
+            $response_data = json_decode( $response_body, true );
+
+            // Check if API response indicates success
+            $is_success = false;
+            $error_message = 'Unknown error';
+
+            if ( isset( $response_data['Data']['ResultList'][0] ) ) {
+                $result = $response_data['Data']['ResultList'][0];
+                if ( $result['Message'] === 'Success' && $result['HttpStatusCode'] === 200 ) {
+                    $is_success = true;
+                } else {
+                    $error_message = $result['Message'] ?? 'API returned error';
+                }
+            }
+
+            if ( $is_success ) {
+                return [
+                    'status_code'  => $status_code,
+                    'result'       => 'success',
+                    'api_response' => $response_body,
+                ];
+            } else {
+                return [
+                    'status_code'   => $status_code,
+                    'result'        => 'error',
+                    'error_message' => $error_message,
+                    'api_response'  => $response_body,
+                ];
+            }
         }
     }
 
@@ -182,11 +207,36 @@ class Wasp_Rest_Api {
                 'error_message' => $response->get_error_message(),
             ];
         } else {
-            return [
-                'status_code'  => $status_code,
-                'result'       => 'success',
-                'api_response' => wp_remote_retrieve_body( $response ),
-            ];
+            $response_body = wp_remote_retrieve_body( $response );
+            $response_data = json_decode( $response_body, true );
+
+            // Check if API response indicates success
+            $is_success = false;
+            $error_message = 'Unknown error';
+
+            if ( isset( $response_data['Data']['ResultList'][0] ) ) {
+                $result = $response_data['Data']['ResultList'][0];
+                if ( $result['Message'] === 'Success' && $result['HttpStatusCode'] === 200 ) {
+                    $is_success = true;
+                } else {
+                    $error_message = $result['Message'] ?? 'API returned error';
+                }
+            }
+
+            if ( $is_success ) {
+                return [
+                    'status_code'  => $status_code,
+                    'result'       => 'success',
+                    'api_response' => $response_body,
+                ];
+            } else {
+                return [
+                    'status_code'   => $status_code,
+                    'result'        => 'error',
+                    'error_message' => $error_message,
+                    'api_response'  => $response_body,
+                ];
+            }
         }
     }
 
