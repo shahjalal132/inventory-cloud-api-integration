@@ -73,7 +73,7 @@ class Wasp_Rest_Api {
             $limit = 100;
 
         // get all items with limit where status is PENDING
-        $pending_items = $wpdb->get_results( $wpdb->prepare( "SELECT * FROM $table WHERE status = 'PENDING' LIMIT %d", $limit ) );
+        $pending_items = $wpdb->get_results( $wpdb->prepare( "SELECT * FROM $table WHERE status = 'PENDING' or status = 'ERROR' LIMIT %d", $limit ) );
         if ( empty( $pending_items ) ) {
             return new \WP_REST_Response( [ 'message' => 'No items found.' ], 200 );
         }
@@ -268,6 +268,7 @@ class Wasp_Rest_Api {
         if ( !empty( $add_payload ) ) {
             $add_result     = $this->transaction_add_api( $this->token, $add_payload );
             $results['add'] = $add_result;
+
             // update status to COMPLETED or ERROR for each item
             $new_status = ( $add_result['result'] === 'success' ) ? 'COMPLETED' : 'ERROR';
             foreach ( $add_ids as $id ) {

@@ -127,7 +127,10 @@ class Import_Sales_Returns_Data {
             $customer    = $sheet->getCell( $customer_col . $row )->getValue();
             $qty         = $sheet->getCell( $qty_col . $row )->getValue();
             $cost        = $sheet->getCell( $cost_col . $row )->getValue();
-
+            // if not empty cost and is numeric
+            if ( !empty( $cost ) && is_numeric( $cost ) ) {
+                $cost = abs( $cost );
+            }
             // Skip empty or invalid rows
             if ( empty( $item_number ) || empty( $customer ) || empty( $qty ) ) {
                 $skipped++;
