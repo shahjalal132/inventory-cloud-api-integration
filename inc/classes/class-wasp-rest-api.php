@@ -432,7 +432,7 @@ class Wasp_Rest_Api {
 
             if ( isset( $response_data['Data']['ResultList'][0] ) ) {
                 $result = $response_data['Data']['ResultList'][0];
-                if ( $result['Message'] === 'Success' && $result['HttpStatusCode'] === 200 ) {
+                if ( $result['HttpStatusCode'] === 200 ) {
                     $is_success = true;
                 } else {
                     $error_message = $result['Message'] ?? 'API returned error';
