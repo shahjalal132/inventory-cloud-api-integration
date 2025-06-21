@@ -53,4 +53,27 @@ class Plugin_Activator {
         dbDelta( $sql );
     }
 
+    public static function create_sync_wasp_woo_orders_table() {
+        global $wpdb;
+        $table_name      = $wpdb->prefix . 'sync_wasp_woo_orders_data';
+        $charset_collate = $wpdb->get_charset_collate();
+        $sql             = "CREATE TABLE IF NOT EXISTS $table_name (
+            id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
+            item_number VARCHAR(255) NOT NULL,
+            customer_number VARCHAR(255) NULL,
+            site_name VARCHAR(255) NULL,
+            location_code VARCHAR(255) NULL,
+            cost DECIMAL(10,2) NOT NULL,
+            quantity DECIMAL(10,2) NOT NULL,
+            remove_date VARCHAR(50) NULL,
+            status VARCHAR(255) NOT NULL DEFAULT 'PENDING',
+            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+            updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+            PRIMARY KEY (id)
+        ) $charset_collate;";
+
+        require_once ABSPATH . 'wp-admin/includes/upgrade.php';
+        dbDelta( $sql );
+    }
+
 }
