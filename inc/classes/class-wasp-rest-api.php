@@ -63,12 +63,30 @@ class Wasp_Rest_Api {
             ] );
         } );
 
+        // Register the REST API endpoint
+        add_action( 'rest_api_init', function () {
+            register_rest_route( 'atebol/v1', '/remove-completed-woo-orders', [
+                'methods'             => 'GET',
+                'callback'            => [ $this, 'handle_remove_completed_woo_orders' ],
+                'permission_callback' => '__return_true', // Adjust as needed
+            ] );
+        } );
+
         // Register the REST API endpoint for status summary
         add_action( 'rest_api_init', function () {
             register_rest_route( 'atebol/v1', '/sales-returns-status', [
                 'methods'             => 'GET',
                 'callback'            => [ $this, 'handle_sales_returns_status' ],
                 'permission_callback' => '__return_true',
+            ] );
+        } );
+
+        // Register the REST API endpoint
+        add_action( 'rest_api_init', function () {
+            register_rest_route( 'atebol/v1', '/remove-completed-sales-returns', [
+                'methods'             => 'GET',
+                'callback'            => [ $this, 'handle_remove_completed_sales_returns' ],
+                'permission_callback' => '__return_true', // Adjust as needed
             ] );
         } );
 
@@ -297,6 +315,67 @@ class Wasp_Rest_Api {
             'results' => $results,
         ], $http_status );
     }
+
+    public function handle_remove_completed_woo_orders( $request ) {
+        global $wpdb;
+        $table = $wpdb->prefix . 'sync_wasp_woo_orders_data';
+    
+        // Step 1: Get limit from query param, default 10, max 100
+        $limit = intval( $request->get_param( 'limit' ) );
+        if ( $limit <= 0 ) {
+            $limit = 10;
+        } elseif ( $limit > 100 ) {
+            $limit = 100;
+        }
+    
+        // Step 2: Calculate the first and last date of previous month
+        $now               = new \DateTimeImmutable( 'first day of this month' );
+        $previous_month    = $now->modify( '-1 month' );
+        $month_start       = $previous_month->format( 'Y-m-01 00:00:00' );
+        $month_end         = $previous_month->format( 'Y-m-t 23:59:59' );
+    
+        // Step 3: Fetch completed items created in previous month
+        $completed_items = $wpdb->get_results(
+            $wpdb->prepare(
+                "SELECT * FROM $table WHERE status = 'COMPLETED' AND created_at BETWEEN %s AND %s LIMIT %d",
+                $month_start,
+                $month_end,
+                $limit
+            )
+        );
+    
+        if ( empty( $completed_items ) ) {
+            return new \WP_REST_Response( [ 'message' => 'No items completed orders found for previous month.' ], 200 );
+        }
+    
+        // Step 4: Delete the items
+        $deleted_count = 0;
+        $deleted_ids   = [];
+    
+        foreach ( $completed_items as $item ) {
+            $delete_result = $wpdb->delete( $table, [ 'id' => $item->id ] );
+            if ( $delete_result !== false ) {
+                $deleted_count++;
+                $deleted_ids[] = $item->id;
+            }
+        }
+    
+        // Step 5: Prepare summary
+        $summary_message = sprintf(
+            'Total %d items deleted from previous month (%s).',
+            $deleted_count,
+            $previous_month->format( 'F Y' )
+        );
+    
+        return new \WP_REST_Response( [
+            'message' => $summary_message,
+            'summary' => [
+                'month'         => $previous_month->format( 'Y-m' ),
+                'deleted_count' => $deleted_count,
+            ],
+            'deleted_ids' => $deleted_ids,
+        ], 200 );
+    }    
 
     /**
      * prepare sales returns data for import
@@ -556,6 +635,67 @@ class Wasp_Rest_Api {
             'results' => $results,
         ], $http_status );
     }
+
+    public function handle_remove_completed_sales_returns( $request ) {
+        global $wpdb;
+        $table = $wpdb->prefix . 'sync_sales_returns_data';
+    
+        // Step 1: Get limit from query param, default 10, max 100
+        $limit = intval( $request->get_param( 'limit' ) );
+        if ( $limit <= 0 ) {
+            $limit = 10;
+        } elseif ( $limit > 100 ) {
+            $limit = 100;
+        }
+    
+        // Step 2: Calculate the first and last date of previous month
+        $now             = new \DateTimeImmutable( 'first day of this month' );
+        $previous_month  = $now->modify( '-1 month' );
+        $month_start     = $previous_month->format( 'Y-m-01 00:00:00' );
+        $month_end       = $previous_month->format( 'Y-m-t 23:59:59' );
+    
+        // Step 3: Fetch completed items created in previous month
+        $completed_items = $wpdb->get_results(
+            $wpdb->prepare(
+                "SELECT * FROM $table WHERE status = 'COMPLETED' AND created_at BETWEEN %s AND %s LIMIT %d",
+                $month_start,
+                $month_end,
+                $limit
+            )
+        );
+    
+        if ( empty( $completed_items ) ) {
+            return new \WP_REST_Response( [ 'message' => 'No completed sales/returns found for previous month.' ], 200 );
+        }
+    
+        // Step 4: Delete the items
+        $deleted_count = 0;
+        $deleted_ids   = [];
+    
+        foreach ( $completed_items as $item ) {
+            $delete_result = $wpdb->delete( $table, [ 'id' => $item->id ] );
+            if ( $delete_result !== false ) {
+                $deleted_count++;
+                $deleted_ids[] = $item->id;
+            }
+        }
+    
+        // Step 5: Prepare summary
+        $summary_message = sprintf(
+            'Total %d completed sales/returns deleted from previous month (%s).',
+            $deleted_count,
+            $previous_month->format( 'F Y' )
+        );
+    
+        return new \WP_REST_Response( [
+            'message' => $summary_message,
+            'summary' => [
+                'month'         => $previous_month->format( 'Y-m' ),
+                'deleted_count' => $deleted_count,
+            ],
+            'deleted_ids' => $deleted_ids,
+        ], 200 );
+    }    
 
     /**
      * call the transaction remove API

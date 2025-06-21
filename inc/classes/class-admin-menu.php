@@ -197,6 +197,8 @@ class Admin_Menu {
                 <h4><?= esc_html( $site_url . '/wp-json/atebol/v1/import-woo-orders' ); ?></h4>
                 <h4><?= esc_html( $site_url . '/wp-json/atebol/v1/sales-returns-status' ); ?></h4>
                 <h4><?= esc_html( $site_url . '/wp-json/atebol/v1/wasp-woo-orders-status' ); ?></h4>
+                <h4><?= esc_html( $site_url . '/wp-json/atebol/v1/remove-completed-sales-returns' ); ?></h4>
+                <h4><?= esc_html( $site_url . '/wp-json/atebol/v1/remove-completed-woo-orders' ); ?></h4>
             </div>
         </div>
 
