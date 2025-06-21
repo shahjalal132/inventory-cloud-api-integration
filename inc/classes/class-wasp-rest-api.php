@@ -54,6 +54,15 @@ class Wasp_Rest_Api {
             ] );
         } );
 
+        // Register the REST API endpoint
+        add_action( 'rest_api_init', function () {
+            register_rest_route( 'atebol/v1', '/import-woo-orders', [
+                'methods'             => 'GET',
+                'callback'            => [ $this, 'handle_import_woo_orders' ],
+                'permission_callback' => '__return_true', // Adjust as needed
+            ] );
+        } );
+
         // Register the REST API endpoint for status summary
         add_action( 'rest_api_init', function () {
             register_rest_route( 'atebol/v1', '/sales-returns-status', [
@@ -68,7 +77,7 @@ class Wasp_Rest_Api {
     public function handle_prepare_woo_orders( $request ) {
         global $wpdb;
         $table = $wpdb->prefix . 'sync_wasp_woo_orders_data';
-    
+
         // Step 1: Get limit from query param, default 10, max 100
         $limit = intval( $request->get_param( 'limit' ) );
         if ( $limit <= 0 ) {
@@ -76,49 +85,49 @@ class Wasp_Rest_Api {
         } elseif ( $limit > 100 ) {
             $limit = 100;
         }
-    
+
         // Step 2: Get pending and error items
         $pending_items = $wpdb->get_results(
             $wpdb->prepare( "SELECT * FROM $table WHERE status = 'PENDING' OR status = 'ERROR' LIMIT %d", $limit )
         );
-    
+
         if ( empty( $pending_items ) ) {
             return new \WP_REST_Response( [ 'message' => 'No items found.' ], 200 );
         }
-    
+
         $total_processed = 0;
         $success_count   = 0;
         $error_count     = 0;
         $ignored_count   = 0;
         $results         = [];
-    
+
         foreach ( $pending_items as $item ) {
             $total_processed++;
-    
+
             // Step 3: Get item details from API
             $api_result = $this->get_item_details_api( $this->token, $item->item_number );
-    
+
             if ( $api_result['result'] === 'success' ) {
                 $response_data = json_decode( $api_result['api_response'], true );
-    
-                $site_name     = '';
-                $location_code = '';
+
+                $site_name      = '';
+                $location_code  = '';
                 $found_non_cllc = false;
-    
+
                 if ( isset( $response_data['Data'] ) && is_array( $response_data['Data'] ) && count( $response_data['Data'] ) > 0 ) {
                     foreach ( $response_data['Data'] as $loc ) {
                         $site = strtoupper( $loc['SiteName'] ?? '' );
                         $code = strtoupper( $loc['LocationCode'] ?? '' );
-    
+
                         // Step 4: If either SiteName or LocationCode is NOT CLLC, accept it
                         if ( $site !== 'CLLC' && $code !== 'CLLC' ) {
-                            $site_name       = $loc['SiteName'] ?? '';
-                            $location_code   = $loc['LocationCode'] ?? '';
-                            $found_non_cllc  = true;
+                            $site_name      = $loc['SiteName'] ?? '';
+                            $location_code  = $loc['LocationCode'] ?? '';
+                            $found_non_cllc = true;
                             break;
                         }
                     }
-    
+
                     // Step 5: Update DB
                     if ( $found_non_cllc ) {
                         $update_result = $wpdb->update(
@@ -130,7 +139,7 @@ class Wasp_Rest_Api {
                             ],
                             [ 'id' => $item->id ]
                         );
-    
+
                         if ( $update_result !== false ) {
                             $success_count++;
                             $results[] = [
@@ -174,7 +183,7 @@ class Wasp_Rest_Api {
                 ];
             }
         }
-    
+
         // Step 6: Prepare summary
         $summary_message = sprintf(
             'Total %d Items processed. %d Items updated. %d Items failed. %d Items ignored.',
@@ -183,7 +192,7 @@ class Wasp_Rest_Api {
             $error_count,
             $ignored_count
         );
-    
+
         // Set response code
         $http_status = 200;
         if ( $error_count > 0 ) {
@@ -192,7 +201,7 @@ class Wasp_Rest_Api {
         if ( $success_count === 0 ) {
             $http_status = 500;
         }
-    
+
         return new \WP_REST_Response( [
             'message' => $summary_message,
             'summary' => [
@@ -203,7 +212,82 @@ class Wasp_Rest_Api {
             ],
             'results' => $results,
         ], $http_status );
-    }    
+    }
+
+    public function handle_import_woo_orders( $request ) {
+        global $wpdb;
+        $table = $wpdb->prefix . 'sync_wasp_woo_orders_data';
+
+        // Step 1: Get limit from query param, default 10, max 100
+        $limit = intval( $request->get_param( 'limit' ) );
+        if ( $limit <= 0 ) {
+            $limit = 10;
+        } elseif ( $limit > 100 ) {
+            $limit = 100;
+        }
+
+        // Step 2: Get READY items
+        $ready_items = $wpdb->get_results(
+            $wpdb->prepare( "SELECT * FROM $table WHERE status = 'READY' LIMIT %d", $limit )
+        );
+
+        if ( empty( $ready_items ) ) {
+            return new \WP_REST_Response( [ 'message' => 'No items found.' ], 200 );
+        }
+
+        // Step 3: Prepare remove payload
+        $remove_payload = [];
+        $remove_ids     = [];
+
+        foreach ( $ready_items as $item ) {
+            $remove_payload[] = [
+                'ItemNumber'     => $item->item_number,
+                'CustomerNumber' => $item->customer_number,
+                'SiteName'       => $item->site_name,
+                'LocationCode'   => $item->location_code,
+                'Quantity'       => $item->quantity,
+                'DateRemoved'    => $item->remove_date,
+            ];
+            $remove_ids[]     = $item->id;
+        }
+
+        $results       = [];
+        $remove_result = null;
+
+        // Step 4: Call remove API
+        if ( !empty( $remove_payload ) ) {
+            $remove_result     = $this->transaction_remove_api( $this->token, $remove_payload );
+            $results['remove'] = $remove_result;
+
+            // Update status for each item
+            $new_status = ( $remove_result['result'] === 'success' ) ? 'COMPLETED' : 'ERROR';
+            foreach ( $remove_ids as $id ) {
+                $wpdb->update( $table, [ 'status' => $new_status ], [ 'id' => $id ] );
+            }
+        }
+
+        // Step 5: Prepare summary
+        $summary_message = sprintf(
+            'Total %d Items processed. %d Items removed.',
+            count( $ready_items ),
+            count( $remove_ids )
+        );
+
+        // Step 6: Determine HTTP status code
+        $http_status = 200;
+        if ( $remove_result && $remove_result['result'] === 'error' ) {
+            $http_status = 500;
+        }
+
+        return new \WP_REST_Response( [
+            'message' => $summary_message,
+            'summary' => [
+                'total_processed' => count( $ready_items ),
+                'remove_count'    => count( $remove_ids ),
+            ],
+            'results' => $results,
+        ], $http_status );
+    }
 
     /**
      * prepare sales returns data for import
