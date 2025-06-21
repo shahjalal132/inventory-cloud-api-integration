@@ -38,6 +38,15 @@ class Wasp_Rest_Api {
 
         // Register the REST API endpoint
         add_action( 'rest_api_init', function () {
+            register_rest_route( 'atebol/v1', '/prepare-woo-orders', [
+                'methods'             => 'GET',
+                'callback'            => [ $this, 'handle_prepare_woo_orders' ],
+                'permission_callback' => '__return_true', // Adjust as needed
+            ] );
+        } );
+
+        // Register the REST API endpoint
+        add_action( 'rest_api_init', function () {
             register_rest_route( 'atebol/v1', '/import-sales-returns', [
                 'methods'             => 'GET',
                 'callback'            => [ $this, 'handle_import_sales_returns' ],
@@ -55,6 +64,146 @@ class Wasp_Rest_Api {
         } );
 
     }
+
+    public function handle_prepare_woo_orders( $request ) {
+        global $wpdb;
+        $table = $wpdb->prefix . 'sync_wasp_woo_orders_data';
+    
+        // Step 1: Get limit from query param, default 10, max 100
+        $limit = intval( $request->get_param( 'limit' ) );
+        if ( $limit <= 0 ) {
+            $limit = 10;
+        } elseif ( $limit > 100 ) {
+            $limit = 100;
+        }
+    
+        // Step 2: Get pending and error items
+        $pending_items = $wpdb->get_results(
+            $wpdb->prepare( "SELECT * FROM $table WHERE status = 'PENDING' OR status = 'ERROR' LIMIT %d", $limit )
+        );
+    
+        if ( empty( $pending_items ) ) {
+            return new \WP_REST_Response( [ 'message' => 'No items found.' ], 200 );
+        }
+    
+        $total_processed = 0;
+        $success_count   = 0;
+        $error_count     = 0;
+        $ignored_count   = 0;
+        $results         = [];
+    
+        foreach ( $pending_items as $item ) {
+            $total_processed++;
+    
+            // Step 3: Get item details from API
+            $api_result = $this->get_item_details_api( $this->token, $item->item_number );
+    
+            if ( $api_result['result'] === 'success' ) {
+                $response_data = json_decode( $api_result['api_response'], true );
+    
+                $site_name     = '';
+                $location_code = '';
+                $found_non_cllc = false;
+    
+                if ( isset( $response_data['Data'] ) && is_array( $response_data['Data'] ) && count( $response_data['Data'] ) > 0 ) {
+                    foreach ( $response_data['Data'] as $loc ) {
+                        $site = strtoupper( $loc['SiteName'] ?? '' );
+                        $code = strtoupper( $loc['LocationCode'] ?? '' );
+    
+                        // Step 4: If either SiteName or LocationCode is NOT CLLC, accept it
+                        if ( $site !== 'CLLC' && $code !== 'CLLC' ) {
+                            $site_name       = $loc['SiteName'] ?? '';
+                            $location_code   = $loc['LocationCode'] ?? '';
+                            $found_non_cllc  = true;
+                            break;
+                        }
+                    }
+    
+                    // Step 5: Update DB
+                    if ( $found_non_cllc ) {
+                        $update_result = $wpdb->update(
+                            $table,
+                            [
+                                'site_name'     => $site_name,
+                                'location_code' => $location_code,
+                                'status'        => 'READY',
+                            ],
+                            [ 'id' => $item->id ]
+                        );
+    
+                        if ( $update_result !== false ) {
+                            $success_count++;
+                            $results[] = [
+                                'item'          => $item->item_number,
+                                'result'        => 'success',
+                                'site_name'     => $site_name,
+                                'location_code' => $location_code,
+                            ];
+                        } else {
+                            $error_count++;
+                            $results[] = [
+                                'item'          => $item->item_number,
+                                'result'        => 'error',
+                                'error_message' => 'Database update failed',
+                            ];
+                        }
+                    } else {
+                        // No non-CLLC location found — IGNORE
+                        $wpdb->update( $table, [ 'status' => 'IGNORED' ], [ 'id' => $item->id ] );
+                        $ignored_count++;
+                        $results[] = [
+                            'item'          => $item->item_number,
+                            'result'        => 'ignored',
+                            'error_message' => 'Only CLLC locations found. Ignored.',
+                        ];
+                    }
+                } else {
+                    $error_count++;
+                    $results[] = [
+                        'item'          => $item->item_number,
+                        'result'        => 'error',
+                        'error_message' => 'No item data found in API response',
+                    ];
+                }
+            } else {
+                $error_count++;
+                $results[] = [
+                    'item'          => $item->item_number,
+                    'result'        => 'error',
+                    'error_message' => $api_result['error_message'] ?? 'API call failed',
+                ];
+            }
+        }
+    
+        // Step 6: Prepare summary
+        $summary_message = sprintf(
+            'Total %d Items processed. %d Items updated. %d Items failed. %d Items ignored.',
+            $total_processed,
+            $success_count,
+            $error_count,
+            $ignored_count
+        );
+    
+        // Set response code
+        $http_status = 200;
+        if ( $error_count > 0 ) {
+            $http_status = 207;
+        }
+        if ( $success_count === 0 ) {
+            $http_status = 500;
+        }
+    
+        return new \WP_REST_Response( [
+            'message' => $summary_message,
+            'summary' => [
+                'total_processed' => $total_processed,
+                'success_count'   => $success_count,
+                'error_count'     => $error_count,
+                'ignored_count'   => $ignored_count,
+            ],
+            'results' => $results,
+        ], $http_status );
+    }    
 
     /**
      * prepare sales returns data for import
