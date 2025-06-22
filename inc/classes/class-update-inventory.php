@@ -82,7 +82,7 @@ class Update_Inventory {
     }
 
     public function server_status() {
-        return 'Server is up and running';
+        return 'ok';
     }
 
     public function insert_item_number_to_db() {
