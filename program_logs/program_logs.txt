@@ -1,0 +1,4 @@
+Cron job failed for prepare-woo-orders: cURL error 7: Failed to connect to localhost port 8080 after 0 ms: Couldn't connect to server - 2025-06-22 11:40:42
+
+Cron job failed for prepare-sales-returns: cURL error 7: Failed to connect to localhost port 8080 after 0 ms: Couldn't connect to server - 2025-06-22 11:40:46
+

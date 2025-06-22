@@ -80,12 +80,12 @@ register_activation_hook( __FILE__, 'wpb_plugin_activator' );
 function wpb_plugin_deactivator() {
     require_once PLUGIN_BASE_PATH . '/inc/classes/class-plugin-deactivator.php';
     Plugin_Deactivator::deactivate();
-    Plugin_Deactivator::remove_sync_sales_return_table();
-    Plugin_Deactivator::remove_sync_wasp_woo_orders_table();
+    // Plugin_Deactivator::remove_sync_sales_return_table();
+    // Plugin_Deactivator::remove_sync_wasp_woo_orders_table();
 }
 
 // Register deactivation hook
-// register_deactivation_hook( __FILE__, 'wpb_plugin_deactivator' );
+register_deactivation_hook( __FILE__, 'wpb_plugin_deactivator' );
 
 
 function get_plugin_instance() {

@@ -168,4 +168,75 @@ jQuery(document).ready(function($) {
         }
     });
     
+    // Test cron jobs setup button
+    $('#test-cron-jobs-btn').on('click', function() {
+        const button = $(this);
+        const originalText = button.text();
+        
+        button.prop('disabled', true).text('Testing...');
+        
+        $.ajax({
+            url: waspCronAjax.ajax_url,
+            type: 'POST',
+            data: {
+                action: 'test_cron_jobs',
+                nonce: waspCronAjax.nonce
+            },
+            success: function(response) {
+                if (response.success) {
+                    showNotification('Cron jobs test completed! Check program logs for details.', 'success');
+                } else {
+                    showNotification(response.data.message || 'Test failed', 'error');
+                }
+            },
+            error: function() {
+                showNotification('Network error occurred during test', 'error');
+            },
+            complete: function() {
+                button.prop('disabled', false).text(originalText);
+            }
+        });
+    });
+    
+    // Production mode toggle
+    $('#production-mode-toggle').on('change', function() {
+        const enabled = $(this).is(':checked') ? 'enabled' : 'disabled';
+        const toggleLabel = $('.wasp-production-toggle .toggle-label');
+        
+        $.ajax({
+            url: waspCronAjax.ajax_url,
+            type: 'POST',
+            data: {
+                action: 'toggle_production_mode',
+                enabled: enabled,
+                nonce: waspCronAjax.nonce
+            },
+            success: function(response) {
+                if (response.success) {
+                    toggleLabel.text('Production Mode: ' + (enabled === 'enabled' ? 'Enabled' : 'Disabled'));
+                    showNotification(response.data.message, 'success');
+
+                    // Show or hide the development notice
+                    if (enabled === 'enabled') {
+                        $('.wasp-dev-notice').slideUp();
+                    } else {
+                        // Only show the notice if it exists on the page
+                        if ($('.wasp-dev-notice').length) {
+                            $('.wasp-dev-notice').slideDown();
+                        }
+                    }
+                } else {
+                    showNotification(response.data.message || 'Failed to update production mode', 'error');
+                    // Revert toggle on failure
+                    $('#production-mode-toggle').prop('checked', !$('#production-mode-toggle').is(':checked'));
+                }
+            },
+            error: function() {
+                showNotification('Network error occurred', 'error');
+                // Revert toggle on error
+                $('#production-mode-toggle').prop('checked', !$('#production-mode-toggle').is(':checked'));
+            }
+        });
+    });
+    
 }); 

@@ -39,6 +39,11 @@ class Jobs {
         // AJAX handlers for enabling/disabling cron jobs
         add_action( 'wp_ajax_toggle_cron_job', [ $this, 'toggle_cron_job' ] );
         add_action( 'wp_ajax_run_cron_job_manually', [ $this, 'run_cron_job_manually' ] );
+        add_action( 'wp_ajax_test_cron_jobs', [ $this, 'test_cron_jobs_ajax' ] );
+        add_action( 'wp_ajax_toggle_production_mode', [ $this, 'toggle_production_mode' ] );
+        
+        // Development: Add a test endpoint for local development
+        add_action( 'rest_api_init', [ $this, 'register_test_endpoint' ] );
     }
 
     /**
@@ -132,20 +137,45 @@ class Jobs {
      * Execute API endpoint
      */
     private function execute_api_endpoint( $endpoint ) {
+        // Check if we're in production mode
+        $production_mode = get_option( 'wasp_cron_production_mode', 'disabled' );
+        
+        if ( $production_mode === 'disabled' && $this->is_development_environment() ) {
+            $this->put_program_logs( "Cron job {$endpoint}: Skipped in development mode (production mode disabled)" );
+            return;
+        }
+        
         $site_url = site_url();
         $api_url = $site_url . '/wp-json/atebol/v1/' . $endpoint;
         
+        // Add timeout and better error handling for local development
+        $timeout = $this->is_development_environment() ? 10 : 300;
+        
         $response = wp_remote_get( $api_url, [
-            'timeout' => 300,
+            'timeout' => $timeout,
             'sslverify' => false,
+            'user-agent' => 'WASP-Cron-Job/1.0',
         ] );
 
         if ( is_wp_error( $response ) ) {
-            $this->put_program_logs( "Cron job failed for {$endpoint}: " . $response->get_error_message() );
+            $error_message = $response->get_error_message();
+            
+            // Provide more helpful error messages for local development
+            if ( $this->is_development_environment() ) {
+                $this->put_program_logs( "Cron job failed for {$endpoint}: {$error_message} - This is normal in local development. Use 'Run Now' button for testing." );
+            } else {
+                $this->put_program_logs( "Cron job failed for {$endpoint}: {$error_message}" );
+            }
         } else {
             $response_code = wp_remote_retrieve_response_code( $response );
             $response_body = wp_remote_retrieve_body( $response );
-            $this->put_program_logs( "Cron job executed for {$endpoint}: HTTP {$response_code} - {$response_body}" );
+            
+            // Only log full response in development mode
+            if ( $this->is_development_environment() ) {
+                $this->put_program_logs( "Cron job executed for {$endpoint}: HTTP {$response_code} - Response length: " . strlen( $response_body ) . " bytes" );
+            } else {
+                $this->put_program_logs( "Cron job executed for {$endpoint}: HTTP {$response_code}" );
+            }
         }
     }
 
@@ -278,6 +308,84 @@ class Jobs {
             
             $this->put_program_logs( "Cron job {$endpoint}: Enabled = {$is_enabled}, Next scheduled = " . ( $next_scheduled ? date( 'Y-m-d H:i:s', $next_scheduled ) : 'Not scheduled' ) );
         }
+    }
+
+    /**
+     * Register a test endpoint for local development
+     */
+    public function register_test_endpoint() {
+        register_rest_route( 'wasp/v1', '/test-cron-jobs', [
+            'methods' => 'GET',
+            'callback' => [ $this, 'test_cron_jobs_ajax' ],
+            'permission_callback' => function() {
+                return current_user_can( 'manage_options' );
+            }
+        ] );
+    }
+
+    /**
+     * Handle test cron jobs AJAX request
+     */
+    public function test_cron_jobs_ajax() {
+        $this->test_cron_jobs();
+        wp_send_json_success( [ 'message' => 'Cron jobs test executed.' ] );
+    }
+
+    /**
+     * Toggle production mode
+     */
+    public function toggle_production_mode() {
+        check_ajax_referer( 'wasp_cron_nonce', 'nonce' );
+
+        if ( !current_user_can( 'manage_options' ) ) {
+            wp_send_json_error( [ 'message' => 'Access denied.' ] );
+        }
+
+        $enabled = sanitize_text_field( $_POST['enabled'] );
+        update_option( 'wasp_cron_production_mode', $enabled );
+
+        $message = $enabled === 'enabled' ? 'Production mode enabled. Cron jobs will run in all environments.' : 'Production mode disabled. Cron jobs will be skipped in development environments.';
+        
+        wp_send_json_success( [ 'message' => $message ] );
+    }
+
+    /**
+     * Check if we're in development environment
+     */
+    public function is_development_environment() {
+        return (
+            defined( 'WP_DEBUG' ) && WP_DEBUG ||
+            defined( 'WP_LOCAL_DEV' ) && WP_LOCAL_DEV ||
+            strpos( site_url(), 'localhost' ) !== false ||
+            strpos( site_url(), '127.0.0.1' ) !== false ||
+            strpos( site_url(), '.local' ) !== false ||
+            strpos( site_url(), '.test' ) !== false ||
+            strpos( site_url(), '.dev' ) !== false
+        );
+    }
+
+    /**
+     * Get development information
+     */
+    public function get_development_info() {
+        $info = [
+            'is_development' => $this->is_development_environment(),
+            'site_url' => site_url(),
+            'wp_cron_disabled' => defined( 'DISABLE_WP_CRON' ) && DISABLE_WP_CRON,
+            'test_endpoint' => site_url() . '/wp-json/wasp/v1/test-cron-jobs',
+            'manual_trigger_url' => site_url() . '/wp-cron.php?doing_wp_cron',
+        ];
+
+        if ( $this->is_development_environment() ) {
+            $info['recommendations'] = [
+                'Use "Run Now" buttons for testing',
+                'Set up a real cron job to call wp-cron.php',
+                'Use the test endpoint: ' . $info['test_endpoint'],
+                'Check program logs for execution details'
+            ];
+        }
+
+        return $info;
     }
 
 }
