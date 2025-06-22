@@ -305,7 +305,6 @@ class Admin_Menu {
         }
 
         $url = esc_url_raw( $_POST['url'] );
-        $this->put_program_logs( "Wasp endpoint url: " . $url );
 
         $response = wp_remote_get( $url, [
             'timeout'   => 60,
@@ -314,8 +313,6 @@ class Admin_Menu {
                 'Authorization' => 'Bearer ' . get_option( 'inv_cloud_token' )
             ]
         ] );
-
-        $this->put_program_logs( "Wasp endpoint response: " . json_encode( $response ) );
 
         if ( is_wp_error( $response ) ) {
             wp_send_json_error( [
