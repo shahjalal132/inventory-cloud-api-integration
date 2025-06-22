@@ -23,7 +23,7 @@ trait Program_Logs {
         }
 
         // Construct the log file path
-        $file_name = $directory . 'program_logs.log';
+        $file_name  = $directory . 'program_logs.txt';
 
         // Append the current datetime to the log entry
         $current_datetime = date( 'Y-m-d H:i:s' );
