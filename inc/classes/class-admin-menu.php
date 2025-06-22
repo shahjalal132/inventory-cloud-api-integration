@@ -25,11 +25,11 @@ class Admin_Menu {
         // register sales/return import sub menu
         add_action( 'admin_menu', [ $this, 'wasp_sales_return_import_sub_menu_page' ] );
 
-        // register inventory-cloud-options sub menu
-        add_action( 'admin_menu', [ $this, 'wasp_inventory_cloud_settings_sub_menu_page' ] );
-
         // register cron jobs sub menu
         add_action( 'admin_menu', [ $this, 'wasp_cron_jobs_sub_menu_page' ] );
+
+        // register inventory-cloud-options sub menu
+        add_action( 'admin_menu', [ $this, 'wasp_inventory_cloud_settings_sub_menu_page' ] );
 
         // add plugin action links
         add_filter( 'plugin_action_links_' . PLUGIN_BASENAME, [ $this, 'add_plugin_action_links' ] );
@@ -37,6 +37,7 @@ class Admin_Menu {
         // Handle AJAX request to save options
         add_action( 'wp_ajax_save_inventory_cloud_options', [ $this, 'save_inventory_cloud_options' ] );
         add_action( 'wp_ajax_instant_update_inventory', [ $this, 'instant_update_inventory_callback' ] );
+        add_action( 'wp_ajax_run_wasp_endpoint', [ $this, 'run_wasp_endpoint' ] );
     }
 
     // Handle AJAX request to save options
@@ -131,88 +132,153 @@ class Admin_Menu {
         );
     }
 
+    private function get_api_endpoints() {
+        $site_url = site_url('/wp-json/atebol/v1/');
+        return [
+            'server-status' => [
+                'url' => $site_url . 'server-status',
+                'description' => 'Check if the server is up and running.',
+                'method' => 'GET'
+            ],
+            'insert-item-number-stock-db' => [
+                'url' => $site_url . 'insert-item-number-stock-db',
+                'description' => 'Sync all item numbers from Wasp to the local database.',
+                'method' => 'GET'
+            ],
+            'update-woo-product-stock' => [
+                'url' => $site_url . 'update-woo-product-stock',
+                'description' => 'Update WooCommerce product stock from the local database.',
+                'method' => 'GET'
+            ],
+            'prepare-sales-returns' => [
+                'url' => $site_url . 'prepare-sales-returns',
+                'description' => 'Prepare sales returns for import.',
+                'method' => 'GET'
+            ],
+            'prepare-woo-orders' => [
+                'url' => $site_url . 'prepare-woo-orders',
+                'description' => 'Prepare WooCommerce orders for import.',
+                'method' => 'GET'
+            ],
+            'import-sales-returns' => [
+                'url' => $site_url . 'import-sales-returns',
+                'description' => 'Import sales and returns into Wasp.',
+                'method' => 'GET'
+            ],
+            'import-woo-orders' => [
+                'url' => $site_url . 'import-woo-orders',
+                'description' => 'Import WooCommerce orders into Wasp.',
+                'method' => 'GET'
+            ],
+            'sales-returns-status' => [
+                'url' => $site_url . 'sales-returns-status',
+                'description' => 'Get the status summary of sales/returns sync.',
+                'method' => 'GET'
+            ],
+            'wasp-woo-orders-status' => [
+                'url' => $site_url . 'wasp-woo-orders-status',
+                'description' => 'Get the status summary of Woo orders sync.',
+                'method' => 'GET'
+            ],
+            'remove-completed-sales-returns' => [
+                'url' => $site_url . 'remove-completed-sales-returns',
+                'description' => 'Clean up old, completed sales/returns records.',
+                'method' => 'GET'
+            ],
+            'remove-completed-woo-orders' => [
+                'url' => $site_url . 'remove-completed-woo-orders',
+                'description' => 'Clean up old, completed Woo order records.',
+                'method' => 'GET'
+            ]
+        ];
+    }
+
     public function wasp_inventory_cloud_sub_menu_page_html() {
 
         $base_url         = get_option( 'inv_cloud_base_url' );
         $token            = get_option( 'inv_cloud_token' );
         $update_quantity  = get_option( 'inv_cloud_update_quantity' );
         $update_inventory = get_option( 'inv_cloud_update_inventory' );
-
+        $api_endpoints    = $this->get_api_endpoints();
         ?>
 
-        <div class="wasp-inv-container">
-            <h1 class="wasp-inv-container-title">Inventory Cloud Options</h1>
+        <div class="wasp-options-container">
+            <h1 class="wasp-options-title">Wasp Inventory Options</h1>
 
-            <div class="wasp-inventory-controller">
-                <h3>Inventory Management Controller</h3>
-                <div class="update-inventory-enabled-disabled inv-cloud-wrapper">
-                    <h4>Update Inventory Enable/Disable:</h4>
-                    <label>
-                        <input type="radio" name="update-inventory" id="update-inventory-enable" value="enable"
-                            <?= $update_inventory === 'enable' ? 'checked' : '' ?>>
-                        Enable
-                    </label>
-
-                    <label>
-                        <input type="radio" name="update-inventory" id="update-inventory-disable" value="disable"
-                            <?= $update_inventory === 'disable' ? 'checked' : '' ?>>
-                        Disable
-                    </label>
-                </div>
-
-                <div class="api-base-url inv-cloud-wrapper">
-                    <h4>Instant Update Inventory:</h4>
-                    <button type="button" id="instant-update-inventory" class="button button-primary">
-                        <div class="instant-update-inventory-wrapper">
-                            <span>Update Inventory</span>
-                            <span class="loader-wrapper"></span>
+            <div class="wasp-options-grid">
+                <!-- General Settings Card -->
+                <div class="wasp-options-card">
+                    <h2>General Settings</h2>
+                    <div class="wasp-form-group">
+                        <label>Update Inventory from Wasp</label>
+                        <div class="wasp-radio-group">
+                            <label><input type="radio" name="update-inventory" value="enable" <?= checked($update_inventory, 'enable'); ?>> Enable</label>
+                            <label><input type="radio" name="update-inventory" value="disable" <?= checked($update_inventory, 'disable'); ?>> Disable</label>
                         </div>
-                    </button>
+                    </div>
+                    <div class="wasp-form-group">
+                        <label for="inv-cloud-update_quantity">Products to Update</label>
+                        <input type="number" id="inv-cloud-update_quantity" name="update_quantity" value="<?= esc_attr($update_quantity) ?>" placeholder="e.g., 100">
+                        <p class="description">Number of products to update per batch from Wasp.</p>
+                    </div>
+                </div>
+
+                <!-- API Credentials Card -->
+                <div class="wasp-options-card">
+                    <h2>API Credentials</h2>
+                    <div class="wasp-form-group">
+                        <label for="inv-cloud-base-url">API Base URL</label>
+                        <input type="text" id="inv-cloud-base-url" name="api-base-url" value="<?= esc_attr($base_url) ?>" placeholder="https://atebol.waspinventorycloud.com">
+                    </div>
+                    <div class="wasp-form-group">
+                        <label for="inv-cloud-token">Authorization Token</label>
+                        <input type="password" id="inv-cloud-token" name="api-token" value="<?= esc_attr($token) ?>" placeholder="Enter your API token">
+                    </div>
                 </div>
             </div>
 
-            <div class="wasp-api-credentials">
-                <h3>Api Credentials</h3>
-                <div class="api-base-url inv-cloud-wrapper">
-                    <h4>API Base Url:</h4>
-                    <input type="text" placeholder="https://api.example.com" value="<?= esc_attr( $base_url ) ?>"
-                        name="api-base-url" id="inv-cloud-base-url" class="widefat" style="width: 20%">
-                </div>
-
-                <div class="inv-cloud-wrapper">
-                    <h4>Token:</h4>
-                    <input type="text" placeholder="token" value="<?= esc_attr( $token ) ?>" name="api-token"
-                        id="inv-cloud-token" class="widefat" style="width: 20%">
-                </div>
-
-                <div class="inv-cloud-wrapper">
-                    <h4>Update Quantity:</h4>
-                    <input type="number" placeholder="How many Products update per minute"
-                        value="<?= esc_attr( $update_quantity ) ?>" name="update_quantity" id="inv-cloud-update_quantity"
-                        class="widefat" style="width: 20%">
-                </div>
-
-                <button type="button" id="inv-cloud-save-btn" class="button button-primary">Save</button>
+            <div class="wasp-options-actions">
+                <button type="button" id="inv-cloud-save-btn" class="button button-primary">Save Changes</button>
             </div>
 
-            <?php
-            $site_url = site_url();
-            ?>
+            <!-- API Endpoints Card -->
+            <div class="wasp-options-card">
+                <h2>API Endpoints</h2>
+                <table class="wasp-endpoints-table">
+                    <thead>
+                        <tr>
+                            <th>Endpoint</th>
+                            <th>Description</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <?php foreach ($api_endpoints as $endpoint): ?>
+                            <tr>
+                                <td class="endpoint-url">
+                                    <span class="endpoint-method"><?= esc_html($endpoint['method']) ?></span>
+                                    <code><?= esc_html(str_replace(site_url(), '', $endpoint['url'])) ?></code>
+                                </td>
+                                <td><?= esc_html($endpoint['description']) ?></td>
+                                <td class="endpoint-actions">
+                                    <button class="button button-secondary run-endpoint-btn" data-url="<?= esc_url($endpoint['url']) ?>">
+                                        <span class="dashicons dashicons-controls-play"></span> Run
+                                    </button>
+                                    <button class="button button-secondary copy-endpoint-btn" data-url="<?= esc_url($endpoint['url']) ?>">
+                                        <span class="dashicons dashicons-admin-page"></span> Copy
+                                    </button>
+                                </td>
+                            </tr>
+                        <?php endforeach; ?>
+                    </tbody>
+                </table>
+            </div>
 
-            <div class="wasp-endpoints">
-                <h3>API Endpoints</h3>
-
-                <h4><?= esc_html( $site_url . '/wp-json/atebol/v1/server-status' ); ?></h4>
-                <h4><?= esc_html( $site_url . '/wp-json/atebol/v1/insert-item-number-stock-db' ); ?></h4>
-                <h4><?= esc_html( $site_url . '/wp-json/atebol/v1/update-woo-product-stock' ); ?></h4>
-                <h4><?= esc_html( $site_url . '/wp-json/atebol/v1/prepare-sales-returns' ); ?></h4>
-                <h4><?= esc_html( $site_url . '/wp-json/atebol/v1/prepare-woo-orders' ); ?></h4>
-                <h4><?= esc_html( $site_url . '/wp-json/atebol/v1/import-sales-returns' ); ?></h4>
-                <h4><?= esc_html( $site_url . '/wp-json/atebol/v1/import-woo-orders' ); ?></h4>
-                <h4><?= esc_html( $site_url . '/wp-json/atebol/v1/sales-returns-status' ); ?></h4>
-                <h4><?= esc_html( $site_url . '/wp-json/atebol/v1/wasp-woo-orders-status' ); ?></h4>
-                <h4><?= esc_html( $site_url . '/wp-json/atebol/v1/remove-completed-sales-returns' ); ?></h4>
-                <h4><?= esc_html( $site_url . '/wp-json/atebol/v1/remove-completed-woo-orders' ); ?></h4>
+            <!-- API Response Card -->
+            <div id="wasp-api-response-wrapper" class="wasp-options-card" style="display: none;">
+                <h2>API Response</h2>
+                <button id="clear-response-btn" class="button button-secondary">Clear</button>
+                <pre id="wasp-api-response"></pre>
             </div>
         </div>
 
@@ -229,6 +295,42 @@ class Admin_Menu {
 
     public function wasp_cron_jobs_sub_menu_page_html() {
         include_once PLUGIN_BASE_PATH . '/templates/menus/wasp-cron-jobs.php';
+    }
+
+    public function run_wasp_endpoint() {
+        check_ajax_referer( 'inv_cloud_nonce', 'nonce' );
+
+        if ( ! current_user_can( 'manage_options' ) ) {
+            wp_send_json_error( [ 'message' => 'Permission denied.' ], 403 );
+        }
+
+        $url = esc_url_raw( $_POST['url'] );
+        $this->put_program_logs( "Wasp endpoint url: " . $url );
+
+        $response = wp_remote_get( $url, [
+            'timeout'   => 60,
+            'sslverify' => false,
+            'headers'   => [
+                'Authorization' => 'Bearer ' . get_option( 'inv_cloud_token' )
+            ]
+        ] );
+
+        $this->put_program_logs( "Wasp endpoint response: " . json_encode( $response ) );
+
+        if ( is_wp_error( $response ) ) {
+            wp_send_json_error( [
+                'message' => $response->get_error_message()
+            ], 500 );
+        } else {
+            $body = wp_remote_retrieve_body( $response );
+            $data = json_decode( $body, true ); // Use true for associative array
+
+            if ( json_last_error() !== JSON_ERROR_NONE ) {
+                // If not JSON, return as plain text
+                wp_send_json_success( ['data' => $body, 'is_json' => false] );
+            }
+            wp_send_json_success( ['data' => $data, 'is_json' => true] );
+        }
     }
 
     public function instant_update_inventory_callback() {

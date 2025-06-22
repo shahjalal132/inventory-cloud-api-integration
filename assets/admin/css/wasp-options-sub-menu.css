@@ -52,3 +52,181 @@
   padding-top: 0;
   margin-bottom: 40px;
 }
+
+/* Wasp Options Page Redesign */
+
+.wasp-options-container {
+    margin-top: 20px;
+}
+
+.wasp-options-title {
+    font-size: 28px;
+    font-weight: 600;
+    margin-bottom: 30px;
+}
+
+.wasp-options-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
+    gap: 30px;
+    margin-bottom: 30px;
+}
+
+.wasp-options-card {
+    background: #fff;
+    padding: 25px;
+    border: 1px solid #ddd;
+    border-radius: 8px;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.05);
+}
+
+.wasp-options-card h2 {
+    font-size: 20px;
+    font-weight: 600;
+    margin-top: 0;
+    margin-bottom: 25px;
+    padding-bottom: 15px;
+    border-bottom: 1px solid #eee;
+}
+
+.wasp-form-group {
+    margin-bottom: 20px;
+}
+
+.wasp-form-group label {
+    display: block;
+    font-weight: 600;
+    margin-bottom: 8px;
+}
+
+.wasp-form-group input[type="text"],
+.wasp-form-group input[type="password"],
+.wasp-form-group input[type="number"] {
+    width: 100%;
+    padding: 10px;
+    border-radius: 4px;
+    border: 1px solid #ccc;
+}
+
+.wasp-form-group .description {
+    font-size: 13px;
+    color: #666;
+    margin-top: 8px;
+}
+
+.wasp-radio-group {
+    display: flex;
+    gap: 20px;
+}
+
+.wasp-radio-group label {
+    font-weight: normal;
+}
+
+.wasp-options-actions {
+    margin-bottom: 30px;
+}
+
+/* Endpoints Table */
+.wasp-endpoints-table {
+    width: 100%;
+    border-collapse: collapse;
+}
+
+.wasp-endpoints-table th,
+.wasp-endpoints-table td {
+    padding: 15px;
+    text-align: left;
+    border-bottom: 1px solid #eee;
+}
+
+.wasp-endpoints-table th {
+    font-weight: 600;
+    background: #f9f9f9;
+}
+
+.wasp-endpoints-table .endpoint-url {
+    font-family: monospace;
+}
+
+.wasp-endpoints-table .endpoint-method {
+    display: inline-block;
+    padding: 3px 8px;
+    font-weight: bold;
+    border-radius: 4px;
+    background: #e3f2fd;
+    color: #1565c0;
+    margin-right: 10px;
+}
+
+.wasp-endpoints-table .endpoint-actions {
+    display: flex;
+    gap: 10px;
+}
+
+.wasp-endpoints-table .endpoint-actions .button {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+}
+
+.wasp-endpoints-table .run-endpoint-btn.is-loading .dashicons {
+    animation: spin 1s linear infinite;
+}
+
+/* API Response Viewer */
+#wasp-api-response-wrapper {
+    position: relative;
+}
+
+#clear-response-btn {
+    position: absolute;
+    top: 20px;
+    right: 20px;
+}
+
+#wasp-api-response {
+    background: #2d2d2d;
+    color: #f1f1f1;
+    padding: 20px;
+    border-radius: 4px;
+    white-space: pre-wrap;
+    word-break: break-all;
+    max-height: 500px;
+    overflow-y: auto;
+}
+
+@keyframes spin {
+    to { transform: rotate(360deg); }
+}
+
+/* Toast Notifications */
+.wasp-toast {
+    position: fixed;
+    bottom: 20px;
+    right: 20px;
+    padding: 15px 25px;
+    border-radius: 6px;
+    background: #333;
+    color: #fff;
+    font-size: 16px;
+    font-weight: 500;
+    z-index: 100000;
+    box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+    transform: translateY(150%);
+    opacity: 0;
+    transition: all 0.3s cubic-bezier(0.215, 0.610, 0.355, 1);
+}
+
+.wasp-toast.show {
+    transform: translateY(0);
+    opacity: 1;
+}
+
+.wasp-toast.success {
+    background: #28a745;
+}
+
+.wasp-toast.error {
+    background: #dc3545;
+}
