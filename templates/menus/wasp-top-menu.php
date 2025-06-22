@@ -65,5 +65,20 @@
                 </p>
             </div>
         </a>
+
+        <!-- Cron Jobs Card -->
+        <a href="<?= esc_url( admin_url( 'admin.php?page=wasp-cron-jobs' ) ); ?>" class="wasp-inv-card-link">
+            <div class="wasp-inv-card">
+                <div class="wasp-inv-card-icon">
+                    <svg class="wasp-inv-icon" viewBox="0 0 24 24">
+                        <path d="M12,2A10,10 0 0,0 2,12A10,10 0 0,0 12,22A10,10 0 0,0 22,12A10,10 0 0,0 12,2M12,4A8,8 0 0,1 20,12A8,8 0 0,1 12,20A8,8 0 0,1 4,12A8,8 0 0,1 12,4M12.5,7V12.25L17,14.92L16.25,16.15L11,13V7H12.5Z" />
+                    </svg>
+                </div>
+                <h3 class="wasp-inv-card-title">Cron Jobs</h3>
+                <p class="wasp-inv-card-description">
+                    Manage automated tasks: enable/disable cron jobs for data processing.
+                </p>
+            </div>
+        </a>
     </div>
 </div>

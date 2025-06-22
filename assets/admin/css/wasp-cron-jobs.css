@@ -1,0 +1,252 @@
+/* WASP Cron Jobs Styles */
+
+.wasp-cron-jobs-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
+    gap: 20px;
+    margin: 20px 0;
+}
+
+.wasp-cron-job-card {
+    background: #fff;
+    border: 1px solid #ddd;
+    border-radius: 8px;
+    padding: 20px;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    transition: all 0.3s ease;
+}
+
+.wasp-cron-job-card:hover {
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
+    transform: translateY(-2px);
+}
+
+.wasp-cron-job-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 15px;
+    padding-bottom: 15px;
+    border-bottom: 1px solid #eee;
+}
+
+.wasp-cron-job-title {
+    margin: 0;
+    font-size: 18px;
+    font-weight: 600;
+    color: #333;
+}
+
+.wasp-cron-job-status {
+    padding: 4px 12px;
+    border-radius: 20px;
+    font-size: 12px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.wasp-cron-job-status.enabled {
+    background: #d4edda;
+    color: #155724;
+    border: 1px solid #c3e6cb;
+}
+
+.wasp-cron-job-status.disabled {
+    background: #f8d7da;
+    color: #721c24;
+    border: 1px solid #f5c6cb;
+}
+
+.wasp-cron-job-details {
+    margin-bottom: 20px;
+}
+
+.wasp-cron-job-description {
+    color: #666;
+    line-height: 1.5;
+    margin-bottom: 10px;
+}
+
+.wasp-cron-job-next-run {
+    font-size: 13px;
+    color: #888;
+    margin: 0;
+}
+
+.wasp-cron-job-controls {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 15px;
+}
+
+.wasp-cron-job-toggle {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.toggle-label {
+    font-size: 14px;
+    font-weight: 500;
+    color: #555;
+}
+
+/* Switch Toggle */
+.switch {
+    position: relative;
+    display: inline-block;
+    width: 50px;
+    height: 24px;
+}
+
+.switch input {
+    opacity: 0;
+    width: 0;
+    height: 0;
+}
+
+.slider {
+    position: absolute;
+    cursor: pointer;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-color: #ccc;
+    transition: .4s;
+    border-radius: 24px;
+}
+
+.slider:before {
+    position: absolute;
+    content: "";
+    height: 18px;
+    width: 18px;
+    left: 3px;
+    bottom: 3px;
+    background-color: white;
+    transition: .4s;
+    border-radius: 50%;
+}
+
+input:checked + .slider {
+    background-color: #2196F3;
+}
+
+input:focus + .slider {
+    box-shadow: 0 0 1px #2196F3;
+}
+
+input:checked + .slider:before {
+    transform: translateX(26px);
+}
+
+.run-now-btn {
+    background: #28a745 !important;
+    border-color: #28a745 !important;
+    color: white !important;
+    padding: 8px 16px !important;
+    font-size: 13px !important;
+    border-radius: 4px !important;
+    transition: all 0.3s ease !important;
+}
+
+.run-now-btn:hover {
+    background: #218838 !important;
+    border-color: #1e7e34 !important;
+    transform: translateY(-1px) !important;
+}
+
+.run-now-btn:disabled {
+    background: #6c757d !important;
+    border-color: #6c757d !important;
+    cursor: not-allowed !important;
+    transform: none !important;
+}
+
+/* Information Section */
+.wasp-cron-jobs-info {
+    background: #f8f9fa;
+    border: 1px solid #e9ecef;
+    border-radius: 8px;
+    padding: 20px;
+    margin-top: 30px;
+}
+
+.wasp-cron-jobs-info h3 {
+    margin-top: 0;
+    color: #333;
+    font-size: 18px;
+}
+
+.wasp-cron-jobs-info ul {
+    margin: 0;
+    padding-left: 20px;
+}
+
+.wasp-cron-jobs-info li {
+    margin-bottom: 8px;
+    color: #666;
+    line-height: 1.5;
+}
+
+.wasp-cron-jobs-info strong {
+    color: #333;
+}
+
+/* Loading States */
+.wasp-cron-job-card.loading {
+    opacity: 0.7;
+    pointer-events: none;
+}
+
+.wasp-cron-job-card.loading .run-now-btn {
+    position: relative;
+}
+
+.wasp-cron-job-card.loading .run-now-btn::after {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: 16px;
+    height: 16px;
+    margin: -8px 0 0 -8px;
+    border: 2px solid transparent;
+    border-top: 2px solid white;
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+    .wasp-cron-jobs-grid {
+        grid-template-columns: 1fr;
+    }
+    
+    .wasp-cron-job-card {
+        padding: 15px;
+    }
+    
+    .wasp-cron-job-header {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 10px;
+    }
+    
+    .wasp-cron-job-controls {
+        flex-direction: column;
+        align-items: stretch;
+    }
+    
+    .wasp-cron-job-toggle {
+        justify-content: center;
+    }
+} 

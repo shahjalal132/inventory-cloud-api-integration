@@ -28,6 +28,9 @@ class Admin_Menu {
         // register inventory-cloud-options sub menu
         add_action( 'admin_menu', [ $this, 'wasp_inventory_cloud_settings_sub_menu_page' ] );
 
+        // register cron jobs sub menu
+        add_action( 'admin_menu', [ $this, 'wasp_cron_jobs_sub_menu_page' ] );
+
         // add plugin action links
         add_filter( 'plugin_action_links_' . PLUGIN_BASENAME, [ $this, 'add_plugin_action_links' ] );
 
@@ -114,6 +117,17 @@ class Admin_Menu {
             'manage_options',
             'wasp-sales-return-import',
             [ $this, 'wasp_sales_return_import_sub_menu_page_html' ]
+        );
+    }
+
+    public function wasp_cron_jobs_sub_menu_page() {
+        add_submenu_page(
+            'wasp-settings',
+            'Wasp Cron Jobs',
+            'Wasp Cron Jobs',
+            'manage_options',
+            'wasp-cron-jobs',
+            [ $this, 'wasp_cron_jobs_sub_menu_page_html' ]
         );
     }
 
@@ -211,6 +225,10 @@ class Admin_Menu {
 
     public function wasp_sales_return_import_sub_menu_page_html() {
         include_once PLUGIN_BASE_PATH . '/templates/menus/wasp-sales-return-import.php';
+    }
+
+    public function wasp_cron_jobs_sub_menu_page_html() {
+        include_once PLUGIN_BASE_PATH . '/templates/menus/wasp-cron-jobs.php';
     }
 
     public function instant_update_inventory_callback() {

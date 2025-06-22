@@ -86,6 +86,20 @@ class Enqueue_Assets {
                 'nonce'    => wp_create_nonce( 'wasp_cloud_nonce' ),
             ] );
         }
+
+        if ( 'wasp-settings_page_wasp-cron-jobs' === $page_now ) {
+            // enqueue css
+            wp_enqueue_style( "wasp-cron-jobs", PLUGIN_ADMIN_ASSETS_DIR_URL . "/css/wasp-cron-jobs.css", [], time(), "all" );
+
+            // enqueue js
+            wp_enqueue_script( "wasp-cron-jobs-scripts", PLUGIN_ADMIN_ASSETS_DIR_URL . "/js/wasp-cron-jobs.js", [ 'jquery' ], time(), true );
+
+            // localize js
+            wp_localize_script( 'wasp-cron-jobs-scripts', 'waspCronAjax', [
+                'ajax_url' => admin_url( 'admin-ajax.php' ),
+                'nonce'    => wp_create_nonce( 'wasp_cron_nonce' ),
+            ] );
+        }
     }
 
     /**
