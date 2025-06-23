@@ -6,6 +6,8 @@
       let apiToken = $("#inv-cloud-token").val();
       let updateQuantity = $("#inv-cloud-update_quantity").val();
       let updateInventory = $("input[name='update-inventory']:checked").val();
+      let apiUsername = $("#inv-cloud-api-username").val();
+      let apiPassword = $("#inv-cloud-api-password").val();
 
       // Use the new toast notification for feedback
       const $button = $(this);
@@ -20,6 +22,8 @@
           api_token: apiToken,
           update_quantity: updateQuantity,
           update_inventory: updateInventory,
+          api_username: apiUsername,
+          api_password: apiPassword,
           nonce: invCloudAjax.nonce,
         },
         success: function (response) {

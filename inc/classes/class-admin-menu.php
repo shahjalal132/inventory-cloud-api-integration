@@ -55,12 +55,16 @@ class Admin_Menu {
         $api_token        = sanitize_text_field( $_POST['api_token'] );
         $update_quantity  = sanitize_text_field( $_POST['update_quantity'] );
         $update_inventory = sanitize_text_field( $_POST['update_inventory'] );
+        $api_username     = sanitize_text_field( $_POST['api_username'] ?? '' );
+        $api_password     = sanitize_text_field( $_POST['api_password'] ?? '' );
 
         // Update the options in the database
         update_option( 'inv_cloud_base_url', $api_base_url );
         update_option( 'inv_cloud_token', $api_token );
         update_option( 'inv_cloud_update_quantity', $update_quantity );
         update_option( 'inv_cloud_update_inventory', $update_inventory );
+        update_option( 'inv_cloud_api_username', $api_username );
+        update_option( 'inv_cloud_api_password', $api_password );
 
         wp_send_json_success( [ 'message' => 'Options saved successfully.' ] );
     }
@@ -199,6 +203,8 @@ class Admin_Menu {
         $token            = get_option( 'inv_cloud_token' );
         $update_quantity  = get_option( 'inv_cloud_update_quantity' );
         $update_inventory = get_option( 'inv_cloud_update_inventory' );
+        $api_username     = get_option( 'inv_cloud_api_username' );
+        $api_password     = get_option( 'inv_cloud_api_password' );
         $api_endpoints    = $this->get_api_endpoints();
         ?>
 
@@ -233,6 +239,14 @@ class Admin_Menu {
                     <div class="wasp-form-group">
                         <label for="inv-cloud-token">Authorization Token</label>
                         <input type="password" id="inv-cloud-token" name="api-token" value="<?= esc_attr($token) ?>" placeholder="Enter your API token">
+                    </div>
+                    <div class="wasp-form-group">
+                        <label for="inv-cloud-api-username">API Username (Basic Auth)</label>
+                        <input type="text" id="inv-cloud-api-username" name="api-username" value="<?= esc_attr($api_username) ?>" placeholder="Enter API username">
+                    </div>
+                    <div class="wasp-form-group">
+                        <label for="inv-cloud-api-password">API Password (Basic Auth)</label>
+                        <input type="password" id="inv-cloud-api-password" name="api-password" value="<?= esc_attr($api_password) ?>" placeholder="Enter API password">
                     </div>
                 </div>
             </div>
@@ -306,12 +320,17 @@ class Admin_Menu {
 
         $url = esc_url_raw( $_POST['url'] );
 
+        $api_username = get_option( 'inv_cloud_api_username' );
+        $api_password = get_option( 'inv_cloud_api_password' );
+        $headers = [];
+        if ( $api_username && $api_password ) {
+            $headers['Authorization'] = 'Basic ' . base64_encode( $api_username . ':' . $api_password );
+        }
+
         $response = wp_remote_get( $url, [
             'timeout'   => 60,
             'sslverify' => false,
-            'headers'   => [
-                'Authorization' => 'Bearer ' . get_option( 'inv_cloud_token' )
-            ]
+            'headers'   => $headers,
         ] );
 
         if ( is_wp_error( $response ) ) {
