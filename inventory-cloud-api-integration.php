@@ -4,7 +4,7 @@
  *  
  * Plugin Name: Inventory Cloud API Integration
  * Plugin URI:  https://github.com/shahjalal132/inventory-cloud-api-integration
- * Author:      Sujon
+ * Author:      Shah Jalal
  * Author URI:  https://github.com/shahjalal132
  * Description: Update inventory in woocommerce and store bidirectionally
  * Version:     2.0.0
