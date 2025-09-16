@@ -1,0 +1,114 @@
+/**
+ * import sales returns data
+ */
+public function handle_import_sales_returns( $request ) {
+    global $wpdb;
+    $table = $wpdb->prefix . 'sync_sales_returns_data';
+
+    // Get limit from query param, default 10, max 100
+    $limit = intval( $request->get_param( 'limit' ) );
+    $limit = $limit <= 0 ? 10 : min( $limit, 100 );
+
+    // Get all READY items with limit
+    $ready_items = $wpdb->get_results(
+        $wpdb->prepare( "SELECT * FROM $table WHERE status = 'READY' LIMIT %d", $limit )
+    );
+    if ( empty( $ready_items ) ) {
+        return new \WP_REST_Response( [ 'message' => 'No items found.' ], 200 );
+    }
+
+    $results       = [];
+    $processed     = 0;
+    $add_count     = 0;
+    $remove_count  = 0;
+    $error_count   = 0;
+    $success_count = 0;
+
+    foreach ( $ready_items as $item ) {
+        $payload = [];
+        $api_result = null;
+
+        if ( strtoupper( $item->type ) === 'RETURN' ) {
+            $payload = [
+                'ItemNumber'     => $item->item_number,
+                'Cost'           => $item->cost,
+                'DateAcquired'   => $item->date_acquired,
+                'CustomerNumber' => $item->customer_number,
+                'SiteName'       => $item->site_name,
+                'LocationCode'   => $item->location_code,
+                'Quantity'       => $item->quantity,
+            ];
+
+            $api_result = $this->transaction_add_api( $this->token, [ $payload ] ); // send as array
+            $add_count++;
+            $results['add'][] = [
+                'id'       => $item->id,
+                'payload'  => $payload,
+                'response' => $api_result,
+            ];
+        }
+        elseif ( strtoupper( $item->type ) === 'SALE' ) {
+            $payload = [
+                'ItemNumber'     => $item->item_number,
+                'CustomerNumber' => $item->customer_number,
+                'SiteName'       => $item->site_name,
+                'LocationCode'   => $item->location_code,
+                'Quantity'       => $item->quantity,
+                'DateRemoved'    => $item->date_acquired,
+            ];
+
+            $api_result = $this->transaction_remove_api( $this->token, [ $payload ] ); // send as array
+            $remove_count++;
+            $results['remove'][] = [
+                'id'       => $item->id,
+                'payload'  => $payload,
+                'response' => $api_result,
+            ];
+        }
+
+        // log request/response
+        $this->put_program_logs( "Transaction API Payload (ID {$item->id}): " . json_encode( $payload ) );
+        $this->put_program_logs( "Transaction API Result (ID {$item->id}): " . json_encode( $api_result ) );
+
+        // determine status
+        $new_status = 'ERROR';
+        if ( isset( $api_result['result'] ) && $api_result['result'] === 'success' ) {
+            $new_status = 'COMPLETED';
+            $success_count++;
+        } else {
+            $error_count++;
+        }
+
+        // update this item only
+        $wpdb->update( $table, [ 'status' => $new_status ], [ 'id' => $item->id ] );
+
+        $processed++;
+    }
+
+    // Prepare summary
+    $summary_message = sprintf(
+        'Processed %d items. %d completed, %d errors. (%d add, %d remove)',
+        $processed,
+        $success_count,
+        $error_count,
+        $add_count,
+        $remove_count
+    );
+
+    // HTTP status logic
+    $http_status = $error_count > 0
+        ? ( $success_count > 0 ? 207 : 500 )
+        : 200;
+
+    return new \WP_REST_Response( [
+        'message' => $summary_message,
+        'summary' => [
+            'total_processed' => $processed,
+            'success_count'   => $success_count,
+            'error_count'     => $error_count,
+            'add_count'       => $add_count,
+            'remove_count'    => $remove_count,
+        ],
+        'results' => $results,
+    ], $http_status );
+}

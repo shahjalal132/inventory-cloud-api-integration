@@ -265,12 +265,13 @@ class Wasp_Rest_Api {
             return new \WP_REST_Response( [ 'message' => 'No items found.' ], 200 );
         }
 
-        // Step 3: Prepare remove payload
-        $remove_payload = [];
-        $remove_ids     = [];
+        $results     = [];
+        $success_cnt = 0;
+        $error_cnt   = 0;
 
+        // Step 3: Loop each item, call API one by one
         foreach ( $ready_items as $item ) {
-            $remove_payload[] = [
+            $payload = [
                 'ItemNumber'     => $item->item_number,
                 'CustomerNumber' => $item->customer_number,
                 'SiteName'       => $item->site_name,
@@ -278,45 +279,49 @@ class Wasp_Rest_Api {
                 'Quantity'       => $item->quantity,
                 'DateRemoved'    => $item->remove_date,
             ];
-            $remove_ids[]     = $item->id;
-        }
 
-        $results       = [];
-        $remove_result = null;
+            // Call remove API per item
+            $remove_result = $this->transaction_remove_api( $this->token, [ $payload ] );
 
-        // Step 4: Call remove API
-        if ( !empty( $remove_payload ) ) {
-            $remove_result     = $this->transaction_remove_api( $this->token, $remove_payload );
-            $results['remove'] = $remove_result;
+            // Log if needed
+            // $this->put_program_logs( "Transaction Remove API Payload: " . json_encode( $payload ) );
+            // $this->put_program_logs( "Transaction Remove API Result: " . json_encode( $remove_result ) );
 
-            $this->put_program_logs("Transaction Remove API Payload: " . json_encode($remove_payload));
-            $this->put_program_logs("Transaction Remove API Result: " . json_encode($remove_result));
-
-            // Update status for each item
+            // Update status based on response
             $new_status = ( $remove_result['result'] === 'success' ) ? 'COMPLETED' : 'ERROR';
-            foreach ( $remove_ids as $id ) {
-                $wpdb->update( $table, [ 'status' => $new_status ], [ 'id' => $id ] );
+            $wpdb->update( $table, [ 'status' => $new_status ], [ 'id' => $item->id ] );
+
+            if ( $new_status === 'COMPLETED' ) {
+                $success_cnt++;
+            } else {
+                $error_cnt++;
             }
+
+            $results[] = [
+                'id'       => $item->id,
+                'item_num' => $item->item_number,
+                'result'   => $remove_result,
+                'status'   => $new_status,
+            ];
         }
 
-        // Step 5: Prepare summary
+        // Step 4: Prepare summary
         $summary_message = sprintf(
-            'Total %d Items processed. %d Items removed.',
+            'Total %d items processed. %d completed, %d failed.',
             count( $ready_items ),
-            count( $remove_ids )
+            $success_cnt,
+            $error_cnt
         );
 
-        // Step 6: Determine HTTP status code
-        $http_status = 200;
-        if ( $remove_result && $remove_result['result'] === 'error' ) {
-            $http_status = 500;
-        }
+        // Step 5: HTTP status code
+        $http_status = ( $error_cnt > 0 ) ? ( $success_cnt > 0 ? 207 : 500 ) : 200;
 
         return new \WP_REST_Response( [
             'message' => $summary_message,
             'summary' => [
                 'total_processed' => count( $ready_items ),
-                'remove_count'    => count( $remove_ids ),
+                'success_count'   => $success_cnt,
+                'error_count'     => $error_cnt,
             ],
             'results' => $results,
         ], $http_status );
@@ -545,30 +550,31 @@ class Wasp_Rest_Api {
         global $wpdb;
         $table = $wpdb->prefix . 'sync_sales_returns_data';
 
-        // get limit from query param, default 10, max 100
+        // Get limit from query param, default 10, max 100
         $limit = intval( $request->get_param( 'limit' ) );
-        if ( $limit <= 0 )
-            $limit = 10;
-        if ( $limit > 100 )
-            $limit = 100;
+        $limit = $limit <= 0 ? 10 : min( $limit, 100 );
 
         // Get all READY items with limit
-        $ready_items = $wpdb->get_results( $wpdb->prepare( "SELECT * FROM $table WHERE status = 'READY' LIMIT %d", $limit ) );
+        $ready_items = $wpdb->get_results(
+            $wpdb->prepare( "SELECT * FROM $table WHERE status = 'READY' LIMIT %d", $limit )
+        );
         if ( empty( $ready_items ) ) {
             return new \WP_REST_Response( [ 'message' => 'No items found.' ], 200 );
         }
 
-        // Prepare payloads
-        $add_payload    = [];
-        $remove_payload = [];
-        $add_ids        = [];
-        $remove_ids     = [];
-        $add_count      = 0;
-        $remove_count   = 0;
+        $results       = [];
+        $processed     = 0;
+        $add_count     = 0;
+        $remove_count  = 0;
+        $error_count   = 0;
+        $success_count = 0;
 
         foreach ( $ready_items as $item ) {
+            $payload    = [];
+            $api_result = null;
+
             if ( strtoupper( $item->type ) === 'RETURN' ) {
-                $add_payload[] = [
+                $payload = [
                     'ItemNumber'     => $item->item_number,
                     'Cost'           => $item->cost,
                     'DateAcquired'   => $item->date_acquired,
@@ -577,10 +583,16 @@ class Wasp_Rest_Api {
                     'LocationCode'   => $item->location_code,
                     'Quantity'       => $item->quantity,
                 ];
-                $add_ids[]     = $item->id;
+
+                $api_result = $this->transaction_add_api( $this->token, [ $payload ] ); // send as array
                 $add_count++;
+                $results['add'][] = [
+                    'id'       => $item->id,
+                    'payload'  => $payload,
+                    'response' => $api_result,
+                ];
             } elseif ( strtoupper( $item->type ) === 'SALE' ) {
-                $remove_payload[] = [
+                $payload = [
                     'ItemNumber'     => $item->item_number,
                     'CustomerNumber' => $item->customer_number,
                     'SiteName'       => $item->site_name,
@@ -588,68 +600,58 @@ class Wasp_Rest_Api {
                     'Quantity'       => $item->quantity,
                     'DateRemoved'    => $item->date_acquired,
                 ];
-                $remove_ids[]     = $item->id;
+
+                $api_result = $this->transaction_remove_api( $this->token, [ $payload ] ); // send as array
                 $remove_count++;
+                $results['remove'][] = [
+                    'id'       => $item->id,
+                    'payload'  => $payload,
+                    'response' => $api_result,
+                ];
             }
+
+            // log request/response
+            // $this->put_program_logs( "Transaction API Payload (ID {$item->id}): " . json_encode( $payload ) );
+            // $this->put_program_logs( "Transaction API Result (ID {$item->id}): " . json_encode( $api_result ) );
+
+            // determine status
+            $new_status = 'ERROR';
+            if ( isset( $api_result['result'] ) && $api_result['result'] === 'success' ) {
+                $new_status = 'COMPLETED';
+                $success_count++;
+            } else {
+                $error_count++;
+            }
+
+            // update this item only
+            $wpdb->update( $table, [ 'status' => $new_status ], [ 'id' => $item->id ] );
+
+            $processed++;
         }
 
-        $results       = [];
-        $add_result    = null;
-        $remove_result = null;
-
-        // Call add API to add items
-        if ( !empty( $add_payload ) ) {
-            $add_result     = $this->transaction_add_api( $this->token, $add_payload );
-            $results['add'] = $add_result;
-
-            $this->put_program_logs("Transaction Add API Payload: " . json_encode($add_payload));
-            $this->put_program_logs("Transaction Add API Result: " . json_encode($add_result));
-
-            // update status to COMPLETED or ERROR for each item
-            $new_status = ( $add_result['result'] === 'success' ) ? 'COMPLETED' : 'ERROR';
-            foreach ( $add_ids as $id ) {
-                $wpdb->update( $table, [ 'status' => $new_status ], [ 'id' => $id ] );
-            }
-        }
-
-        // Call remove API to remove items
-        if ( !empty( $remove_payload ) ) {
-            $remove_result     = $this->transaction_remove_api( $this->token, $remove_payload );
-            $results['remove'] = $remove_result;
-
-            $this->put_program_logs("Transaction Remove API Payload: " . json_encode($remove_payload));
-            $this->put_program_logs("Transaction Remove API Result: " . json_encode($remove_result));
-
-            // update status to COMPLETED or ERROR for each item
-            $new_status = ( $remove_result['result'] === 'success' ) ? 'COMPLETED' : 'ERROR';
-            foreach ( $remove_ids as $id ) {
-                $wpdb->update( $table, [ 'status' => $new_status ], [ 'id' => $id ] );
-            }
-        }
-
-        // Prepare summary message
+        // Prepare summary
         $summary_message = sprintf(
-            'Total %d Items processed. %d Items (remove) %d Items (add).',
-            count( $ready_items ),
-            $remove_count,
-            $add_count
+            'Processed %d items. %d completed, %d errors. (%d add, %d remove)',
+            $processed,
+            $success_count,
+            $error_count,
+            $add_count,
+            $remove_count
         );
 
-        // Determine HTTP status code
-        $http_status = 200;
-        if ( ( $add_result && $add_result['result'] === 'error' ) || ( $remove_result && $remove_result['result'] === 'error' ) ) {
-            $http_status = 207;
-        }
-        if ( ( $add_result && $add_result['result'] === 'error' && $add_count > 0 ) && ( $remove_result && $remove_result['result'] === 'error' && $remove_count > 0 ) ) {
-            $http_status = 500;
-        }
+        // HTTP status logic
+        $http_status = $error_count > 0
+            ? ( $success_count > 0 ? 207 : 500 )
+            : 200;
 
         return new \WP_REST_Response( [
             'message' => $summary_message,
             'summary' => [
-                'total_processed' => count( $ready_items ),
-                'remove_count'    => $remove_count,
+                'total_processed' => $processed,
+                'success_count'   => $success_count,
+                'error_count'     => $error_count,
                 'add_count'       => $add_count,
+                'remove_count'    => $remove_count,
             ],
             'results' => $results,
         ], $http_status );
