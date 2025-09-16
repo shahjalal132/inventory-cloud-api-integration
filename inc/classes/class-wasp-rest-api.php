@@ -427,6 +427,9 @@ class Wasp_Rest_Api {
             // 3. get item details from api
             $api_result = $this->get_item_details_api( $this->token, $item->item_number );
 
+            // log api response
+            // $this->put_program_logs( "API response for item number {$item->item_number}: " . json_encode( $api_result ) . "\n" );
+
             if ( $api_result['result'] === 'success' ) {
                 $response_data = json_decode( $api_result['api_response'], true );
 
@@ -847,8 +850,10 @@ class Wasp_Rest_Api {
     /**
      * call the item inventory search API
      */
+    /**
+     * call the item inventory search API
+     */
     private function get_item_details_api( $token, $item_number ) {
-        // if token and item_number are empty, return error
         if ( empty( $token ) || empty( $item_number ) ) {
             return [
                 'status_code'   => 400,
@@ -857,15 +862,27 @@ class Wasp_Rest_Api {
             ];
         }
 
-        // prepare api url
+        $cache_key = 'sales_return_item_' . md5( $item_number );
+
+        // ✅ Check transient cache
+        $cached = get_transient( $cache_key );
+        if ( $cached !== false ) {
+            // $this->put_program_logs( "Cache hit for item number {$item_number}" );
+
+            return [
+                'status_code'  => 200,
+                'result'       => 'success',
+                'api_response' => $cached,
+                'cache'        => 'hit',
+            ];
+        }
+
+        // 🚀 Cache miss → Call API
+        // $this->put_program_logs( "Cache miss for item number {$item_number}" );
+
         $api_url = sprintf( "%s/public-api/ic/item/inventorysearch", $this->api_base_url );
+        $payload = [ 'ItemNumber' => $item_number ];
 
-        // prepare payload
-        $payload = [
-            'ItemNumber' => $item_number,
-        ];
-
-        // call api
         $response = wp_remote_post( $api_url, [
             'headers' => [
                 'Content-Type'  => 'application/json',
@@ -875,7 +892,6 @@ class Wasp_Rest_Api {
             'timeout' => $this->timeout,
         ] );
 
-        // retrieve response status code
         $status_code = wp_remote_retrieve_response_code( $response );
 
         if ( is_wp_error( $response ) ) {
@@ -884,34 +900,28 @@ class Wasp_Rest_Api {
                 'result'        => 'error',
                 'error_message' => $response->get_error_message(),
             ];
+        }
+
+        $response_body = wp_remote_retrieve_body( $response );
+        $response_data = json_decode( $response_body, true );
+
+        if ( isset( $response_data['Data'] ) && !empty( $response_data['Data'] ) ) {
+            // ✅ Store in transient for 30 days
+            set_transient( $cache_key, $response_body, 30 * DAY_IN_SECONDS );
+
+            return [
+                'status_code'  => $status_code,
+                'result'       => 'success',
+                'api_response' => $response_body,
+                'cache'        => 'miss',
+            ];
         } else {
-            $response_body = wp_remote_retrieve_body( $response );
-            $response_data = json_decode( $response_body, true );
-
-            // Check if API response indicates success
-            $is_success    = false;
-            $error_message = 'Unknown error';
-
-            if ( isset( $response_data['Data'] ) && !empty( $response_data['Data'] ) ) {
-                $is_success = true;
-            } else {
-                $error_message = 'No data found for the item';
-            }
-
-            if ( $is_success ) {
-                return [
-                    'status_code'  => $status_code,
-                    'result'       => 'success',
-                    'api_response' => $response_body,
-                ];
-            } else {
-                return [
-                    'status_code'   => $status_code,
-                    'result'        => 'error',
-                    'error_message' => $error_message,
-                    'api_response'  => $response_body,
-                ];
-            }
+            return [
+                'status_code'   => $status_code,
+                'result'        => 'error',
+                'error_message' => 'No data found for the item',
+                'api_response'  => $response_body,
+            ];
         }
     }
 
