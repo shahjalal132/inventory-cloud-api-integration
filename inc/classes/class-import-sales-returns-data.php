@@ -52,7 +52,7 @@ class Import_Sales_Returns_Data {
 
         $date_message = sprintf( 'Importing data for %s %s and date acquired: %s', $month, $year, $date_acquired );
         // log message
-        // $this->put_program_logs( $date_message );
+        $this->put_program_logs( $date_message );
 
         // Initialize counters
         $imported = 0;
@@ -63,7 +63,7 @@ class Import_Sales_Returns_Data {
         $table = $wpdb->prefix . 'sync_sales_returns_data';
 
         // Truncate the table before import (for testing)
-        // $this->truncate_table( $table );
+        $this->truncate_table( $table );
 
         // require the autoloader
         require_once PLUGIN_BASE_PATH . '/vendor/autoload.php';
@@ -97,7 +97,7 @@ class Import_Sales_Returns_Data {
 
         // log active sheet
         $sheet_message = sprintf( 'Active sheet: %s', $sheetTitle );
-        // $this->put_program_logs( $sheet_message );
+        $this->put_program_logs( $sheet_message );
 
         // Get column mapping and initial row index based on year and sheet name
         $mapping_info  = $this->get_column_map_and_index( $year, $sheetTitle );
@@ -107,7 +107,7 @@ class Import_Sales_Returns_Data {
         // If mapping is empty, unsupported format
         if ( empty( $map ) ) {
             $error_message = sprintf( 'Unsupported sheet/tab name: %s for year %s', $sheetTitle, $year );
-            // $this->put_program_logs( $error_message );
+            $this->put_program_logs( $error_message );
             wp_send_json_error( [ 'message' => $error_message ] );
         }
 
@@ -222,7 +222,7 @@ class Import_Sales_Returns_Data {
                 'quantity' => 6, // Quantity (Column G)
                 'cost'     => 7  // Cost (Column H)
             ];
-            $initial_index = 8; // Data starts from row 8
+            $initial_index = 1; // Data starts from row 2
         }
         // 2025 (new) format: years 2024-2030 (inclusive)
         elseif ( $year > 2023 && $year <= 2030 && $sheetTitle === 'sheet1' ) {
@@ -232,7 +232,7 @@ class Import_Sales_Returns_Data {
                 'quantity' => 8,  // Quantity (Column I)
                 'cost'     => 9   // Cost (Column J)
             ];
-            $initial_index = 8; // Data starts from row 8
+            $initial_index = 1; // Data starts from row 2
         }
         // Add more formats as needed
 
