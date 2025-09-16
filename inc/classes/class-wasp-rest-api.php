@@ -115,7 +115,7 @@ class Wasp_Rest_Api {
 
         // Step 2: Get pending and error items
         $pending_items = $wpdb->get_results(
-            $wpdb->prepare( "SELECT * FROM $table WHERE status = 'PENDING' OR status = 'ERROR' LIMIT %d", $limit )
+            $wpdb->prepare( "SELECT * FROM $table WHERE status = 'PENDING' LIMIT %d", $limit )
         );
 
         if ( empty( $pending_items ) ) {
@@ -194,6 +194,9 @@ class Wasp_Rest_Api {
                         ];
                     }
                 } else {
+                    // update status error
+                    $wpdb->update( $table, [ 'status' => 'ERROR' ], [ 'id' => $item->id ] );
+
                     $error_count++;
                     $results[] = [
                         'item'          => $item->item_number,
@@ -319,7 +322,7 @@ class Wasp_Rest_Api {
     public function handle_remove_completed_woo_orders( $request ) {
         global $wpdb;
         $table = $wpdb->prefix . 'sync_wasp_woo_orders_data';
-    
+
         // Step 1: Get limit from query param, default 10, max 100
         $limit = intval( $request->get_param( 'limit' ) );
         if ( $limit <= 0 ) {
@@ -327,13 +330,13 @@ class Wasp_Rest_Api {
         } elseif ( $limit > 100 ) {
             $limit = 100;
         }
-    
+
         // Step 2: Calculate the first and last date of previous month
-        $now               = new \DateTimeImmutable( 'first day of this month' );
-        $previous_month    = $now->modify( '-1 month' );
-        $month_start       = $previous_month->format( 'Y-m-01 00:00:00' );
-        $month_end         = $previous_month->format( 'Y-m-t 23:59:59' );
-    
+        $now            = new \DateTimeImmutable( 'first day of this month' );
+        $previous_month = $now->modify( '-1 month' );
+        $month_start    = $previous_month->format( 'Y-m-01 00:00:00' );
+        $month_end      = $previous_month->format( 'Y-m-t 23:59:59' );
+
         // Step 3: Fetch completed items created in previous month
         $completed_items = $wpdb->get_results(
             $wpdb->prepare(
@@ -343,15 +346,15 @@ class Wasp_Rest_Api {
                 $limit
             )
         );
-    
+
         if ( empty( $completed_items ) ) {
             return new \WP_REST_Response( [ 'message' => 'No items completed orders found for previous month.' ], 200 );
         }
-    
+
         // Step 4: Delete the items
         $deleted_count = 0;
         $deleted_ids   = [];
-    
+
         foreach ( $completed_items as $item ) {
             $delete_result = $wpdb->delete( $table, [ 'id' => $item->id ] );
             if ( $delete_result !== false ) {
@@ -359,23 +362,23 @@ class Wasp_Rest_Api {
                 $deleted_ids[] = $item->id;
             }
         }
-    
+
         // Step 5: Prepare summary
         $summary_message = sprintf(
             'Total %d items deleted from previous month (%s).',
             $deleted_count,
             $previous_month->format( 'F Y' )
         );
-    
+
         return new \WP_REST_Response( [
-            'message' => $summary_message,
-            'summary' => [
+            'message'     => $summary_message,
+            'summary'     => [
                 'month'         => $previous_month->format( 'Y-m' ),
                 'deleted_count' => $deleted_count,
             ],
             'deleted_ids' => $deleted_ids,
         ], 200 );
-    }    
+    }
 
     /**
      * prepare sales returns data for import
@@ -394,7 +397,7 @@ class Wasp_Rest_Api {
             $limit = 100;
 
         // get all items with limit where status is PENDING
-        $pending_items = $wpdb->get_results( $wpdb->prepare( "SELECT * FROM $table WHERE status = 'PENDING' or status = 'ERROR' LIMIT %d", $limit ) );
+        $pending_items = $wpdb->get_results( $wpdb->prepare( "SELECT * FROM $table WHERE status = 'PENDING' LIMIT %d", $limit ) );
         if ( empty( $pending_items ) ) {
             return new \WP_REST_Response( [ 'message' => 'No items found.' ], 200 );
         }
@@ -479,6 +482,9 @@ class Wasp_Rest_Api {
                         ];
                     }
                 } else {
+                    // update status to ERROR
+                    $wpdb->update( $table, [ 'status' => 'ERROR' ], [ 'id' => $item->id ] );
+
                     $error_count++;
                     $results[] = [
                         'item'          => $item->item_number,
@@ -639,7 +645,7 @@ class Wasp_Rest_Api {
     public function handle_remove_completed_sales_returns( $request ) {
         global $wpdb;
         $table = $wpdb->prefix . 'sync_sales_returns_data';
-    
+
         // Step 1: Get limit from query param, default 10, max 100
         $limit = intval( $request->get_param( 'limit' ) );
         if ( $limit <= 0 ) {
@@ -647,13 +653,13 @@ class Wasp_Rest_Api {
         } elseif ( $limit > 100 ) {
             $limit = 100;
         }
-    
+
         // Step 2: Calculate the first and last date of previous month
-        $now             = new \DateTimeImmutable( 'first day of this month' );
-        $previous_month  = $now->modify( '-1 month' );
-        $month_start     = $previous_month->format( 'Y-m-01 00:00:00' );
-        $month_end       = $previous_month->format( 'Y-m-t 23:59:59' );
-    
+        $now            = new \DateTimeImmutable( 'first day of this month' );
+        $previous_month = $now->modify( '-1 month' );
+        $month_start    = $previous_month->format( 'Y-m-01 00:00:00' );
+        $month_end      = $previous_month->format( 'Y-m-t 23:59:59' );
+
         // Step 3: Fetch completed items created in previous month
         $completed_items = $wpdb->get_results(
             $wpdb->prepare(
@@ -663,15 +669,15 @@ class Wasp_Rest_Api {
                 $limit
             )
         );
-    
+
         if ( empty( $completed_items ) ) {
             return new \WP_REST_Response( [ 'message' => 'No completed sales/returns found for previous month.' ], 200 );
         }
-    
+
         // Step 4: Delete the items
         $deleted_count = 0;
         $deleted_ids   = [];
-    
+
         foreach ( $completed_items as $item ) {
             $delete_result = $wpdb->delete( $table, [ 'id' => $item->id ] );
             if ( $delete_result !== false ) {
@@ -679,23 +685,23 @@ class Wasp_Rest_Api {
                 $deleted_ids[] = $item->id;
             }
         }
-    
+
         // Step 5: Prepare summary
         $summary_message = sprintf(
             'Total %d completed sales/returns deleted from previous month (%s).',
             $deleted_count,
             $previous_month->format( 'F Y' )
         );
-    
+
         return new \WP_REST_Response( [
-            'message' => $summary_message,
-            'summary' => [
+            'message'     => $summary_message,
+            'summary'     => [
                 'month'         => $previous_month->format( 'Y-m' ),
                 'deleted_count' => $deleted_count,
             ],
             'deleted_ids' => $deleted_ids,
         ], 200 );
-    }    
+    }
 
     /**
      * call the transaction remove API

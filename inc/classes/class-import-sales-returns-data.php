@@ -97,7 +97,7 @@ class Import_Sales_Returns_Data {
 
         // log active sheet
         $sheet_message = sprintf( 'Active sheet: %s', $sheetTitle );
-        $this->put_program_logs( $sheet_message );
+        // $this->put_program_logs( $sheet_message );
 
         // Get column mapping and initial row index based on year and sheet name
         $mapping_info  = $this->get_column_map_and_index( $year, $sheetTitle );
@@ -175,7 +175,7 @@ class Import_Sales_Returns_Data {
             // prepare message
             $message = sprintf( '%s row(s) imported successfully. %s row(s) skipped.', $imported, $skipped );
             // log message
-            $this->put_program_logs( $message );
+            // $this->put_program_logs( $message );
             wp_send_json_success( [
                 'message' => $message,
             ] );
@@ -183,7 +183,7 @@ class Import_Sales_Returns_Data {
             // prepare message
             $message = sprintf( 'No rows were imported. %s row(s) were skipped due to missing or invalid data.', $skipped );
             // log message
-            $this->put_program_logs( $message );
+            // $this->put_program_logs( $message );
             wp_send_json_error( [
                 'message' => $message,
             ] );
