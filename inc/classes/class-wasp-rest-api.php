@@ -115,7 +115,7 @@ class Wasp_Rest_Api {
 
         // Step 2: Get pending and error items
         $pending_items = $wpdb->get_results(
-            $wpdb->prepare( "SELECT * FROM $table WHERE status = 'PENDING' LIMIT %d", $limit )
+            $wpdb->prepare( "SELECT * FROM $table WHERE status = 'PENDING' OR status = 'ERROR' LIMIT %d", $limit )
         );
 
         if ( empty( $pending_items ) ) {
@@ -289,6 +289,9 @@ class Wasp_Rest_Api {
             $remove_result     = $this->transaction_remove_api( $this->token, $remove_payload );
             $results['remove'] = $remove_result;
 
+            $this->put_program_logs("Transaction Remove API Payload: " . json_encode($remove_payload));
+            $this->put_program_logs("Transaction Remove API Result: " . json_encode($remove_result));
+
             // Update status for each item
             $new_status = ( $remove_result['result'] === 'success' ) ? 'COMPLETED' : 'ERROR';
             foreach ( $remove_ids as $id ) {
@@ -397,7 +400,7 @@ class Wasp_Rest_Api {
             $limit = 100;
 
         // get all items with limit where status is PENDING
-        $pending_items = $wpdb->get_results( $wpdb->prepare( "SELECT * FROM $table WHERE status = 'PENDING' LIMIT %d", $limit ) );
+        $pending_items = $wpdb->get_results( $wpdb->prepare( "SELECT * FROM $table WHERE status = 'PENDING' OR status = 'ERROR' LIMIT %d", $limit ) );
         if ( empty( $pending_items ) ) {
             return new \WP_REST_Response( [ 'message' => 'No items found.' ], 200 );
         }
@@ -599,6 +602,9 @@ class Wasp_Rest_Api {
             $add_result     = $this->transaction_add_api( $this->token, $add_payload );
             $results['add'] = $add_result;
 
+            $this->put_program_logs("Transaction Add API Payload: " . json_encode($add_payload));
+            $this->put_program_logs("Transaction Add API Result: " . json_encode($add_result));
+
             // update status to COMPLETED or ERROR for each item
             $new_status = ( $add_result['result'] === 'success' ) ? 'COMPLETED' : 'ERROR';
             foreach ( $add_ids as $id ) {
@@ -610,6 +616,10 @@ class Wasp_Rest_Api {
         if ( !empty( $remove_payload ) ) {
             $remove_result     = $this->transaction_remove_api( $this->token, $remove_payload );
             $results['remove'] = $remove_result;
+
+            $this->put_program_logs("Transaction Remove API Payload: " . json_encode($remove_payload));
+            $this->put_program_logs("Transaction Remove API Result: " . json_encode($remove_result));
+
             // update status to COMPLETED or ERROR for each item
             $new_status = ( $remove_result['result'] === 'success' ) ? 'COMPLETED' : 'ERROR';
             foreach ( $remove_ids as $id ) {

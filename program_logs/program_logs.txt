@@ -1,0 +1,112 @@
+Transaction Remove API Payload: 
+[
+    {
+        "ItemNumber": "9781905255085",
+        "CustomerNumber": "CLLC 01",
+        "SiteName": "CLLC",
+        "LocationCode": "CLLC",
+        "Quantity": "1.00",
+        "DateRemoved": "2023-03-31T23:59:59Z"
+    }
+] - 2025-09-16 07:27:21
+
+Transaction Remove API Result: 
+{
+    "status_code": 200,
+    "result": "success",
+    "api_response": "{\"Data\":{\"ResultList\":[{\"ResultCode\":0,\"Message\":\"Success\",\"HttpStatusCode\":200,\"FieldName\":\"9781905255085\"}],\"SuccessfullResults\":1,\"TotalResults\":1,\"ErrorCount\":0},\"Messages\":[{\"ResultCode\":0,\"Message\":\"Success\",\"HttpStatusCode\":200,\"FieldName\":\"\"}],\"TotalRecordsLongCount\":1,\"HasSuccessWithMoreDataRemaining\":false,\"HasError\":false,\"HasMessage\":true,\"HasHttpError\":false}"
+} - 2025-09-16 07:27:21
+
+-------------------
+
+Transaction Remove API Payload: 
+[
+    {
+        "ItemNumber": "9781905255085",
+        "CustomerNumber": "CLLC 01",
+        "SiteName": "CLLC",
+        "LocationCode": "CLLC",
+        "Quantity": "1.00",
+        "DateRemoved": "2023-03-31T23:59:59Z"
+    },
+    {
+        "ItemNumber": "9781905255085",
+        "CustomerNumber": "CLLC 01",
+        "SiteName": "CLLC",
+        "LocationCode": "CLLC",
+        "Quantity": "1.00",
+        "DateRemoved": "2023-03-31T23:59:59Z"
+    },
+    {
+        "ItemNumber": "9781905255122",
+        "CustomerNumber": "CLLC 01",
+        "SiteName": "CLLC",
+        "LocationCode": "CLLC",
+        "Quantity": "1.00",
+        "DateRemoved": "2023-03-31T23:59:59Z"
+    },
+    {
+        "ItemNumber": "9781905255191",
+        "CustomerNumber": "CLLC 01",
+        "SiteName": "CLLC",
+        "LocationCode": "CLLC",
+        "Quantity": "2.00",
+        "DateRemoved": "2023-03-31T23:59:59Z"
+    },
+    {
+        "ItemNumber": "9781905255191",
+        "CustomerNumber": "CLLC 01",
+        "SiteName": "CLLC",
+        "LocationCode": "CLLC",
+        "Quantity": "1.00",
+        "DateRemoved": "2023-03-31T23:59:59Z"
+    },
+    {
+        "ItemNumber": "9781905255191",
+        "CustomerNumber": "CLLC 01",
+        "SiteName": "CLLC",
+        "LocationCode": "CLLC",
+        "Quantity": "4.00",
+        "DateRemoved": "2023-03-31T23:59:59Z"
+    },
+    {
+        "ItemNumber": "9781905255269",
+        "CustomerNumber": "CLLC 01",
+        "SiteName": "CLLC",
+        "LocationCode": "CLLC",
+        "Quantity": "1.00",
+        "DateRemoved": "2023-03-31T23:59:59Z"
+    },
+    {
+        "ItemNumber": "9781905255450",
+        "CustomerNumber": "CLLC 01",
+        "SiteName": "CLLC",
+        "LocationCode": "CLLC",
+        "Quantity": "1.00",
+        "DateRemoved": "2023-03-31T23:59:59Z"
+    },
+    {
+        "ItemNumber": "9781905255450",
+        "CustomerNumber": "CLLC 01",
+        "SiteName": "CLLC",
+        "LocationCode": "CLLC",
+        "Quantity": "1.00",
+        "DateRemoved": "2023-03-31T23:59:59Z"
+    },
+    {
+        "ItemNumber": "9781905255450",
+        "CustomerNumber": "CLLC 01",
+        "SiteName": "CLLC",
+        "LocationCode": "CLLC",
+        "Quantity": "1.00",
+        "DateRemoved": "2023-03-31T23:59:59Z"
+    }
+] - 2025-09-16 07:35:53
+
+Transaction Remove API Result: 
+{
+    "status_code": 200,
+    "result": "success",
+    "api_response": "{\"Data\":{\"ResultList\":[{\"ResultCode\":0,\"Message\":\"Success\",\"HttpStatusCode\":200,\"FieldName\":\"9781905255085\"},{\"ResultCode\":0,\"Message\":\"Success\",\"HttpStatusCode\":200,\"FieldName\":\"9781905255085\"},{\"ResultCode\":0,\"Message\":\"Success\",\"HttpStatusCode\":200,\"FieldName\":\"9781905255122\"},{\"ResultCode\":0,\"Message\":\"Success\",\"HttpStatusCode\":200,\"FieldName\":\"9781905255191\"},{\"ResultCode\":0,\"Message\":\"Success\",\"HttpStatusCode\":200,\"FieldName\":\"9781905255191\"},{\"ResultCode\":0,\"Message\":\"Success\",\"HttpStatusCode\":200,\"FieldName\":\"9781905255191\"},{\"ResultCode\":0,\"Message\":\"Success\",\"HttpStatusCode\":200,\"FieldName\":\"9781905255269\"},{\"ResultCode\":0,\"Message\":\"Success\",\"HttpStatusCode\":200,\"FieldName\":\"9781905255450\"},{\"ResultCode\":0,\"Message\":\"Success\",\"HttpStatusCode\":200,\"FieldName\":\"9781905255450\"},{\"ResultCode\":0,\"Message\":\"Success\",\"HttpStatusCode\":200,\"FieldName\":\"9781905255450\"}],\"SuccessfullResults\":10,\"TotalResults\":10,\"ErrorCount\":0},\"Messages\":[{\"ResultCode\":0,\"Message\":\"Success\",\"HttpStatusCode\":200,\"FieldName\":\"\"}],\"TotalRecordsLongCount\":10,\"HasSuccessWithMoreDataRemaining\":false,\"HasError\":false,\"HasMessage\":true,\"HasHttpError\":false}"
+} - 2025-09-16 07:35:53
+
