@@ -49,6 +49,11 @@ function autoloader( $resource = '' ) {
                 $file_name = sprintf( 'trait-%s', trim( strtolower( $path[2] ) ) );
                 break;
 
+            case 'enums':
+                $directory = 'enums';
+                $file_name = trim( strtolower( $path[2] ) );
+                break;
+
             case 'widgets':
             case 'blocks': // phpcs:ignore PSR2.ControlStructures.SwitchDeclaration.TerminatingComment
                 /**

@@ -4,6 +4,7 @@ namespace BOILERPLATE\Inc;
 
 use BOILERPLATE\Inc\Traits\Program_Logs;
 use BOILERPLATE\Inc\Traits\Singleton;
+use BOILERPLATE\Inc\Enums\Status_Enums;
 
 class Import_Sales_Returns_Data {
 
@@ -11,6 +12,7 @@ class Import_Sales_Returns_Data {
     use Program_Logs;
 
     public function __construct() {
+
         $this->setup_hooks();
     }
 
@@ -157,7 +159,7 @@ class Import_Sales_Returns_Data {
                 'quantity'        => abs( $qty ),
                 'type'            => $transaction_type,
                 'format'          => $format,
-                'status'          => 'PENDING',
+                'status'          => Status_Enums::PENDING->value,
             ];
 
             // Insert row into DB using helper

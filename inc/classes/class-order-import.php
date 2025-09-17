@@ -4,6 +4,7 @@ namespace BOILERPLATE\Inc;
 
 use BOILERPLATE\Inc\Traits\Program_Logs;
 use BOILERPLATE\Inc\Traits\Singleton;
+use BOILERPLATE\Inc\Enums\Status_Enums;
 
 class Order_Import {
 
@@ -73,7 +74,7 @@ class Order_Import {
                     'cost'            => $cost,
                     'quantity'        => $quantity,
                     'remove_date'     => $remove_date,
-                    'status'          => 'PENDING',
+                    'status'          => Status_Enums::PENDING->value,
                 ] );
             }
 

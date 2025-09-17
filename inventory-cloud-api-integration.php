@@ -57,6 +57,9 @@ if ( !defined( 'PLUGIN_LIBS_DIR_URL' ) ) {
 
 // Require files
 require_once PLUGIN_BASE_PATH . '/loader.php';
+
+// Ensure enum is loaded
+class_exists('BOILERPLATE\Inc\Enums\Status_Enums');
 require_once PLUGIN_BASE_PATH . '/inc/helpers/autoloader.php';
 
 /**

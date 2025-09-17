@@ -71,7 +71,7 @@ public function handle_import_sales_returns( $request ) {
         $this->put_program_logs( "Transaction API Result (ID {$item->id}): " . json_encode( $api_result ) );
 
         // determine status
-        $new_status = 'ERROR';
+        $new_status = 'FAILED';
         if ( isset( $api_result['result'] ) && $api_result['result'] === 'success' ) {
             $new_status = 'COMPLETED';
             $success_count++;

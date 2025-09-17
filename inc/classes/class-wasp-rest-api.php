@@ -4,6 +4,7 @@ namespace BOILERPLATE\Inc;
 
 use BOILERPLATE\Inc\Traits\Program_Logs;
 use BOILERPLATE\Inc\Traits\Singleton;
+use BOILERPLATE\Inc\Enums\Status_Enums;
 
 class Wasp_Rest_Api {
 
@@ -115,7 +116,7 @@ class Wasp_Rest_Api {
 
         // Step 2: Get pending and error items
         $pending_items = $wpdb->get_results(
-            $wpdb->prepare( "SELECT * FROM $table WHERE status = 'PENDING' OR status = 'ERROR' LIMIT %d", $limit )
+            $wpdb->prepare( "SELECT * FROM $table WHERE status = %s OR status = %s LIMIT %d", Status_Enums::PENDING->value, Status_Enums::FAILED->value, $limit )
         );
 
         if ( empty( $pending_items ) ) {
@@ -162,7 +163,7 @@ class Wasp_Rest_Api {
                             [
                                 'site_name'     => $site_name,
                                 'location_code' => $location_code,
-                                'status'        => 'READY',
+                                'status'        => Status_Enums::READY->value,
                             ],
                             [ 'id' => $item->id ]
                         );
@@ -185,7 +186,7 @@ class Wasp_Rest_Api {
                         }
                     } else {
                         // No non-CLLC location found — IGNORE
-                        $wpdb->update( $table, [ 'status' => 'IGNORED' ], [ 'id' => $item->id ] );
+                        $wpdb->update( $table, [ 'status' => Status_Enums::IGNORED->value ], [ 'id' => $item->id ] );
                         $ignored_count++;
                         $results[] = [
                             'item'          => $item->item_number,
@@ -195,7 +196,7 @@ class Wasp_Rest_Api {
                     }
                 } else {
                     // update status error
-                    $wpdb->update( $table, [ 'status' => 'ERROR' ], [ 'id' => $item->id ] );
+                    $wpdb->update( $table, [ 'status' => Status_Enums::FAILED->value ], [ 'id' => $item->id ] );
 
                     $error_count++;
                     $results[] = [
@@ -258,7 +259,7 @@ class Wasp_Rest_Api {
 
         // Step 2: Get READY items
         $ready_items = $wpdb->get_results(
-            $wpdb->prepare( "SELECT * FROM $table WHERE status = 'READY' LIMIT %d", $limit )
+            $wpdb->prepare( "SELECT * FROM $table WHERE status = %s LIMIT %d", Status_Enums::READY->value, $limit )
         );
 
         if ( empty( $ready_items ) ) {
@@ -288,10 +289,10 @@ class Wasp_Rest_Api {
             // $this->put_program_logs( "Transaction Remove API Result: " . json_encode( $remove_result ) );
 
             // Update status based on response
-            $new_status = ( $remove_result['result'] === 'success' ) ? 'COMPLETED' : 'ERROR';
+            $new_status = ( $remove_result['result'] === 'success' ) ? Status_Enums::COMPLETED->value : Status_Enums::FAILED->value;
             $wpdb->update( $table, [ 'status' => $new_status ], [ 'id' => $item->id ] );
 
-            if ( $new_status === 'COMPLETED' ) {
+            if ( $new_status === Status_Enums::COMPLETED->value ) {
                 $success_cnt++;
             } else {
                 $error_cnt++;
@@ -348,7 +349,8 @@ class Wasp_Rest_Api {
         // Step 3: Fetch completed items created in previous month
         $completed_items = $wpdb->get_results(
             $wpdb->prepare(
-                "SELECT * FROM $table WHERE status = 'COMPLETED' AND created_at BETWEEN %s AND %s LIMIT %d",
+                "SELECT * FROM $table WHERE status = %s AND created_at BETWEEN %s AND %s LIMIT %d",
+                Status_Enums::COMPLETED->value,
                 $month_start,
                 $month_end,
                 $limit
@@ -405,7 +407,7 @@ class Wasp_Rest_Api {
             $limit = 100;
 
         // get all items with limit where status is PENDING
-        $pending_items = $wpdb->get_results( $wpdb->prepare( "SELECT * FROM $table WHERE status = 'PENDING' OR status = 'ERROR' LIMIT %d", $limit ) );
+        $pending_items = $wpdb->get_results( $wpdb->prepare( "SELECT * FROM $table WHERE status = %s OR status = %s LIMIT %d", Status_Enums::PENDING->value, Status_Enums::FAILED->value, $limit ) );
         if ( empty( $pending_items ) ) {
             return new \WP_REST_Response( [ 'message' => 'No items found.' ], 200 );
         }
@@ -422,7 +424,7 @@ class Wasp_Rest_Api {
 
             // 2. check is the item number numeric or not. if not skip it and update status to IGNORED
             if ( !is_numeric( $item->item_number ) ) {
-                $wpdb->update( $table, [ 'status' => 'IGNORED' ], [ 'id' => $item->id ] );
+                $wpdb->update( $table, [ 'status' => Status_Enums::IGNORED->value ], [ 'id' => $item->id ] );
                 $ignored_count++;
                 $results[] = [
                     'item'          => $item->item_number,
@@ -470,7 +472,7 @@ class Wasp_Rest_Api {
                         [
                             'site_name'     => $site_name,
                             'location_code' => $location_code,
-                            'status'        => 'READY',
+                            'status'        => Status_Enums::READY->value,
                         ],
                         [ 'id' => $item->id ]
                     );
@@ -494,7 +496,7 @@ class Wasp_Rest_Api {
                     }
                 } else {
                     // update status to ERROR
-                    $wpdb->update( $table, [ 'status' => 'ERROR' ], [ 'id' => $item->id ] );
+                    $wpdb->update( $table, [ 'status' => Status_Enums::FAILED->value ], [ 'id' => $item->id ] );
 
                     $error_count++;
                     $results[] = [
@@ -556,7 +558,7 @@ class Wasp_Rest_Api {
 
         // Get all READY items with limit
         $ready_items = $wpdb->get_results(
-            $wpdb->prepare( "SELECT * FROM $table WHERE status = 'READY' LIMIT %d", $limit )
+            $wpdb->prepare( "SELECT * FROM $table WHERE status = %s LIMIT %d", Status_Enums::READY->value, $limit )
         );
         if ( empty( $ready_items ) ) {
             return new \WP_REST_Response( [ 'message' => 'No items found.' ], 200 );
@@ -585,6 +587,10 @@ class Wasp_Rest_Api {
                 ];
 
                 $api_result = $this->transaction_add_api( $this->token, [ $payload ] ); // send as array
+                // log response
+                $this->put_program_logs( "Transaction Add API Payload: " . json_encode( $payload ) );
+                $this->put_program_logs( "Transaction Add API Result: " . json_encode( $api_result ) );
+
                 $add_count++;
                 $results['add'][] = [
                     'id'       => $item->id,
@@ -602,6 +608,10 @@ class Wasp_Rest_Api {
                 ];
 
                 $api_result = $this->transaction_remove_api( $this->token, [ $payload ] ); // send as array
+                // log response
+                $this->put_program_logs( "Transaction Remove API Payload: " . json_encode( $payload ) );
+                $this->put_program_logs( "Transaction Remove API Result: " . json_encode( $api_result ) );
+
                 $remove_count++;
                 $results['remove'][] = [
                     'id'       => $item->id,
@@ -615,9 +625,9 @@ class Wasp_Rest_Api {
             // $this->put_program_logs( "Transaction API Result (ID {$item->id}): " . json_encode( $api_result ) );
 
             // determine status
-            $new_status = 'ERROR';
+            $new_status = Status_Enums::FAILED->value;
             if ( isset( $api_result['result'] ) && $api_result['result'] === 'success' ) {
-                $new_status = 'COMPLETED';
+                $new_status = Status_Enums::COMPLETED->value;
                 $success_count++;
             } else {
                 $error_count++;
@@ -678,7 +688,8 @@ class Wasp_Rest_Api {
         // Step 3: Fetch completed items created in previous month
         $completed_items = $wpdb->get_results(
             $wpdb->prepare(
-                "SELECT * FROM $table WHERE status = 'COMPLETED' AND created_at BETWEEN %s AND %s LIMIT %d",
+                "SELECT * FROM $table WHERE status = %s AND created_at BETWEEN %s AND %s LIMIT %d",
+                Status_Enums::COMPLETED->value,
                 $month_start,
                 $month_end,
                 $limit
@@ -948,7 +959,7 @@ class Wasp_Rest_Api {
         if ( $status !== null ) {
             $status = strtoupper( $status );
         }
-        $valid_statuses = [ 'PENDING', 'IGNORED', 'ERROR', 'COMPLETED', 'READY' ];
+        $valid_statuses = [ Status_Enums::PENDING->value, Status_Enums::IGNORED->value, Status_Enums::FAILED->value, Status_Enums::COMPLETED->value, Status_Enums::READY->value ];
 
         if ( $status && in_array( $status, $valid_statuses ) ) {
             $count = $wpdb->get_var( $wpdb->prepare( "SELECT COUNT(*) FROM $table WHERE status = %s", $status ) );
@@ -960,11 +971,11 @@ class Wasp_Rest_Api {
 
         // If no status filter, return all counts
         $total     = $wpdb->get_var( "SELECT COUNT(*) FROM $table" );
-        $pending   = $wpdb->get_var( "SELECT COUNT(*) FROM $table WHERE status = 'PENDING'" );
-        $ignored   = $wpdb->get_var( "SELECT COUNT(*) FROM $table WHERE status = 'IGNORED'" );
-        $error     = $wpdb->get_var( "SELECT COUNT(*) FROM $table WHERE status = 'ERROR'" );
-        $completed = $wpdb->get_var( "SELECT COUNT(*) FROM $table WHERE status = 'COMPLETED'" );
-        $ready     = $wpdb->get_var( "SELECT COUNT(*) FROM $table WHERE status = 'READY'" );
+        $pending   = $wpdb->get_var( $wpdb->prepare( "SELECT COUNT(*) FROM $table WHERE status = %s", Status_Enums::PENDING->value ) );
+        $ignored   = $wpdb->get_var( $wpdb->prepare( "SELECT COUNT(*) FROM $table WHERE status = %s", Status_Enums::IGNORED->value ) );
+        $error     = $wpdb->get_var( $wpdb->prepare( "SELECT COUNT(*) FROM $table WHERE status = %s", Status_Enums::FAILED->value ) );
+        $completed = $wpdb->get_var( $wpdb->prepare( "SELECT COUNT(*) FROM $table WHERE status = %s", Status_Enums::COMPLETED->value ) );
+        $ready     = $wpdb->get_var( $wpdb->prepare( "SELECT COUNT(*) FROM $table WHERE status = %s", Status_Enums::READY->value ) );
 
         return new \WP_REST_Response( [
             'message'   => 'Sales returns status summary',
@@ -985,7 +996,7 @@ class Wasp_Rest_Api {
         if ( $status !== null ) {
             $status = strtoupper( $status );
         }
-        $valid_statuses = [ 'PENDING', 'IGNORED', 'ERROR', 'COMPLETED', 'READY' ];
+        $valid_statuses = [ Status_Enums::PENDING->value, Status_Enums::IGNORED->value, Status_Enums::FAILED->value, Status_Enums::COMPLETED->value, Status_Enums::READY->value ];
 
         if ( $status && in_array( $status, $valid_statuses ) ) {
             $count = $wpdb->get_var( $wpdb->prepare( "SELECT COUNT(*) FROM $table WHERE status = %s", $status ) );
@@ -997,11 +1008,11 @@ class Wasp_Rest_Api {
 
         // If no status filter, return all counts
         $total     = $wpdb->get_var( "SELECT COUNT(*) FROM $table" );
-        $pending   = $wpdb->get_var( "SELECT COUNT(*) FROM $table WHERE status = 'PENDING'" );
-        $ignored   = $wpdb->get_var( "SELECT COUNT(*) FROM $table WHERE status = 'IGNORED'" );
-        $error     = $wpdb->get_var( "SELECT COUNT(*) FROM $table WHERE status = 'ERROR'" );
-        $completed = $wpdb->get_var( "SELECT COUNT(*) FROM $table WHERE status = 'COMPLETED'" );
-        $ready     = $wpdb->get_var( "SELECT COUNT(*) FROM $table WHERE status = 'READY'" );
+        $pending   = $wpdb->get_var( $wpdb->prepare( "SELECT COUNT(*) FROM $table WHERE status = %s", Status_Enums::PENDING->value ) );
+        $ignored   = $wpdb->get_var( $wpdb->prepare( "SELECT COUNT(*) FROM $table WHERE status = %s", Status_Enums::IGNORED->value ) );
+        $error     = $wpdb->get_var( $wpdb->prepare( "SELECT COUNT(*) FROM $table WHERE status = %s", Status_Enums::FAILED->value ) );
+        $completed = $wpdb->get_var( $wpdb->prepare( "SELECT COUNT(*) FROM $table WHERE status = %s", Status_Enums::COMPLETED->value ) );
+        $ready     = $wpdb->get_var( $wpdb->prepare( "SELECT COUNT(*) FROM $table WHERE status = %s", Status_Enums::READY->value ) );
 
         return new \WP_REST_Response( [
             'message'   => 'WASP Woo Orders status summary',
