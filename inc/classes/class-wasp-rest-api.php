@@ -459,6 +459,7 @@ class Wasp_Rest_Api {
                             break;
                         }
                     }
+
                     // If not found CLLC, use the first SiteName/LocationCode from API response
                     if ( !$found_cllc ) {
                         $first_loc     = $response_data['Data'][0];
@@ -588,8 +589,8 @@ class Wasp_Rest_Api {
 
                 $api_result = $this->transaction_add_api( $this->token, [ $payload ] ); // send as array
                 // log response
-                $this->put_program_logs( "Transaction Add API Payload: " . json_encode( $payload ) );
-                $this->put_program_logs( "Transaction Add API Result: " . json_encode( $api_result ) );
+                // $this->put_program_logs( "Transaction Add API Payload: " . json_encode( $payload ) );
+                // $this->put_program_logs( "Transaction Add API Result: " . json_encode( $api_result ) );
 
                 $add_count++;
                 $results['add'][] = [
@@ -609,8 +610,8 @@ class Wasp_Rest_Api {
 
                 $api_result = $this->transaction_remove_api( $this->token, [ $payload ] ); // send as array
                 // log response
-                $this->put_program_logs( "Transaction Remove API Payload: " . json_encode( $payload ) );
-                $this->put_program_logs( "Transaction Remove API Result: " . json_encode( $api_result ) );
+                // $this->put_program_logs( "Transaction Remove API Payload: " . json_encode( $payload ) );
+                // $this->put_program_logs( "Transaction Remove API Result: " . json_encode( $api_result ) );
 
                 $remove_count++;
                 $results['remove'][] = [
@@ -929,8 +930,8 @@ class Wasp_Rest_Api {
         $response_data = json_decode( $response_body, true );
 
         if ( isset( $response_data['Data'] ) && !empty( $response_data['Data'] ) ) {
-            // ✅ Store in transient for 30 days
-            set_transient( $cache_key, $response_body, 30 * DAY_IN_SECONDS );
+            // ✅ Store in transient for 10 minutes
+            set_transient( $cache_key, $response_body, 10 * MINUTE_IN_SECONDS );
 
             return [
                 'status_code'  => $status_code,
