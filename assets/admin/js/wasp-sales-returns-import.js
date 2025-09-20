@@ -124,5 +124,31 @@
         },
       });
     });
+
+    // Basic interactivity for demonstration
+    document
+      .getElementById("searchInput")
+      .addEventListener("input", function (e) {
+        console.log("Searching for:", e.target.value);
+        // Add your search logic here
+      });
+
+    document
+      .getElementById("statusFilter")
+      .addEventListener("change", function (e) {
+        console.log("Filtering by status:", e.target.value);
+        // Add your filter logic here
+      });
+
+    // Pagination click handlers
+    document.querySelectorAll(".wasp-data-table-page-btn").forEach((btn) => {
+      btn.addEventListener("click", function (e) {
+        e.preventDefault();
+        if (!this.classList.contains("wasp-data-table-page-btn-disabled")) {
+          console.log("Page clicked:", this.textContent);
+          // Add your pagination logic here
+        }
+      });
+    });
   });
 })(jQuery);
