@@ -77,6 +77,8 @@ class Enqueue_Assets {
             // enqueue css
             wp_enqueue_style( "wasp-order-import", PLUGIN_ADMIN_ASSETS_DIR_URL . "/css/wasp-order-import.css", [], time(), "all" );
 
+            wp_enqueue_style( "wasp-sales-returns-import", PLUGIN_ADMIN_ASSETS_DIR_URL . "/css/wasp-sales-returns-import.css", [], time(), "all" );
+
             // enqueue js
             wp_enqueue_script( "wasp-order-import-scripts", PLUGIN_ADMIN_ASSETS_DIR_URL . "/js/wasp-order-import.js", [ 'jquery' ], time(), true );
 

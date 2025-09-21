@@ -55,6 +55,11 @@
     </form>
 </div>
 
+<?php 
+// include the status enum
+use BOILERPLATE\Inc\Enums\Status_Enums;
+?>
+
 <!-- sales return search filter table -->
 <div class="wasp-my-20">
     <div class="wasp-data-table-container">
@@ -63,10 +68,11 @@
             <div class="wasp-data-table-filter-section">
                 <span class="wasp-data-table-filter-label">Filter by Status:</span>
                 <select class="wasp-data-table-select" id="statusFilter">
-                    <option value="">All Status</option>
-                    <option value="active">Active</option>
-                    <option value="maintenance">Maintenance</option>
-                    <option value="pending">Pending</option>
+                    <option value="">All</option>
+                    <option value="active"><?php Status_Enums::PENDING->value ?></option>
+                    <option value="maintenance"><?php Status_Enums::READY->value ?></option>
+                    <option value="pending"><?php Status_Enums::FAILED->value ?></option>
+                    <option value="pending"><?php Status_Enums::COMPLETED->value ?></option>
                 </select>
             </div>
             <div class="wasp-data-table-search-section">
@@ -106,21 +112,6 @@
                             <td class="wasp-data-table-td">Equipment</td>
                             <td class="wasp-data-table-td">
                                 <span class="wasp-data-table-status wasp-data-table-status-active">Active</span>
-                            </td>
-                        </tr>
-                        <tr class="wasp-data-table-tr">
-                            <td class="wasp-data-table-td">002</td>
-                            <td class="wasp-data-table-td">ITM-2024-002</td>
-                            <td class="wasp-data-table-td">$850.50</td>
-                            <td class="wasp-data-table-td">2024-02-20</td>
-                            <td class="wasp-data-table-td">CUST-10002</td>
-                            <td class="wasp-data-table-td">Warehouse Central</td>
-                            <td class="wasp-data-table-td">WC-205</td>
-                            <td class="wasp-data-table-td">15</td>
-                            <td class="wasp-data-table-td">Supplies</td>
-                            <td class="wasp-data-table-td">
-                                <span
-                                    class="wasp-data-table-status wasp-data-table-status-maintenance">Maintenance</span>
                             </td>
                         </tr>
                     </tbody>
