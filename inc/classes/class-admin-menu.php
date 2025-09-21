@@ -82,8 +82,8 @@ class Admin_Menu {
 
     public function wasp_settings_top_menu() {
         add_menu_page(
-            'Wasp Settings',
-            'Wasp Settings',
+            'Dashboard',
+            'Dashboard',
             'manage_options',
             'wasp-settings',
             [ $this, 'wasp_settings_page_html' ],
@@ -99,8 +99,8 @@ class Admin_Menu {
     public function wasp_inventory_cloud_settings_sub_menu_page() {
         add_submenu_page(
             'wasp-settings',
-            'Wasp Options',
-            'Wasp Options',
+            'Settings',
+            'Settings',
             'manage_options',
             'inventory-cloud-options',
             [ $this, 'wasp_inventory_cloud_sub_menu_page_html' ]
@@ -110,8 +110,8 @@ class Admin_Menu {
     public function wasp_order_import_sub_menu_page() {
         add_submenu_page(
             'wasp-settings',
-            'Wasp Order Import',
-            'Wasp Order Import',
+            'Order Import',
+            'Order Import',
             'manage_options',
             'wasp-order-import',
             [ $this, 'wasp_order_import_sub_menu_page_html' ]
@@ -121,8 +121,8 @@ class Admin_Menu {
     public function wasp_sales_return_import_sub_menu_page() {
         add_submenu_page(
             'wasp-settings',
-            'Wasp Sales/Return Import',
-            'Wasp Sales/Return Import',
+            'Sales/Return Import',
+            'Sales/Return Import',
             'manage_options',
             'wasp-sales-return-import',
             [ $this, 'wasp_sales_return_import_sub_menu_page_html' ]
@@ -132,8 +132,8 @@ class Admin_Menu {
     public function wasp_cron_jobs_sub_menu_page() {
         add_submenu_page(
             'wasp-settings',
-            'Wasp Cron Jobs',
-            'Wasp Cron Jobs',
+            'Cron Jobs',
+            'Cron Jobs',
             'manage_options',
             'wasp-cron-jobs',
             [ $this, 'wasp_cron_jobs_sub_menu_page_html' ]
