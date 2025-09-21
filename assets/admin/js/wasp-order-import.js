@@ -96,7 +96,6 @@
             hideProgressBar();
             
             if (response.success) {
-              alert(response.data.message);
               $form[0].reset();
               $selectedFile.hide();
               $fileCustom.find(".wasp-inv-file-text").text("Click to select file or drag and drop");

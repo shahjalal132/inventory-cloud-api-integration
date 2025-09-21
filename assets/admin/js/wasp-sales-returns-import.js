@@ -128,7 +128,6 @@
             hideProgressBar();
             
             if (response.success) {
-              alert(response.data.message);
 
               // Reset form and UI
               $form[0].reset();
