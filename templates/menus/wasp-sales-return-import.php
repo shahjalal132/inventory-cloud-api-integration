@@ -69,10 +69,11 @@ use BOILERPLATE\Inc\Enums\Status_Enums;
                 <span class="wasp-data-table-filter-label">Filter by Status:</span>
                 <select class="wasp-data-table-select" id="statusFilter">
                     <option value="">All</option>
-                    <option value="active"><?php Status_Enums::PENDING->value ?></option>
-                    <option value="maintenance"><?php Status_Enums::READY->value ?></option>
-                    <option value="pending"><?php Status_Enums::FAILED->value ?></option>
-                    <option value="pending"><?php Status_Enums::COMPLETED->value ?></option>
+                    <option value="<?php echo Status_Enums::PENDING->value ?>"><?php echo Status_Enums::PENDING->value ?></option>
+                    <option value="<?php echo Status_Enums::READY->value ?>"><?php echo Status_Enums::READY->value ?></option>
+                    <option value="<?php echo Status_Enums::FAILED->value ?>"><?php echo Status_Enums::FAILED->value ?></option>
+                    <option value="<?php echo Status_Enums::COMPLETED->value ?>"><?php echo Status_Enums::COMPLETED->value ?></option>
+                    <option value="<?php echo Status_Enums::IGNORED->value ?>"><?php echo Status_Enums::IGNORED->value ?></option>
                 </select>
             </div>
             <div class="wasp-data-table-search-section">
@@ -100,20 +101,7 @@ use BOILERPLATE\Inc\Enums\Status_Enums;
                         </tr>
                     </thead>
                     <tbody class="wasp-data-table-tbody">
-                        <tr class="wasp-data-table-tr">
-                            <td class="wasp-data-table-td">001</td>
-                            <td class="wasp-data-table-td">ITM-2024-001</td>
-                            <td class="wasp-data-table-td">$1,250.00</td>
-                            <td class="wasp-data-table-td">2024-01-15</td>
-                            <td class="wasp-data-table-td">CUST-10001</td>
-                            <td class="wasp-data-table-td">Manufacturing Plant A</td>
-                            <td class="wasp-data-table-td">MPA-001</td>
-                            <td class="wasp-data-table-td">25</td>
-                            <td class="wasp-data-table-td">Equipment</td>
-                            <td class="wasp-data-table-td">
-                                <span class="wasp-data-table-status wasp-data-table-status-active">Active</span>
-                            </td>
-                        </tr>
+                        <!-- Dynamic content will be loaded here -->
                     </tbody>
                 </table>
             </div>
@@ -122,20 +110,10 @@ use BOILERPLATE\Inc\Enums\Status_Enums;
         <!-- Footer with Info and Pagination -->
         <div class="wasp-data-table-footer">
             <div class="wasp-data-table-info">
-                Showing 1 - 100 of 1,000
+                <!-- Dynamic info will be loaded here -->
             </div>
             <div class="wasp-data-table-pagination">
-                <a href="#" class="wasp-data-table-page-btn wasp-data-table-page-btn-disabled">‹‹</a>
-                <a href="#" class="wasp-data-table-page-btn wasp-data-table-page-btn-disabled">‹</a>
-                <a href="#" class="wasp-data-table-page-btn wasp-data-table-page-btn-active">1</a>
-                <a href="#" class="wasp-data-table-page-btn">2</a>
-                <a href="#" class="wasp-data-table-page-btn">3</a>
-                <a href="#" class="wasp-data-table-page-btn">4</a>
-                <a href="#" class="wasp-data-table-page-btn">5</a>
-                <span class="wasp-data-table-ellipsis">...</span>
-                <a href="#" class="wasp-data-table-page-btn">10</a>
-                <a href="#" class="wasp-data-table-page-btn">›</a>
-                <a href="#" class="wasp-data-table-page-btn">››</a>
+                <!-- Dynamic pagination will be loaded here -->
             </div>
         </div>
     </div>

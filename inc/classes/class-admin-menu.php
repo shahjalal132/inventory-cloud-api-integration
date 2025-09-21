@@ -38,6 +38,10 @@ class Admin_Menu {
         add_action( 'wp_ajax_save_inventory_cloud_options', [ $this, 'save_inventory_cloud_options' ] );
         add_action( 'wp_ajax_instant_update_inventory', [ $this, 'instant_update_inventory_callback' ] );
         add_action( 'wp_ajax_run_wasp_endpoint', [ $this, 'run_wasp_endpoint' ] );
+        
+        // Handle AJAX requests for table data
+        add_action( 'wp_ajax_fetch_sales_returns_data', [ $this, 'fetch_sales_returns_data' ] );
+        add_action( 'wp_ajax_fetch_orders_data', [ $this, 'fetch_orders_data' ] );
     }
 
     // Handle AJAX request to save options
@@ -373,6 +377,142 @@ class Admin_Menu {
             wp_send_json_success( [ 'message' => $response_body ] );
         }
 
+    }
+
+    /**
+     * Fetch sales returns data for the table
+     */
+    public function fetch_sales_returns_data() {
+        check_ajax_referer( 'wasp_cloud_nonce', 'nonce' );
+
+        if ( !current_user_can( 'manage_options' ) ) {
+            wp_send_json_error( [ 'message' => 'Access denied.' ] );
+        }
+
+        global $wpdb;
+        $table = $wpdb->prefix . 'sync_sales_returns_data';
+
+        // Get parameters
+        $page = intval( $_POST['page'] ?? 1 );
+        $per_page = intval( $_POST['per_page'] ?? 10 );
+        $search = sanitize_text_field( $_POST['search'] ?? '' );
+        $status_filter = sanitize_text_field( $_POST['status_filter'] ?? '' );
+
+        // Calculate offset
+        $offset = ( $page - 1 ) * $per_page;
+
+        // Build WHERE clause
+        $where_conditions = [];
+        $where_values = [];
+
+        if ( !empty( $search ) ) {
+            $where_conditions[] = "(item_number LIKE %s OR customer_number LIKE %s OR site_name LIKE %s OR location_code LIKE %s)";
+            $search_term = '%' . $wpdb->esc_like( $search ) . '%';
+            $where_values = array_merge( $where_values, [ $search_term, $search_term, $search_term, $search_term ] );
+        }
+
+        if ( !empty( $status_filter ) ) {
+            $where_conditions[] = "status = %s";
+            $where_values[] = $status_filter;
+        }
+
+        $where_clause = !empty( $where_conditions ) ? 'WHERE ' . implode( ' AND ', $where_conditions ) : '';
+
+        // Get total count
+        $count_sql = "SELECT COUNT(*) FROM $table $where_clause";
+        if ( !empty( $where_values ) ) {
+            $count_sql = $wpdb->prepare( $count_sql, $where_values );
+        }
+        $total = $wpdb->get_var( $count_sql );
+
+        // Get data
+        $data_sql = "SELECT * FROM $table $where_clause ORDER BY created_at ASC LIMIT %d OFFSET %d";
+        $data_values = array_merge( $where_values, [ $per_page, $offset ] );
+        $data_sql = $wpdb->prepare( $data_sql, $data_values );
+        $results = $wpdb->get_results( $data_sql, ARRAY_A );
+
+        // Calculate pagination info
+        $total_pages = ceil( $total / $per_page );
+
+        wp_send_json_success( [
+            'data' => $results,
+            'pagination' => [
+                'current_page' => $page,
+                'per_page' => $per_page,
+                'total' => $total,
+                'total_pages' => $total_pages,
+                'has_next' => $page < $total_pages,
+                'has_prev' => $page > 1
+            ]
+        ] );
+    }
+
+    /**
+     * Fetch orders data for the table
+     */
+    public function fetch_orders_data() {
+        check_ajax_referer( 'wasp_cloud_nonce', 'nonce' );
+
+        if ( !current_user_can( 'manage_options' ) ) {
+            wp_send_json_error( [ 'message' => 'Access denied.' ] );
+        }
+
+        global $wpdb;
+        $table = $wpdb->prefix . 'sync_wasp_woo_orders_data';
+
+        // Get parameters
+        $page = intval( $_POST['page'] ?? 1 );
+        $per_page = intval( $_POST['per_page'] ?? 10 );
+        $search = sanitize_text_field( $_POST['search'] ?? '' );
+        $status_filter = sanitize_text_field( $_POST['status_filter'] ?? '' );
+
+        // Calculate offset
+        $offset = ( $page - 1 ) * $per_page;
+
+        // Build WHERE clause
+        $where_conditions = [];
+        $where_values = [];
+
+        if ( !empty( $search ) ) {
+            $where_conditions[] = "(item_number LIKE %s OR customer_number LIKE %s OR site_name LIKE %s OR location_code LIKE %s)";
+            $search_term = '%' . $wpdb->esc_like( $search ) . '%';
+            $where_values = array_merge( $where_values, [ $search_term, $search_term, $search_term, $search_term ] );
+        }
+
+        if ( !empty( $status_filter ) ) {
+            $where_conditions[] = "status = %s";
+            $where_values[] = $status_filter;
+        }
+
+        $where_clause = !empty( $where_conditions ) ? 'WHERE ' . implode( ' AND ', $where_conditions ) : '';
+
+        // Get total count
+        $count_sql = "SELECT COUNT(*) FROM $table $where_clause";
+        if ( !empty( $where_values ) ) {
+            $count_sql = $wpdb->prepare( $count_sql, $where_values );
+        }
+        $total = $wpdb->get_var( $count_sql );
+
+        // Get data
+        $data_sql = "SELECT * FROM $table $where_clause ORDER BY created_at ASC LIMIT %d OFFSET %d";
+        $data_values = array_merge( $where_values, [ $per_page, $offset ] );
+        $data_sql = $wpdb->prepare( $data_sql, $data_values );
+        $results = $wpdb->get_results( $data_sql, ARRAY_A );
+
+        // Calculate pagination info
+        $total_pages = ceil( $total / $per_page );
+
+        wp_send_json_success( [
+            'data' => $results,
+            'pagination' => [
+                'current_page' => $page,
+                'per_page' => $per_page,
+                'total' => $total,
+                'total_pages' => $total_pages,
+                'has_next' => $page < $total_pages,
+                'has_prev' => $page > 1
+            ]
+        ] );
     }
 
 }

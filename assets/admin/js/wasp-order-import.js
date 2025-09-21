@@ -73,6 +73,9 @@
             $selectedFile.hide();
             $fileCustom.find(".wasp-inv-file-text").text("Click to select file or drag and drop");
             $fileCustom.find(".wasp-inv-file-types").show();
+            
+            // Refresh table data
+            loadOrdersData();
           } else {
             alert(response.data.message);
           }
@@ -84,5 +87,165 @@
         },
       });
     });
+
+    // Table data management
+    let currentPage = 1;
+    const perPage = 20;
+    let currentSearch = '';
+    let currentStatusFilter = '';
+
+    // Load table data
+    function loadOrdersData() {
+      const $tableBody = $('.wasp-data-table-tbody');
+      const $pagination = $('.wasp-data-table-pagination');
+      const $info = $('.wasp-data-table-info');
+      
+      // Show loading state
+      $tableBody.html('<tr><td colspan="9" style="text-align: center; padding: 20px;">Loading...</td></tr>');
+
+      $.ajax({
+        url: waspInvOrderAjax.ajax_url,
+        type: 'POST',
+        data: {
+          action: 'fetch_orders_data',
+          nonce: waspInvOrderAjax.nonce,
+          page: currentPage,
+          per_page: perPage,
+          search: currentSearch,
+          status_filter: currentStatusFilter
+        },
+        success: function(response) {
+          if (response.success) {
+            renderTableData(response.data.data);
+            renderPagination(response.data.pagination);
+            renderTableInfo(response.data.pagination);
+          } else {
+            $tableBody.html('<tr><td colspan="9" style="text-align: center; padding: 20px; color: red;">Error loading data</td></tr>');
+          }
+        },
+        error: function() {
+          $tableBody.html('<tr><td colspan="9" style="text-align: center; padding: 20px; color: red;">Error loading data</td></tr>');
+        }
+      });
+    }
+
+    // Render table data
+    function renderTableData(data) {
+      const $tableBody = $('.wasp-data-table-tbody');
+      
+      if (data.length === 0) {
+        $tableBody.html('<tr><td colspan="9" style="text-align: center; padding: 20px;">No data found</td></tr>');
+        return;
+      }
+
+      let html = '';
+      data.forEach(function(row) {
+        const statusClass = getStatusClass(row.status);
+        html += `
+          <tr class="wasp-data-table-tr">
+            <td class="wasp-data-table-td">${row.id}</td>
+            <td class="wasp-data-table-td">${row.item_number || ''}</td>
+            <td class="wasp-data-table-td">${row.customer_number || ''}</td>
+            <td class="wasp-data-table-td">${row.site_name || ''}</td>
+            <td class="wasp-data-table-td">${row.location_code || ''}</td>
+            <td class="wasp-data-table-td">$${parseFloat(row.cost || 0).toFixed(2)}</td>
+            <td class="wasp-data-table-td">${row.quantity || ''}</td>
+            <td class="wasp-data-table-td">${row.remove_date || ''}</td>
+            <td class="wasp-data-table-td">
+              <span class="wasp-data-table-status ${statusClass}">${row.status || ''}</span>
+            </td>
+          </tr>
+        `;
+      });
+      
+      $tableBody.html(html);
+    }
+
+    // Get status CSS class
+    function getStatusClass(status) {
+      switch(status) {
+        case 'PENDING': return 'wasp-data-table-status-pending';
+        case 'READY': return 'wasp-data-table-status-ready';
+        case 'FAILED': return 'wasp-data-table-status-failed';
+        case 'COMPLETED': return 'wasp-data-table-status-completed';
+        case 'IGNORED': return 'wasp-data-table-status-ignored';
+        default: return 'wasp-data-table-status-active';
+      }
+    }
+
+    // Render pagination
+    function renderPagination(pagination) {
+      const $pagination = $('.wasp-data-table-pagination');
+      let html = '';
+
+      // Previous buttons
+      html += `<a href="#" class="wasp-data-table-page-btn ${!pagination.has_prev ? 'wasp-data-table-page-btn-disabled' : ''}" data-page="1">‹‹</a>`;
+      html += `<a href="#" class="wasp-data-table-page-btn ${!pagination.has_prev ? 'wasp-data-table-page-btn-disabled' : ''}" data-page="${pagination.current_page - 1}">‹</a>`;
+
+      // Page numbers
+      const startPage = Math.max(1, pagination.current_page - 2);
+      const endPage = Math.min(pagination.total_pages, pagination.current_page + 2);
+
+      if (startPage > 1) {
+        html += `<a href="#" class="wasp-data-table-page-btn" data-page="1">1</a>`;
+        if (startPage > 2) {
+          html += `<span class="wasp-data-table-ellipsis">...</span>`;
+        }
+      }
+
+      for (let i = startPage; i <= endPage; i++) {
+        html += `<a href="#" class="wasp-data-table-page-btn ${i === pagination.current_page ? 'wasp-data-table-page-btn-active' : ''}" data-page="${i}">${i}</a>`;
+      }
+
+      if (endPage < pagination.total_pages) {
+        if (endPage < pagination.total_pages - 1) {
+          html += `<span class="wasp-data-table-ellipsis">...</span>`;
+        }
+        html += `<a href="#" class="wasp-data-table-page-btn" data-page="${pagination.total_pages}">${pagination.total_pages}</a>`;
+      }
+
+      // Next buttons
+      html += `<a href="#" class="wasp-data-table-page-btn ${!pagination.has_next ? 'wasp-data-table-page-btn-disabled' : ''}" data-page="${pagination.current_page + 1}">›</a>`;
+      html += `<a href="#" class="wasp-data-table-page-btn ${!pagination.has_next ? 'wasp-data-table-page-btn-disabled' : ''}" data-page="${pagination.total_pages}">››</a>`;
+
+      $pagination.html(html);
+    }
+
+    // Render table info
+    function renderTableInfo(pagination) {
+      const $info = $('.wasp-data-table-info');
+      const start = (pagination.current_page - 1) * pagination.per_page + 1;
+      const end = Math.min(pagination.current_page * pagination.per_page, pagination.total);
+      $info.text(`Showing ${start} - ${end} of ${pagination.total}`);
+    }
+
+    // Search functionality
+    document.getElementById("searchInput").addEventListener("input", function (e) {
+      currentSearch = e.target.value;
+      currentPage = 1; // Reset to first page
+      loadOrdersData();
+    });
+
+    // Filter functionality
+    document.getElementById("statusFilter").addEventListener("change", function (e) {
+      currentStatusFilter = e.target.value;
+      currentPage = 1; // Reset to first page
+      loadOrdersData();
+    });
+
+    // Pagination click handlers
+    $(document).on('click', '.wasp-data-table-page-btn', function(e) {
+      e.preventDefault();
+      if (!$(this).hasClass('wasp-data-table-page-btn-disabled')) {
+        const page = parseInt($(this).data('page'));
+        if (page && page !== currentPage) {
+          currentPage = page;
+          loadOrdersData();
+        }
+      }
+    });
+
+    // Load initial data
+    loadOrdersData();
   });
 })(jQuery);
