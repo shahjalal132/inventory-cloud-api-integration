@@ -22,6 +22,18 @@
             Import Orders
         </button>
     </form>
+
+    <!-- Progress Bar -->
+    <div class="wasp-progress-container" id="wasp-progress-container" style="display: none;">
+        <div class="wasp-progress-header">
+            <h3>Importing Orders...</h3>
+            <span class="wasp-progress-percentage" id="wasp-progress-percentage">0%</span>
+        </div>
+        <div class="wasp-progress-bar">
+            <div class="wasp-progress-fill" id="wasp-progress-fill"></div>
+        </div>
+        <div class="wasp-progress-status" id="wasp-progress-status">Preparing import...</div>
+    </div>
 </div>
 
 <?php 

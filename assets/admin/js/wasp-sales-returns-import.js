@@ -6,6 +6,12 @@
     const $selectedFile = $("#wasp-inv-selectedFile"); // Area to display selected file name
     const $importBtn = $("#wasp-inv-importBtn"); // Submit/Import button
     const $form = $("#wasp-inv-importForm"); // The form element
+    
+    // Progress bar elements
+    const $progressContainer = $("#wasp-progress-container");
+    const $progressFill = $("#wasp-progress-fill");
+    const $progressPercentage = $("#wasp-progress-percentage");
+    const $progressStatus = $("#wasp-progress-status");
 
     // ==============================
     // Handle File Selection (Browse)
@@ -83,7 +89,11 @@
         return;
       }
 
-      // Simulate import process
+      // Show progress bar and start simulation
+      showProgressBar();
+      startProgressSimulation();
+      updateProgress(10, "Uploading file...");
+      
       $importBtn.prop("disabled", true).text("Importing...");
 
       // Prepare FormData object to send file + other fields
@@ -101,29 +111,50 @@
         data: formData,
         processData: false, // Important for file upload
         contentType: false, // Important for file upload
+        xhr: function() {
+          const xhr = new window.XMLHttpRequest();
+          xhr.upload.addEventListener("progress", function(evt) {
+            if (evt.lengthComputable) {
+              const percentComplete = Math.round((evt.loaded / evt.total) * 50) + 10; // 10-60%
+              updateProgress(percentComplete, "Uploading file...");
+            }
+          }, false);
+          return xhr;
+        },
         success: function (response) {
-          if (response.success) {
-            alert(response.data.message);
-
-            // Reset form and UI
-            $form[0].reset();
-            $selectedFile.hide();
-            $fileCustom
-              .find(".wasp-inv-file-text")
-              .text("Click to select file or drag and drop");
-            $fileCustom.find(".wasp-inv-file-types").show();
+          updateProgress(100, "Import completed!");
+          
+          setTimeout(function() {
+            hideProgressBar();
             
-            // Refresh table data
-            loadSalesReturnsData();
-          } else {
-            alert(response.data.message);
-          }
+            if (response.success) {
+              alert(response.data.message);
 
-          $importBtn.prop("disabled", false).text("Import Data");
+              // Reset form and UI
+              $form[0].reset();
+              $selectedFile.hide();
+              $fileCustom
+                .find(".wasp-inv-file-text")
+                .text("Click to select file or drag and drop");
+              $fileCustom.find(".wasp-inv-file-types").show();
+              
+              // Refresh table data
+              loadSalesReturnsData();
+            } else {
+              alert(response.data.message);
+            }
+
+            $importBtn.prop("disabled", false).text("Import Data");
+          }, 1000);
         },
         error: function (response) {
-          alert(response.responseJSON.data.message);
-          $importBtn.prop("disabled", false).text("Import Data");
+          updateProgress(100, "Import failed!");
+          
+          setTimeout(function() {
+            hideProgressBar();
+            alert(response.responseJSON.data.message);
+            $importBtn.prop("disabled", false).text("Import Data");
+          }, 1000);
         },
       });
     });
@@ -134,6 +165,50 @@
     let currentSearch = '';
     let currentStatusFilter = '';
     let searchTimeout;
+    
+    // Progress bar management
+    let progressInterval;
+    let currentProgress = 0;
+
+    // Progress bar functions
+    function showProgressBar() {
+      $progressContainer.show();
+      $progressFill.css('width', '0%');
+      $progressPercentage.text('0%');
+      $progressStatus.text('Preparing import...');
+      currentProgress = 0;
+    }
+
+    function hideProgressBar() {
+      $progressContainer.hide();
+      if (progressInterval) {
+        clearInterval(progressInterval);
+        progressInterval = null;
+      }
+    }
+
+    function updateProgress(percentage, status) {
+      currentProgress = Math.min(100, Math.max(0, percentage));
+      $progressFill.css('width', currentProgress + '%');
+      $progressPercentage.text(Math.round(currentProgress) + '%');
+      if (status) {
+        $progressStatus.text(status);
+      }
+    }
+
+    function simulateProgress() {
+      if (currentProgress < 90) {
+        currentProgress += Math.random() * 10;
+        updateProgress(currentProgress);
+      }
+    }
+
+    function startProgressSimulation() {
+      if (progressInterval) {
+        clearInterval(progressInterval);
+      }
+      progressInterval = setInterval(simulateProgress, 500);
+    }
 
     // Load table data
     function loadSalesReturnsData() {
