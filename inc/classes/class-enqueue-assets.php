@@ -45,7 +45,7 @@ class Enqueue_Assets {
          * When you need to enqueue admin assets.
          * first check if the current page is you want to enqueue page
          */
-        if ( 'dashboard_page_inventory-cloud-options' === $page_now ) {
+        if ( 'wasp-dashboard_page_inventory-cloud-options' === $page_now ) {
             // enqueue css
             wp_enqueue_style( "wasp-options-sub-menu", PLUGIN_ADMIN_ASSETS_DIR_URL . "/css/wasp-options-sub-menu.css", [], time(), "all" );
 
@@ -59,7 +59,7 @@ class Enqueue_Assets {
             ] );
         }
 
-        if ( 'dashboard_page_wasp-sales-return-import' === $page_now ) {
+        if ( 'wasp-dashboard_page_wasp-sales-return-import' === $page_now ) {
             // enqueue css
             wp_enqueue_style( "wasp-sales-returns-import", PLUGIN_ADMIN_ASSETS_DIR_URL . "/css/wasp-sales-returns-import.css", [], time(), "all" );
 
@@ -73,7 +73,7 @@ class Enqueue_Assets {
             ] );
         }
 
-        if ( 'dashboard_page_wasp-order-import' === $page_now ) {
+        if ( 'wasp-dashboard_page_wasp-order-import' === $page_now ) {
             // enqueue css
             wp_enqueue_style( "wasp-order-import", PLUGIN_ADMIN_ASSETS_DIR_URL . "/css/wasp-order-import.css", [], time(), "all" );
 
@@ -89,7 +89,7 @@ class Enqueue_Assets {
             ] );
         }
 
-        if ( 'dashboard_page_wasp-cron-jobs' === $page_now ) {
+        if ( 'wasp-dashboard_page_wasp-cron-jobs' === $page_now ) {
             // enqueue css
             wp_enqueue_style( "wasp-cron-jobs", PLUGIN_ADMIN_ASSETS_DIR_URL . "/css/wasp-cron-jobs.css", [], time(), "all" );
 

@@ -82,8 +82,8 @@ class Admin_Menu {
 
     public function wasp_settings_top_menu() {
         add_menu_page(
-            'Dashboard',
-            'Dashboard',
+            'Wasp Dashboard',
+            'Wasp Dashboard',
             'manage_options',
             'wasp-settings',
             [ $this, 'wasp_settings_page_html' ],
