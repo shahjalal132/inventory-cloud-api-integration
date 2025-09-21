@@ -93,6 +93,7 @@
     const perPage = 20;
     let currentSearch = '';
     let currentStatusFilter = '';
+    let searchTimeout;
 
     // Load table data
     function loadOrdersData() {
@@ -219,11 +220,25 @@
       $info.text(`Showing ${start} - ${end} of ${pagination.total}`);
     }
 
-    // Search functionality
+    // Search functionality with debouncer
     document.getElementById("searchInput").addEventListener("input", function (e) {
       currentSearch = e.target.value;
       currentPage = 1; // Reset to first page
-      loadOrdersData();
+      
+      // Add loading indicator
+      e.target.classList.add('loading');
+      
+      // Clear existing timeout
+      if (searchTimeout) {
+        clearTimeout(searchTimeout);
+      }
+      
+      // Set new timeout for debounced search
+      searchTimeout = setTimeout(function() {
+        loadOrdersData();
+        // Remove loading indicator after search completes
+        e.target.classList.remove('loading');
+      }, 500); // 500ms delay
     });
 
     // Filter functionality

@@ -426,7 +426,7 @@ class Admin_Menu {
         $total = $wpdb->get_var( $count_sql );
 
         // Get data
-        $data_sql = "SELECT * FROM $table $where_clause ORDER BY created_at ASC LIMIT %d OFFSET %d";
+        $data_sql = "SELECT * FROM $table $where_clause LIMIT %d OFFSET %d";
         $data_values = array_merge( $where_values, [ $per_page, $offset ] );
         $data_sql = $wpdb->prepare( $data_sql, $data_values );
         $results = $wpdb->get_results( $data_sql, ARRAY_A );
@@ -494,7 +494,7 @@ class Admin_Menu {
         $total = $wpdb->get_var( $count_sql );
 
         // Get data
-        $data_sql = "SELECT * FROM $table $where_clause ORDER BY created_at ASC LIMIT %d OFFSET %d";
+        $data_sql = "SELECT * FROM $table $where_clause LIMIT %d OFFSET %d";
         $data_values = array_merge( $where_values, [ $per_page, $offset ] );
         $data_sql = $wpdb->prepare( $data_sql, $data_values );
         $results = $wpdb->get_results( $data_sql, ARRAY_A );
