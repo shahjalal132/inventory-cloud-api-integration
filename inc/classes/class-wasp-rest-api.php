@@ -589,8 +589,8 @@ class Wasp_Rest_Api {
 
                 $api_result = $this->transaction_add_api( $this->token, [ $payload ] ); // send as array
                 // log response
-                // $this->put_program_logs( "Transaction Add API Payload: " . json_encode( $payload ) );
-                // $this->put_program_logs( "Transaction Add API Result: " . json_encode( $api_result ) );
+                $this->put_program_logs( "Transaction Add API Payload: " . json_encode( $payload ) );
+                $this->put_program_logs( "Transaction Add API Result: " . json_encode( $api_result ) );
 
                 $add_count++;
                 $results['add'][] = [
@@ -610,8 +610,8 @@ class Wasp_Rest_Api {
 
                 $api_result = $this->transaction_remove_api( $this->token, [ $payload ] ); // send as array
                 // log response
-                // $this->put_program_logs( "Transaction Remove API Payload: " . json_encode( $payload ) );
-                // $this->put_program_logs( "Transaction Remove API Result: " . json_encode( $api_result ) );
+                $this->put_program_logs( "Transaction Remove API Payload: " . json_encode( $payload ) );
+                $this->put_program_logs( "Transaction Remove API Result: " . json_encode( $api_result ) );
 
                 $remove_count++;
                 $results['remove'][] = [

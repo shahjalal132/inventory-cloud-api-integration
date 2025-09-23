@@ -44,6 +44,7 @@ class Plugin_Activator {
             type VARCHAR(50) NOT NULL DEFAULT '',
             format VARCHAR(32) NULL,
             status VARCHAR(255) NOT NULL DEFAULT 'PENDING',
+            api_response LONGTEXT NULL,
             created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
             updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
             PRIMARY KEY (id)
@@ -67,6 +68,7 @@ class Plugin_Activator {
             quantity DECIMAL(10,2) NOT NULL,
             remove_date VARCHAR(50) NULL,
             status VARCHAR(255) NOT NULL DEFAULT 'PENDING',
+            api_response LONGTEXT NULL,
             created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
             updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
             PRIMARY KEY (id)
