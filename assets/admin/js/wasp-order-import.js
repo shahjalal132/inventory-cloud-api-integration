@@ -249,7 +249,7 @@
             <td class="wasp-data-table-td">${row.quantity || ''}</td>
             <td class="wasp-data-table-td">${formatDate(row.remove_date)}</td>
             <td class="wasp-data-table-td">
-              <span class="wasp-data-table-status ${statusClass}" ${tooltipAttr}>${row.status || ''}</span>
+              <span title="${errorMessage || ''}" class="wasp-data-table-status ${statusClass}" ${tooltipAttr}>${row.status || ''}</span>
             </td>
           </tr>
         `;
