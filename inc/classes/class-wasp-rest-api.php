@@ -132,6 +132,13 @@ class Wasp_Rest_Api {
         foreach ( $pending_items as $item ) {
             $total_processed++;
 
+            // if item number is not numeric, blank, or null, ignore it and update the status to IGNORED
+            if ( !is_numeric( $item->item_number ) || empty( $item->item_number ) ) {
+                $wpdb->update( $table, [ 'status' => Status_Enums::IGNORED->value, 'message' => 'Item number is not correct or empty' ], [ 'id' => $item->id ] );
+                $ignored_count++;
+                continue;
+            }
+
             // Step 3: Get item details from API
             $api_result = $this->get_item_details_api( $this->token, $item->item_number );
 
