@@ -136,7 +136,17 @@ class Wasp_Rest_Api {
             $api_result = $this->get_item_details_api( $this->token, $item->item_number );
 
             if ( $api_result['result'] === 'success' ) {
+                // extract api response data
                 $response_data = json_decode( $api_result['api_response'], true );
+
+                // update api_response
+                $update_result = $wpdb->update(
+                    $table,
+                    [
+                        'api_response' => $api_result['api_response'],
+                    ],
+                    [ 'id' => $item->id ]
+                );
 
                 $site_name      = '';
                 $location_code  = '';
@@ -186,7 +196,16 @@ class Wasp_Rest_Api {
                         }
                     } else {
                         // No non-CLLC location found — IGNORE
-                        $wpdb->update( $table, [ 'status' => Status_Enums::IGNORED->value ], [ 'id' => $item->id ] );
+                        $wpdb->update(
+                            $table,
+                            [
+                                'status'       => Status_Enums::IGNORED->value,
+                                'api_response' => $api_result['api_response'],
+                                'message'      => 'Only CLLC locations found',
+                            ],
+                            [ 'id' => $item->id ]
+                        );
+
                         $ignored_count++;
                         $results[] = [
                             'item'          => $item->item_number,
