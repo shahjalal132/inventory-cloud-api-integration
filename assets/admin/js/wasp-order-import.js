@@ -236,6 +236,7 @@
       data.forEach(function(row) {
         const statusClass = getStatusClass(row.status);
         const errorMessage = extractErrorMessage(row.api_response);
+        const errorColumnMessage = row.message ? row.message : '';
         const tooltipAttr = errorMessage ? `data-tooltip="${errorMessage}"` : '';
         
         html += `
@@ -249,7 +250,7 @@
             <td class="wasp-data-table-td">${row.quantity || ''}</td>
             <td class="wasp-data-table-td">${formatDate(row.remove_date)}</td>
             <td class="wasp-data-table-td">
-              <span title="${errorMessage || ''}" class="wasp-data-table-status ${statusClass}" ${tooltipAttr}>${row.status || ''}</span>
+              <span title="${errorMessage || errorColumnMessage}" class="wasp-data-table-status ${statusClass}" ${tooltipAttr}>${row.status || ''}</span>
             </td>
           </tr>
         `;
