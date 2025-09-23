@@ -285,20 +285,20 @@ class Wasp_Rest_Api {
             $remove_result = $this->transaction_remove_api( $this->token, [ $payload ] );
 
             // Log if needed
-            // $this->put_program_logs( "Transaction Remove API Payload: " . json_encode( $payload ) );
-            // $this->put_program_logs( "Transaction Remove API Result: " . json_encode( $remove_result ) );
+            $this->put_program_logs( "Transaction Remove API Payload: " . json_encode( $payload ) );
+            $this->put_program_logs( "Transaction Remove API Result: " . json_encode( $remove_result ) );
 
             // Update status and store API response
-            $new_status = ( $remove_result['result'] === 'success' ) ? Status_Enums::COMPLETED->value : Status_Enums::FAILED->value;
+            $new_status   = ( $remove_result['result'] === 'success' ) ? Status_Enums::COMPLETED->value : Status_Enums::FAILED->value;
             $api_response = isset( $remove_result['api_response'] ) ? $remove_result['api_response'] : '';
-            
-            $wpdb->update( 
-                $table, 
-                [ 
-                    'status' => $new_status,
-                    'api_response' => $api_response
-                ], 
-                [ 'id' => $item->id ] 
+
+            $wpdb->update(
+                $table,
+                [
+                    'status'       => $new_status,
+                    'api_response' => $api_response,
+                ],
+                [ 'id' => $item->id ]
             );
 
             if ( $new_status === Status_Enums::COMPLETED->value ) {
@@ -645,13 +645,13 @@ class Wasp_Rest_Api {
 
             // update this item only with API response
             $api_response = isset( $api_result['api_response'] ) ? $api_result['api_response'] : '';
-            $wpdb->update( 
-                $table, 
-                [ 
-                    'status' => $new_status,
-                    'api_response' => $api_response
-                ], 
-                [ 'id' => $item->id ] 
+            $wpdb->update(
+                $table,
+                [
+                    'status'       => $new_status,
+                    'api_response' => $api_response,
+                ],
+                [ 'id' => $item->id ]
             );
 
             $processed++;
@@ -948,7 +948,7 @@ class Wasp_Rest_Api {
 
         if ( isset( $response_data['Data'] ) && !empty( $response_data['Data'] ) ) {
             // ✅ Store in transient for 10 minutes
-            set_transient( $cache_key, $response_body, 10 * MINUTE_IN_SECONDS );
+            set_transient( $cache_key, $response_body, 5 * MINUTE_IN_SECONDS );
 
             return [
                 'status_code'  => $status_code,
