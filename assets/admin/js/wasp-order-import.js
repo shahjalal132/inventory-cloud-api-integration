@@ -235,8 +235,11 @@
       let html = '';
       data.forEach(function(row) {
         const statusClass = getStatusClass(row.status);
+        const errorMessage = extractErrorMessage(row.api_response);
+        const tooltipAttr = errorMessage ? `data-tooltip="${errorMessage}"` : '';
+        
         html += `
-          <tr class="wasp-data-table-tr">
+          <tr class="wasp-data-table-tr" ${tooltipAttr}>
             <td class="wasp-data-table-td">${row.id}</td>
             <td class="wasp-data-table-td">${row.item_number || ''}</td>
             <td class="wasp-data-table-td">${row.customer_number || ''}</td>
@@ -246,13 +249,44 @@
             <td class="wasp-data-table-td">${row.quantity || ''}</td>
             <td class="wasp-data-table-td">${formatDate(row.remove_date)}</td>
             <td class="wasp-data-table-td">
-              <span class="wasp-data-table-status ${statusClass}">${row.status || ''}</span>
+              <span class="wasp-data-table-status ${statusClass}" ${tooltipAttr}>${row.status || ''}</span>
             </td>
           </tr>
         `;
       });
       
       $tableBody.html(html);
+    }
+
+    // Extract error message from API response
+    function extractErrorMessage(apiResponse) {
+      if (!apiResponse) return '';
+      
+      try {
+        const response = JSON.parse(apiResponse);
+        
+        // Check for error messages in the response
+        if (response.Messages && Array.isArray(response.Messages)) {
+          for (const message of response.Messages) {
+            if (message.Message && message.HttpStatusCode !== 200) {
+              return message.Message;
+            }
+          }
+        }
+        
+        // Check Data.ResultList for errors
+        if (response.Data && response.Data.ResultList && Array.isArray(response.Data.ResultList)) {
+          for (const result of response.Data.ResultList) {
+            if (result.Message && result.HttpStatusCode !== 200) {
+              return result.Message;
+            }
+          }
+        }
+        
+        return '';
+      } catch (e) {
+        return '';
+      }
     }
 
     // Get status CSS class

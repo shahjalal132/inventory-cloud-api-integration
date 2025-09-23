@@ -554,3 +554,8 @@ input[type="file"] {
     flex-wrap: wrap;
   }
 }
+
+/* Error Tooltip Styles */
+.wasp-data-table-status-failed{
+  cursor: help;
+}
