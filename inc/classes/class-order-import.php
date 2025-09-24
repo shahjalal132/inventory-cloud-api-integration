@@ -44,6 +44,10 @@ class Order_Import {
             $sheet       = $spreadsheet->getActiveSheet();
             $rows        = $sheet->toArray();
 
+            // Initialize counters
+            $imported = 0;
+            $skipped = 0;
+
             // Skip header row
             for ( $i = 1; $i < count( $rows ); $i++ ) {
                 $row = $rows[$i];
@@ -56,6 +60,12 @@ class Order_Import {
                 $quantity        = isset( $row[6] ) ? (float) $row[6] : 0;
                 $remove_date_raw = isset( $row[1] ) ? trim( $row[1] ) : '';
 
+                // Validate item number - skip if invalid
+                if ( !is_valid_item_number( $item_number ) ) {
+                    $skipped++;
+                    continue;
+                }
+
                 // Convert remove_date to ISO 8601 format
                 $remove_date = '';
                 if ( !empty( $remove_date_raw ) ) {
@@ -66,7 +76,7 @@ class Order_Import {
                 }
 
                 // Insert into database
-                $wpdb->insert( $table, [
+                $result = $wpdb->insert( $table, [
                     'item_number'     => $item_number,
                     'customer_number' => $customer_number,
                     'site_name'       => $site_name,
@@ -76,9 +86,22 @@ class Order_Import {
                     'remove_date'     => $remove_date,
                     'status'          => Status_Enums::PENDING->value,
                 ] );
+
+                if ( $result !== false ) {
+                    $imported++;
+                } else {
+                    $skipped++;
+                }
             }
 
-            wp_send_json_success( [ 'message' => 'CSV file processed and inserted successfully!' ] );
+            // Send response with import statistics
+            if ( $imported > 0 ) {
+                $message = sprintf( '%s row(s) imported successfully. %s row(s) skipped.', $imported, $skipped );
+                wp_send_json_success( [ 'message' => $message ] );
+            } else {
+                $message = sprintf( 'No rows were imported. %s row(s) were skipped due to invalid item numbers.', $skipped );
+                wp_send_json_error( [ 'message' => $message ] );
+            }
 
         } catch (\Exception $e) {
             $this->put_program_logs( 'Failed to read or process CSV: ' . $e->getMessage() );

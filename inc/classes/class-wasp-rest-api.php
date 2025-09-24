@@ -311,8 +311,8 @@ class Wasp_Rest_Api {
             $remove_result = $this->transaction_remove_api( $this->token, [ $payload ] );
 
             // Log if needed
-            $this->put_program_logs( "Transaction Remove API Payload: " . json_encode( $payload ) );
-            $this->put_program_logs( "Transaction Remove API Result: " . json_encode( $remove_result ) );
+            // $this->put_program_logs( "Transaction Remove API Payload: " . json_encode( $payload ) );
+            // $this->put_program_logs( "Transaction Remove API Result: " . json_encode( $remove_result ) );
 
             // Update status and store API response
             $new_status   = ( $remove_result['result'] === 'success' ) ? Status_Enums::COMPLETED->value : Status_Enums::FAILED->value;

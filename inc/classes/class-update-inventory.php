@@ -126,6 +126,11 @@ class Update_Inventory {
                                 continue;
                             }
 
+                            // Validate item number - skip if invalid
+                            if ( !is_valid_item_number( $item_number ) ) {
+                                continue;
+                            }
+
                             // message for non CLLC locations
                             $locationCodeMessage = sprintf( 'Item number: %s, quantity: %s, location: %s', $item_number, $quantity, $locationCode );
                             // $this->put_program_logs( $locationCodeMessage );

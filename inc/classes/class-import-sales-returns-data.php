@@ -143,6 +143,12 @@ class Import_Sales_Returns_Data {
             $item_number = $this->clean_excel_value( $item_number );
             $customer    = $this->clean_excel_value( $customer );
 
+            // Validate item number - skip if invalid
+            if ( !is_valid_item_number( $item_number ) ) {
+                $skipped++;
+                continue;
+            }
+
             // Convert quantity to float and determine transaction type
             $qty              = floatval( $qty );
             $transaction_type = ( $qty < 0 ) ? 'RETURN' : 'SALE';
