@@ -42,6 +42,10 @@ class Admin_Menu {
         // Handle AJAX requests for table data
         add_action( 'wp_ajax_fetch_sales_returns_data', [ $this, 'fetch_sales_returns_data' ] );
         add_action( 'wp_ajax_fetch_orders_data', [ $this, 'fetch_orders_data' ] );
+        
+        // Handle AJAX requests for CSV export
+        add_action( 'wp_ajax_export_sales_returns_csv', [ $this, 'export_sales_returns_csv' ] );
+        add_action( 'wp_ajax_export_orders_csv', [ $this, 'export_orders_csv' ] );
     }
 
     // Handle AJAX request to save options
@@ -513,6 +517,184 @@ class Admin_Menu {
                 'has_prev' => $page > 1
             ]
         ] );
+    }
+
+    /**
+     * Export sales returns data as CSV
+     */
+    public function export_sales_returns_csv() {
+        check_ajax_referer( 'wasp_cloud_nonce', 'nonce' );
+
+        if ( !current_user_can( 'manage_options' ) ) {
+            wp_send_json_error( [ 'message' => 'Access denied.' ] );
+        }
+
+        global $wpdb;
+        $table = $wpdb->prefix . 'sync_sales_returns_data';
+
+        // Get parameters for filtering
+        $search = sanitize_text_field( $_POST['search'] ?? '' );
+        $status_filter = sanitize_text_field( $_POST['status_filter'] ?? '' );
+
+        // Build WHERE clause (same as fetch_sales_returns_data)
+        $where_conditions = [];
+        $where_values = [];
+
+        if ( !empty( $search ) ) {
+            $where_conditions[] = "(item_number LIKE %s OR customer_number LIKE %s OR site_name LIKE %s OR location_code LIKE %s)";
+            $search_term = '%' . $wpdb->esc_like( $search ) . '%';
+            $where_values = array_merge( $where_values, [ $search_term, $search_term, $search_term, $search_term ] );
+        }
+
+        if ( !empty( $status_filter ) ) {
+            $where_conditions[] = "status = %s";
+            $where_values[] = $status_filter;
+        }
+
+        $where_clause = !empty( $where_conditions ) ? 'WHERE ' . implode( ' AND ', $where_conditions ) : '';
+
+        // Get all data (no pagination for export)
+        $data_sql = "SELECT * FROM $table $where_clause";
+        if ( !empty( $where_values ) ) {
+            $data_sql = $wpdb->prepare( $data_sql, $where_values );
+        }
+        $results = $wpdb->get_results( $data_sql, ARRAY_A );
+
+        // Generate CSV
+        $filename = 'sales-returns-' . date('Y-m-d-His') . '.csv';
+        
+        // Set headers for CSV download
+        header('Content-Type: text/csv; charset=utf-8');
+        header('Content-Disposition: attachment; filename="' . $filename . '"');
+        header('Pragma: no-cache');
+        header('Expires: 0');
+
+        // Create output stream
+        $output = fopen('php://output', 'w');
+
+        // Add CSV headers
+        fputcsv($output, [
+            'ID',
+            'Item Number',
+            'Cost',
+            'Date Acquired',
+            'Customer Number',
+            'Site Name',
+            'Location Code',
+            'Quantity',
+            'Type',
+            'Status'
+        ]);
+
+        // Add data rows
+        foreach ($results as $row) {
+            // Add negative sign to quantity if type is RETURN
+            $quantity = $row['quantity'];
+            if (isset($row['type']) && $row['type'] === 'RETURN') {
+                $quantity = '-' . $quantity;
+            }
+
+            fputcsv($output, [
+                $row['id'],
+                $row['item_number'] ?? '',
+                $row['cost'] ?? '',
+                $row['date_acquired'] ?? '',
+                $row['customer_number'] ?? '',
+                $row['site_name'] ?? '',
+                $row['location_code'] ?? '',
+                $quantity,
+                $row['type'] ?? '',
+                $row['status'] ?? ''
+            ]);
+        }
+
+        fclose($output);
+        exit;
+    }
+
+    /**
+     * Export orders data as CSV
+     */
+    public function export_orders_csv() {
+        check_ajax_referer( 'wasp_cloud_nonce', 'nonce' );
+
+        if ( !current_user_can( 'manage_options' ) ) {
+            wp_send_json_error( [ 'message' => 'Access denied.' ] );
+        }
+
+        global $wpdb;
+        $table = $wpdb->prefix . 'sync_wasp_woo_orders_data';
+
+        // Get parameters for filtering
+        $search = sanitize_text_field( $_POST['search'] ?? '' );
+        $status_filter = sanitize_text_field( $_POST['status_filter'] ?? '' );
+
+        // Build WHERE clause (same as fetch_orders_data)
+        $where_conditions = [];
+        $where_values = [];
+
+        if ( !empty( $search ) ) {
+            $where_conditions[] = "(item_number LIKE %s OR customer_number LIKE %s OR site_name LIKE %s OR location_code LIKE %s)";
+            $search_term = '%' . $wpdb->esc_like( $search ) . '%';
+            $where_values = array_merge( $where_values, [ $search_term, $search_term, $search_term, $search_term ] );
+        }
+
+        if ( !empty( $status_filter ) ) {
+            $where_conditions[] = "status = %s";
+            $where_values[] = $status_filter;
+        }
+
+        $where_clause = !empty( $where_conditions ) ? 'WHERE ' . implode( ' AND ', $where_conditions ) : '';
+
+        // Get all data (no pagination for export)
+        $data_sql = "SELECT * FROM $table $where_clause";
+        if ( !empty( $where_values ) ) {
+            $data_sql = $wpdb->prepare( $data_sql, $where_values );
+        }
+        $results = $wpdb->get_results( $data_sql, ARRAY_A );
+
+        // Generate CSV
+        $filename = 'woo-orders-' . date('Y-m-d-His') . '.csv';
+        
+        // Set headers for CSV download
+        header('Content-Type: text/csv; charset=utf-8');
+        header('Content-Disposition: attachment; filename="' . $filename . '"');
+        header('Pragma: no-cache');
+        header('Expires: 0');
+
+        // Create output stream
+        $output = fopen('php://output', 'w');
+
+        // Add CSV headers
+        fputcsv($output, [
+            'ID',
+            'Item Number',
+            'Customer Number',
+            'Site Name',
+            'Location Code',
+            'Cost',
+            'Quantity',
+            'Remove Date',
+            'Status'
+        ]);
+
+        // Add data rows
+        foreach ($results as $row) {
+            fputcsv($output, [
+                $row['id'],
+                $row['item_number'] ?? '',
+                $row['customer_number'] ?? '',
+                $row['site_name'] ?? '',
+                $row['location_code'] ?? '',
+                $row['cost'] ?? '',
+                $row['quantity'] ?? '',
+                $row['remove_date'] ?? '',
+                $row['status'] ?? ''
+            ]);
+        }
+
+        fclose($output);
+        exit;
     }
 
 }

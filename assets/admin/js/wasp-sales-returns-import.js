@@ -425,6 +425,47 @@
       }
     });
 
+    // Export CSV button handler
+    $('#wasp-sales-return-export-btn').on('click', function(e) {
+      e.preventDefault();
+      
+      // Disable button during export
+      const $btn = $(this);
+      const originalText = $btn.text();
+      $btn.prop('disabled', true).text('Exporting...');
+      
+      // Create a form dynamically to submit the export request
+      const form = document.createElement('form');
+      form.method = 'POST';
+      form.action = waspInvAjax.ajax_url;
+      form.style.display = 'none';
+      
+      // Add form fields
+      const fields = {
+        action: 'export_sales_returns_csv',
+        nonce: waspInvAjax.nonce,
+        search: currentSearch,
+        status_filter: currentStatusFilter
+      };
+      
+      for (const key in fields) {
+        const input = document.createElement('input');
+        input.type = 'hidden';
+        input.name = key;
+        input.value = fields[key];
+        form.appendChild(input);
+      }
+      
+      document.body.appendChild(form);
+      form.submit();
+      document.body.removeChild(form);
+      
+      // Re-enable button after a short delay
+      setTimeout(function() {
+        $btn.prop('disabled', false).text(originalText);
+      }, 1000);
+    });
+
     // Load initial data
     loadSalesReturnsData();
   });
