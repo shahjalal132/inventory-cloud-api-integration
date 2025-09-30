@@ -88,6 +88,9 @@ use BOILERPLATE\Inc\Enums\Status_Enums;
                     <option value="<?php echo Status_Enums::IGNORED->value ?>"><?php echo Status_Enums::IGNORED->value ?></option>
                 </select>
             </div>
+            <div>
+                <button class="wasp-export-btn" id="wasp-sales-return-export-btn">Export CSV</button>
+            </div>
             <div class="wasp-data-table-search-section">
                 <input type="text" class="wasp-data-table-search-input"
                     placeholder="Search items, customers, locations..." id="searchInput">

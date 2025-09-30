@@ -570,3 +570,25 @@ input[type="file"] {
 .wasp-data-table-status-ignored {
   cursor: help;
 }
+
+.wasp-export-btn {
+    width: 150px;
+    background:#ffffff;
+    color: #135e96;
+    border: none;
+    padding: 10px 20px;
+    border-radius: 8px;
+    font-size: 1rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    position: relative;
+    overflow: hidden;
+    border: 1px solid #135e96;
+}
+
+.wasp-export-btn:hover{
+  background: #135e96;
+  color: #ffffff;
+  border: 1px solid #ffffff;
+}
