@@ -116,7 +116,7 @@ class Wasp_Rest_Api {
 
         // Step 2: Get pending and error items
         $pending_items = $wpdb->get_results(
-            $wpdb->prepare( "SELECT * FROM $table WHERE status = %s OR status = %s LIMIT %d", Status_Enums::PENDING->value, Status_Enums::FAILED->value, $limit )
+            $wpdb->prepare( "SELECT * FROM $table WHERE status = %s LIMIT %d", Status_Enums::PENDING->value, $limit )
         );
 
         if ( empty( $pending_items ) ) {
@@ -444,7 +444,7 @@ class Wasp_Rest_Api {
             $limit = 100;
 
         // get all items with limit where status is PENDING
-        $pending_items = $wpdb->get_results( $wpdb->prepare( "SELECT * FROM $table WHERE status = %s OR status = %s LIMIT %d", Status_Enums::PENDING->value, Status_Enums::FAILED->value, $limit ) );
+        $pending_items = $wpdb->get_results( $wpdb->prepare( "SELECT * FROM $table WHERE status = %s LIMIT %d", Status_Enums::PENDING->value, $limit ) );
         if ( empty( $pending_items ) ) {
             return new \WP_REST_Response( [ 'message' => 'No items found.' ], 200 );
         }
