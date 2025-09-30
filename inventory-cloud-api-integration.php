@@ -7,7 +7,7 @@
  * Author:      Shah Jalal
  * Author URI:  https://github.com/shahjalal132
  * Description: Update inventory in woocommerce and store bidirectionally
- * Version:     2.3.0
+ * Version:     2.4.0
  * text-domain: inventory-cloud
  * Domain Path: /languages
  * 
