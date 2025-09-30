@@ -544,6 +544,8 @@ class Wasp_Rest_Api {
                     ];
                 }
             } else {
+                // update status to IGNORED with message No data found from api for this item
+                $wpdb->update( $table, [ 'status' => Status_Enums::IGNORED->value, 'message' => 'No data found from api for this item' ], [ 'id' => $item->id ] );
                 $error_count++;
                 $results[] = [
                     'item'          => $item->item_number,
