@@ -583,7 +583,8 @@ class Admin_Menu {
             'Location Code',
             'Quantity',
             'Type',
-            'Status'
+            'Status',
+            'Message'
         ]);
 
         // Add data rows
@@ -593,6 +594,9 @@ class Admin_Menu {
             if (isset($row['type']) && $row['type'] === 'RETURN') {
                 $quantity = '-' . $quantity;
             }
+
+            // Extract error message from API response
+            $errorMessage = $this->extract_error_message_from_api_response($row['api_response'] ?? '');
 
             fputcsv($output, [
                 $row['id'],
@@ -604,7 +608,8 @@ class Admin_Menu {
                 $row['location_code'] ?? '',
                 $quantity,
                 $row['type'] ?? '',
-                $row['status'] ?? ''
+                $row['status'] ?? '',
+                $errorMessage
             ]);
         }
 
@@ -675,11 +680,18 @@ class Admin_Menu {
             'Cost',
             'Quantity',
             'Remove Date',
-            'Status'
+            'Status',
+            'Message'
         ]);
 
         // Add data rows
         foreach ($results as $row) {
+            // Extract error message from API response or use message field
+            $errorMessage = $this->extract_error_message_from_api_response($row['api_response'] ?? '');
+            if (empty($errorMessage) && !empty($row['message'])) {
+                $errorMessage = $row['message'];
+            }
+
             fputcsv($output, [
                 $row['id'],
                 $row['item_number'] ?? '',
@@ -689,12 +701,50 @@ class Admin_Menu {
                 $row['cost'] ?? '',
                 $row['quantity'] ?? '',
                 $row['remove_date'] ?? '',
-                $row['status'] ?? ''
+                $row['status'] ?? '',
+                $errorMessage
             ]);
         }
 
         fclose($output);
         exit;
+    }
+
+    /**
+     * Extract error message from API response JSON
+     * 
+     * @param string $api_response JSON string from API response
+     * @return string Error message or empty string
+     */
+    private function extract_error_message_from_api_response( $api_response ) {
+        if ( empty( $api_response ) ) {
+            return '';
+        }
+
+        $response = json_decode( $api_response, true );
+        if ( json_last_error() !== JSON_ERROR_NONE ) {
+            return '';
+        }
+
+        // Check for error messages in Messages array
+        if ( isset( $response['Messages'] ) && is_array( $response['Messages'] ) ) {
+            foreach ( $response['Messages'] as $message ) {
+                if ( isset( $message['Message'] ) && isset( $message['HttpStatusCode'] ) && $message['HttpStatusCode'] !== 200 ) {
+                    return $message['Message'];
+                }
+            }
+        }
+
+        // Check Data.ResultList for errors
+        if ( isset( $response['Data']['ResultList'] ) && is_array( $response['Data']['ResultList'] ) ) {
+            foreach ( $response['Data']['ResultList'] as $result ) {
+                if ( isset( $result['Message'] ) && isset( $result['HttpStatusCode'] ) && $result['HttpStatusCode'] !== 200 ) {
+                    return $result['Message'];
+                }
+            }
+        }
+
+        return '';
     }
 
 }

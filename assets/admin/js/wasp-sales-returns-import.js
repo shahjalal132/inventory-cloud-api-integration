@@ -216,7 +216,7 @@
       const $info = $('.wasp-data-table-info');
       
       // Show loading state
-      $tableBody.html('<tr><td colspan="10" style="text-align: center; padding: 20px;">Loading...</td></tr>');
+      $tableBody.html('<tr><td colspan="11" style="text-align: center; padding: 20px;">Loading...</td></tr>');
 
       $.ajax({
         url: waspInvAjax.ajax_url,
@@ -235,11 +235,11 @@
             renderPagination(response.data.pagination);
             renderTableInfo(response.data.pagination);
           } else {
-            $tableBody.html('<tr><td colspan="10" style="text-align: center; padding: 20px; color: red;">Error loading data</td></tr>');
+            $tableBody.html('<tr><td colspan="11" style="text-align: center; padding: 20px; color: red;">Error loading data</td></tr>');
           }
         },
         error: function() {
-          $tableBody.html('<tr><td colspan="10" style="text-align: center; padding: 20px; color: red;">Error loading data</td></tr>');
+          $tableBody.html('<tr><td colspan="11" style="text-align: center; padding: 20px; color: red;">Error loading data</td></tr>');
         }
       });
     }
@@ -265,7 +265,7 @@
       const $tableBody = $('.wasp-data-table-tbody');
       
       if (data.length === 0) {
-        $tableBody.html('<tr><td colspan="10" style="text-align: center; padding: 20px;">No data found</td></tr>');
+        $tableBody.html('<tr><td colspan="11" style="text-align: center; padding: 20px;">No data found</td></tr>');
         return;
       }
 
@@ -289,6 +289,7 @@
             <td class="wasp-data-table-td">
               <span title="${errorMessage || ''}" class="wasp-data-table-status ${statusClass}" ${tooltipAttr}>${row.status || ''}</span>
             </td>
+            <td class="wasp-data-table-td">${errorMessage || ''}</td>
           </tr>
         `;
       });

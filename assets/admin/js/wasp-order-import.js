@@ -179,7 +179,7 @@
       const $info = $('.wasp-data-table-info');
       
       // Show loading state
-      $tableBody.html('<tr><td colspan="9" style="text-align: center; padding: 20px;">Loading...</td></tr>');
+      $tableBody.html('<tr><td colspan="10" style="text-align: center; padding: 20px;">Loading...</td></tr>');
 
       $.ajax({
         url: waspInvOrderAjax.ajax_url,
@@ -198,11 +198,11 @@
             renderPagination(response.data.pagination);
             renderTableInfo(response.data.pagination);
           } else {
-            $tableBody.html('<tr><td colspan="9" style="text-align: center; padding: 20px; color: red;">Error loading data</td></tr>');
+            $tableBody.html('<tr><td colspan="10" style="text-align: center; padding: 20px; color: red;">Error loading data</td></tr>');
           }
         },
         error: function() {
-          $tableBody.html('<tr><td colspan="9" style="text-align: center; padding: 20px; color: red;">Error loading data</td></tr>');
+          $tableBody.html('<tr><td colspan="10" style="text-align: center; padding: 20px; color: red;">Error loading data</td></tr>');
         }
       });
     }
@@ -228,7 +228,7 @@
       const $tableBody = $('.wasp-data-table-tbody');
       
       if (data.length === 0) {
-        $tableBody.html('<tr><td colspan="9" style="text-align: center; padding: 20px;">No data found</td></tr>');
+        $tableBody.html('<tr><td colspan="10" style="text-align: center; padding: 20px;">No data found</td></tr>');
         return;
       }
 
@@ -237,6 +237,7 @@
         const statusClass = getStatusClass(row.status);
         const errorMessage = extractErrorMessage(row.api_response);
         const errorColumnMessage = row.message ? row.message : '';
+        const displayMessage = errorMessage || errorColumnMessage;
         const tooltipAttr = errorMessage ? `data-tooltip="${errorMessage}"` : '';
         
         html += `
@@ -250,8 +251,9 @@
             <td class="wasp-data-table-td">${row.quantity || ''}</td>
             <td class="wasp-data-table-td">${formatDate(row.remove_date)}</td>
             <td class="wasp-data-table-td">
-              <span title="${errorMessage || errorColumnMessage}" class="wasp-data-table-status ${statusClass}" ${tooltipAttr}>${row.status || ''}</span>
+              <span title="${displayMessage || ''}" class="wasp-data-table-status ${statusClass}" ${tooltipAttr}>${row.status || ''}</span>
             </td>
+            <td class="wasp-data-table-td">${displayMessage || ''}</td>
           </tr>
         `;
       });

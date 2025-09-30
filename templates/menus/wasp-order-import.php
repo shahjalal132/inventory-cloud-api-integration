@@ -81,6 +81,7 @@ use BOILERPLATE\Inc\Enums\Status_Enums;
                             <th class="wasp-data-table-th">Quantity</th>
                             <th class="wasp-data-table-th">Remove Date</th>
                             <th class="wasp-data-table-th">Status</th>
+                            <th class="wasp-data-table-th">Message</th>
                         </tr>
                     </thead>
                     <tbody class="wasp-data-table-tbody">

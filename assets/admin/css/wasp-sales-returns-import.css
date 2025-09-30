@@ -592,3 +592,13 @@ input[type="file"] {
   color: #ffffff;
   border: 1px solid #ffffff;
 }
+
+/* Message column specific styling */
+.wasp-data-table-td:last-child {
+  max-width: 300px;
+  white-space: normal;
+  word-wrap: break-word;
+  word-break: break-word;
+  overflow-wrap: break-word;
+  line-height: 1.4;
+}
