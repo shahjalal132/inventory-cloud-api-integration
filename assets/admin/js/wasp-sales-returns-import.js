@@ -284,7 +284,7 @@
             <td class="wasp-data-table-td">${row.customer_number || ''}</td>
             <td class="wasp-data-table-td">${row.site_name || ''}</td>
             <td class="wasp-data-table-td">${row.location_code || ''}</td>
-            <td class="wasp-data-table-td">${row.quantity || ''}</td>
+            <td class="wasp-data-table-td">${row.type === 'RETURN' ? '-' + (row.quantity || '') : (row.quantity || '')}</td>
             <td class="wasp-data-table-td">${row.type || ''}</td>
             <td class="wasp-data-table-td">
               <span title="${errorMessage || ''}" class="wasp-data-table-status ${statusClass}" ${tooltipAttr}>${row.status || ''}</span>

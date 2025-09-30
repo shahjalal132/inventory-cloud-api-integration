@@ -2,3 +2,5 @@ Transaction Remove API Payload: {"ItemNumber":"jalal","CustomerNumber":"GA 10","
 
 Transaction Remove API Result: {"status_code":200,"result":"error","error_message":"ItemNumber: jalal is fail, message :The Asset Tag, jalal, does not exist in the system,The Site Name, , does not exist in the system. ","api_response":"{\"Data\":{\"ResultList\":[{\"ResultCode\":-57010,\"Message\":\"ItemNumber: jalal is fail, message :The Asset Tag, jalal, does not exist in the system,The Site Name, , does not exist in the system. \",\"HttpStatusCode\":422,\"FieldName\":\"jalal\"}],\"SuccessfullResults\":0,\"TotalResults\":1,\"ErrorCount\":1},\"Messages\":[{\"ResultCode\":-57010,\"Message\":\"ItemNumber: jalal is fail, message :The Asset Tag, jalal, does not exist in the system,The Site Name, , does not exist in the system. \",\"HttpStatusCode\":422,\"FieldName\":\"jalal\"}],\"TotalRecordsLongCount\":0,\"HasSuccessWithMoreDataRemaining\":false,\"HasError\":true,\"HasMessage\":true,\"HasHttpError\":true}"} - 2025-09-24 04:59:21
 
+Importing data for 3 2023 and date acquired: 2023-03-31T23:59:59Z - 2025-09-30 09:05:52
+
