@@ -272,7 +272,9 @@
       let html = '';
       data.forEach(function(row) {
         const statusClass = getStatusClass(row.status);
-        const errorMessage = extractErrorMessage(row.api_response);
+        const apiMessage = extractErrorMessage(row.api_response);
+        const message = row.message || '';
+        const errorMessage = apiMessage || message;
         const tooltipAttr = errorMessage ? `data-tooltip="${errorMessage}"` : '';
         
         html += `
