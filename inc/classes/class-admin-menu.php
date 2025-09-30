@@ -595,10 +595,10 @@ class Admin_Menu {
                 $quantity = '-' . $quantity;
             }
 
-            // Extract error message from API response
-            $errorMessage = $this->extract_error_message_from_api_response($row['api_response'] ?? '');
-            $message = $row['message'] ?? '';
-            $errorMessage = $errorMessage || $message;
+            // Extract error message from API response or use message field
+            $apiMessage = $this->extract_error_message_from_api_response($row['api_response'] ?? '');
+            $dbMessage = $row['message'] ?? '';
+            $errorMessage = !empty($apiMessage) ? $apiMessage : $dbMessage;
 
             fputcsv($output, [
                 $row['id'],
@@ -611,7 +611,7 @@ class Admin_Menu {
                 $quantity,
                 $row['type'] ?? '',
                 $row['status'] ?? '',
-                $errorMessage ?? ''
+                $errorMessage
             ]);
         }
 
@@ -689,9 +689,9 @@ class Admin_Menu {
         // Add data rows
         foreach ($results as $row) {
             // Extract error message from API response or use message field
-            $errorMessage = $this->extract_error_message_from_api_response($row['api_response'] ?? '');
-            $message = $row['message'] ?? '';
-            $errorMessage = $errorMessage || $message;
+            $apiMessage = $this->extract_error_message_from_api_response($row['api_response'] ?? '');
+            $dbMessage = $row['message'] ?? '';
+            $errorMessage = !empty($apiMessage) ? $apiMessage : $dbMessage;
 
             fputcsv($output, [
                 $row['id'],
@@ -703,7 +703,7 @@ class Admin_Menu {
                 $row['quantity'] ?? '',
                 $row['remove_date'] ?? '',
                 $row['status'] ?? '',
-                $errorMessage ?? ''
+                $errorMessage
             ]);
         }
 
