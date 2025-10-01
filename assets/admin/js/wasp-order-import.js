@@ -6,7 +6,7 @@
     const $selectedFile = $("#wasp-order-selectedFile");
     const $importBtn = $("#wasp-order-importBtn");
     const $form = $("#wasp-order-importForm");
-    
+
     // Progress bar elements
     const $progressContainer = $("#wasp-progress-container");
     const $progressFill = $("#wasp-progress-fill");
@@ -61,46 +61,53 @@
         alert("Please select a CSV file to import");
         return;
       }
-      
+
       // Show progress bar and start simulation
       showProgressBar();
       startProgressSimulation();
       updateProgress(10, "Uploading file...");
-      
+
       $importBtn.prop("disabled", true).text("Importing...");
       const formData = new FormData();
       formData.append("action", "wasp_import_woocommerce_orders");
       formData.append("nonce", waspInvOrderAjax.nonce);
       formData.append("file", file);
-      
+
       $.ajax({
         url: waspInvOrderAjax.ajax_url,
         type: "POST",
         data: formData,
         processData: false,
         contentType: false,
-        xhr: function() {
+        xhr: function () {
           const xhr = new window.XMLHttpRequest();
-          xhr.upload.addEventListener("progress", function(evt) {
-            if (evt.lengthComputable) {
-              const percentComplete = Math.round((evt.loaded / evt.total) * 50) + 10; // 10-60%
-              updateProgress(percentComplete, "Uploading file...");
-            }
-          }, false);
+          xhr.upload.addEventListener(
+            "progress",
+            function (evt) {
+              if (evt.lengthComputable) {
+                const percentComplete =
+                  Math.round((evt.loaded / evt.total) * 50) + 10; // 10-60%
+                updateProgress(percentComplete, "Uploading file...");
+              }
+            },
+            false
+          );
           return xhr;
         },
         success: function (response) {
           updateProgress(100, "Import completed!");
-          
-          setTimeout(function() {
+
+          setTimeout(function () {
             hideProgressBar();
-            
+
             if (response.success) {
               $form[0].reset();
               $selectedFile.hide();
-              $fileCustom.find(".wasp-inv-file-text").text("Click to select file or drag and drop");
+              $fileCustom
+                .find(".wasp-inv-file-text")
+                .text("Click to select file or drag and drop");
               $fileCustom.find(".wasp-inv-file-types").show();
-              
+
               // Refresh table data
               loadOrdersData();
             } else {
@@ -111,8 +118,8 @@
         },
         error: function (response) {
           updateProgress(100, "Import failed!");
-          
-          setTimeout(function() {
+
+          setTimeout(function () {
             hideProgressBar();
             alert(response.responseJSON.data.message);
             $importBtn.prop("disabled", false).text("Import Orders");
@@ -124,10 +131,10 @@
     // Table data management
     let currentPage = 1;
     const perPage = 20;
-    let currentSearch = '';
-    let currentStatusFilter = '';
+    let currentSearch = "";
+    let currentStatusFilter = "";
     let searchTimeout;
-    
+
     // Progress bar management
     let progressInterval;
     let currentProgress = 0;
@@ -135,9 +142,9 @@
     // Progress bar functions
     function showProgressBar() {
       $progressContainer.show();
-      $progressFill.css('width', '0%');
-      $progressPercentage.text('0%');
-      $progressStatus.text('Preparing import...');
+      $progressFill.css("width", "0%");
+      $progressPercentage.text("0%");
+      $progressStatus.text("Preparing import...");
       currentProgress = 0;
     }
 
@@ -151,8 +158,8 @@
 
     function updateProgress(percentage, status) {
       currentProgress = Math.min(100, Math.max(0, percentage));
-      $progressFill.css('width', currentProgress + '%');
-      $progressPercentage.text(Math.round(currentProgress) + '%');
+      $progressFill.css("width", currentProgress + "%");
+      $progressPercentage.text(Math.round(currentProgress) + "%");
       if (status) {
         $progressStatus.text(status);
       }
@@ -174,100 +181,116 @@
 
     // Load table data
     function loadOrdersData() {
-      const $tableBody = $('.wasp-data-table-tbody');
-      const $pagination = $('.wasp-data-table-pagination');
-      const $info = $('.wasp-data-table-info');
-      
+      const $tableBody = $(".wasp-data-table-tbody");
+      const $pagination = $(".wasp-data-table-pagination");
+      const $info = $(".wasp-data-table-info");
+
       // Show loading state
-      $tableBody.html('<tr><td colspan="10" style="text-align: center; padding: 20px;">Loading...</td></tr>');
+      $tableBody.html(
+        '<tr><td colspan="10" style="text-align: center; padding: 20px;">Loading...</td></tr>'
+      );
 
       $.ajax({
         url: waspInvOrderAjax.ajax_url,
-        type: 'POST',
+        type: "POST",
         data: {
-          action: 'fetch_orders_data',
+          action: "fetch_orders_data",
           nonce: waspInvOrderAjax.nonce,
           page: currentPage,
           per_page: perPage,
           search: currentSearch,
-          status_filter: currentStatusFilter
+          status_filter: currentStatusFilter,
         },
-        success: function(response) {
+        success: function (response) {
           if (response.success) {
             renderTableData(response.data.data);
             renderPagination(response.data.pagination);
             renderTableInfo(response.data.pagination);
           } else {
-            $tableBody.html('<tr><td colspan="10" style="text-align: center; padding: 20px; color: red;">Error loading data</td></tr>');
+            $tableBody.html(
+              '<tr><td colspan="10" style="text-align: center; padding: 20px; color: red;">Error loading data</td></tr>'
+            );
           }
         },
-        error: function() {
-          $tableBody.html('<tr><td colspan="10" style="text-align: center; padding: 20px; color: red;">Error loading data</td></tr>');
-        }
+        error: function () {
+          $tableBody.html(
+            '<tr><td colspan="10" style="text-align: center; padding: 20px; color: red;">Error loading data</td></tr>'
+          );
+        },
       });
     }
 
     function formatDate(dateString) {
-      if (!dateString) return '';
+      if (!dateString) return "";
       const date = new Date(dateString);
-    
-      const day = String(date.getDate()).padStart(2, '0');
-      const month = String(date.getMonth() + 1).padStart(2, '0'); // months are 0-based
-      const year = date.getFullYear();
-    
-      let hours = date.getHours();
-      const minutes = String(date.getMinutes()).padStart(2, '0');
-      const ampm = hours >= 12 ? 'pm' : 'am';
+
+      const day = String(date.getUTCDate()).padStart(2, "0");
+      const month = String(date.getUTCMonth() + 1).padStart(2, "0"); // months are 0-based
+      const year = date.getUTCFullYear();
+
+      let hours = date.getUTCHours();
+      const minutes = String(date.getUTCMinutes()).padStart(2, "0");
+      const ampm = hours >= 12 ? "pm" : "am";
       hours = hours % 12 || 12; // convert 0 -> 12 for 12-hour clock
-    
+
       return `${day}-${month}-${year} ${hours}:${minutes}${ampm}`;
     }
 
     // Render table data
     function renderTableData(data) {
-      const $tableBody = $('.wasp-data-table-tbody');
-      
+      const $tableBody = $(".wasp-data-table-tbody");
+
       if (data.length === 0) {
-        $tableBody.html('<tr><td colspan="10" style="text-align: center; padding: 20px;">No data found</td></tr>');
+        $tableBody.html(
+          '<tr><td colspan="10" style="text-align: center; padding: 20px;">No data found</td></tr>'
+        );
         return;
       }
 
-      let html = '';
-      data.forEach(function(row) {
+      let html = "";
+      data.forEach(function (row) {
         const statusClass = getStatusClass(row.status);
         const errorMessage = extractErrorMessage(row.api_response);
-        const errorColumnMessage = row.message ? row.message : '';
+        const errorColumnMessage = row.message ? row.message : "";
         const displayMessage = errorMessage || errorColumnMessage;
-        const tooltipAttr = errorMessage ? `data-tooltip="${errorMessage}"` : '';
-        
+        const tooltipAttr = errorMessage
+          ? `data-tooltip="${errorMessage}"`
+          : "";
+
         html += `
           <tr class="wasp-data-table-tr" ${tooltipAttr}>
             <td class="wasp-data-table-td">${row.id}</td>
-            <td class="wasp-data-table-td">${row.item_number || ''}</td>
-            <td class="wasp-data-table-td">${row.customer_number || ''}</td>
-            <td class="wasp-data-table-td">${row.site_name || ''}</td>
-            <td class="wasp-data-table-td">${row.location_code || ''}</td>
-            <td class="wasp-data-table-td">£${parseFloat(row.cost || 0).toFixed(2)}</td>
-            <td class="wasp-data-table-td">${row.quantity || ''}</td>
+            <td class="wasp-data-table-td">${row.item_number || ""}</td>
+            <td class="wasp-data-table-td">${row.customer_number || ""}</td>
+            <td class="wasp-data-table-td">${row.site_name || ""}</td>
+            <td class="wasp-data-table-td">${row.location_code || ""}</td>
+            <td class="wasp-data-table-td">£${parseFloat(row.cost || 0).toFixed(
+              2
+            )}</td>
+            <td class="wasp-data-table-td">${row.quantity || ""}</td>
             <td class="wasp-data-table-td">${formatDate(row.remove_date)}</td>
             <td class="wasp-data-table-td">
-              <span title="${displayMessage || ''}" class="wasp-data-table-status ${statusClass}" ${tooltipAttr}>${row.status || ''}</span>
+              <span title="${
+                displayMessage || ""
+              }" class="wasp-data-table-status ${statusClass}" ${tooltipAttr}>${
+          row.status || ""
+        }</span>
             </td>
-            <td class="wasp-data-table-td">${displayMessage || ''}</td>
+            <td class="wasp-data-table-td">${displayMessage || ""}</td>
           </tr>
         `;
       });
-      
+
       $tableBody.html(html);
     }
 
     // Extract error message from API response
     function extractErrorMessage(apiResponse) {
-      if (!apiResponse) return '';
-      
+      if (!apiResponse) return "";
+
       try {
         const response = JSON.parse(apiResponse);
-        
+
         // Check for error messages in the response
         if (response.Messages && Array.isArray(response.Messages)) {
           for (const message of response.Messages) {
@@ -276,46 +299,63 @@
             }
           }
         }
-        
+
         // Check Data.ResultList for errors
-        if (response.Data && response.Data.ResultList && Array.isArray(response.Data.ResultList)) {
+        if (
+          response.Data &&
+          response.Data.ResultList &&
+          Array.isArray(response.Data.ResultList)
+        ) {
           for (const result of response.Data.ResultList) {
             if (result.Message && result.HttpStatusCode !== 200) {
               return result.Message;
             }
           }
         }
-        
-        return '';
+
+        return "";
       } catch (e) {
-        return '';
+        return "";
       }
     }
 
     // Get status CSS class
     function getStatusClass(status) {
-      switch(status) {
-        case 'PENDING': return 'wasp-data-table-status-pending';
-        case 'READY': return 'wasp-data-table-status-ready';
-        case 'FAILED': return 'wasp-data-table-status-failed';
-        case 'COMPLETED': return 'wasp-data-table-status-completed';
-        case 'IGNORED': return 'wasp-data-table-status-ignored';
-        default: return 'wasp-data-table-status-active';
+      switch (status) {
+        case "PENDING":
+          return "wasp-data-table-status-pending";
+        case "READY":
+          return "wasp-data-table-status-ready";
+        case "FAILED":
+          return "wasp-data-table-status-failed";
+        case "COMPLETED":
+          return "wasp-data-table-status-completed";
+        case "IGNORED":
+          return "wasp-data-table-status-ignored";
+        default:
+          return "wasp-data-table-status-active";
       }
     }
 
     // Render pagination
     function renderPagination(pagination) {
-      const $pagination = $('.wasp-data-table-pagination');
-      let html = '';
+      const $pagination = $(".wasp-data-table-pagination");
+      let html = "";
 
       // Previous buttons
-      html += `<a href="#" class="wasp-data-table-page-btn ${!pagination.has_prev ? 'wasp-data-table-page-btn-disabled' : ''}" data-page="1">‹‹</a>`;
-      html += `<a href="#" class="wasp-data-table-page-btn ${!pagination.has_prev ? 'wasp-data-table-page-btn-disabled' : ''}" data-page="${pagination.current_page - 1}">‹</a>`;
+      html += `<a href="#" class="wasp-data-table-page-btn ${
+        !pagination.has_prev ? "wasp-data-table-page-btn-disabled" : ""
+      }" data-page="1">‹‹</a>`;
+      html += `<a href="#" class="wasp-data-table-page-btn ${
+        !pagination.has_prev ? "wasp-data-table-page-btn-disabled" : ""
+      }" data-page="${pagination.current_page - 1}">‹</a>`;
 
       // Page numbers
       const startPage = Math.max(1, pagination.current_page - 2);
-      const endPage = Math.min(pagination.total_pages, pagination.current_page + 2);
+      const endPage = Math.min(
+        pagination.total_pages,
+        pagination.current_page + 2
+      );
 
       if (startPage > 1) {
         html += `<a href="#" class="wasp-data-table-page-btn" data-page="1">1</a>`;
@@ -325,7 +365,9 @@
       }
 
       for (let i = startPage; i <= endPage; i++) {
-        html += `<a href="#" class="wasp-data-table-page-btn ${i === pagination.current_page ? 'wasp-data-table-page-btn-active' : ''}" data-page="${i}">${i}</a>`;
+        html += `<a href="#" class="wasp-data-table-page-btn ${
+          i === pagination.current_page ? "wasp-data-table-page-btn-active" : ""
+        }" data-page="${i}">${i}</a>`;
       }
 
       if (endPage < pagination.total_pages) {
@@ -336,53 +378,64 @@
       }
 
       // Next buttons
-      html += `<a href="#" class="wasp-data-table-page-btn ${!pagination.has_next ? 'wasp-data-table-page-btn-disabled' : ''}" data-page="${pagination.current_page + 1}">›</a>`;
-      html += `<a href="#" class="wasp-data-table-page-btn ${!pagination.has_next ? 'wasp-data-table-page-btn-disabled' : ''}" data-page="${pagination.total_pages}">››</a>`;
+      html += `<a href="#" class="wasp-data-table-page-btn ${
+        !pagination.has_next ? "wasp-data-table-page-btn-disabled" : ""
+      }" data-page="${pagination.current_page + 1}">›</a>`;
+      html += `<a href="#" class="wasp-data-table-page-btn ${
+        !pagination.has_next ? "wasp-data-table-page-btn-disabled" : ""
+      }" data-page="${pagination.total_pages}">››</a>`;
 
       $pagination.html(html);
     }
 
     // Render table info
     function renderTableInfo(pagination) {
-      const $info = $('.wasp-data-table-info');
+      const $info = $(".wasp-data-table-info");
       const start = (pagination.current_page - 1) * pagination.per_page + 1;
-      const end = Math.min(pagination.current_page * pagination.per_page, pagination.total);
+      const end = Math.min(
+        pagination.current_page * pagination.per_page,
+        pagination.total
+      );
       $info.text(`Showing ${start} - ${end} of ${pagination.total}`);
     }
 
     // Search functionality with debouncer
-    document.getElementById("searchInput").addEventListener("input", function (e) {
-      currentSearch = e.target.value;
-      currentPage = 1; // Reset to first page
-      
-      // Add loading indicator
-      e.target.classList.add('loading');
-      
-      // Clear existing timeout
-      if (searchTimeout) {
-        clearTimeout(searchTimeout);
-      }
-      
-      // Set new timeout for debounced search
-      searchTimeout = setTimeout(function() {
-        loadOrdersData();
-        // Remove loading indicator after search completes
-        e.target.classList.remove('loading');
-      }, 500); // 500ms delay
-    });
+    document
+      .getElementById("searchInput")
+      .addEventListener("input", function (e) {
+        currentSearch = e.target.value;
+        currentPage = 1; // Reset to first page
+
+        // Add loading indicator
+        e.target.classList.add("loading");
+
+        // Clear existing timeout
+        if (searchTimeout) {
+          clearTimeout(searchTimeout);
+        }
+
+        // Set new timeout for debounced search
+        searchTimeout = setTimeout(function () {
+          loadOrdersData();
+          // Remove loading indicator after search completes
+          e.target.classList.remove("loading");
+        }, 500); // 500ms delay
+      });
 
     // Filter functionality
-    document.getElementById("statusFilter").addEventListener("change", function (e) {
-      currentStatusFilter = e.target.value;
-      currentPage = 1; // Reset to first page
-      loadOrdersData();
-    });
+    document
+      .getElementById("statusFilter")
+      .addEventListener("change", function (e) {
+        currentStatusFilter = e.target.value;
+        currentPage = 1; // Reset to first page
+        loadOrdersData();
+      });
 
     // Pagination click handlers
-    $(document).on('click', '.wasp-data-table-page-btn', function(e) {
+    $(document).on("click", ".wasp-data-table-page-btn", function (e) {
       e.preventDefault();
-      if (!$(this).hasClass('wasp-data-table-page-btn-disabled')) {
-        const page = parseInt($(this).data('page'));
+      if (!$(this).hasClass("wasp-data-table-page-btn-disabled")) {
+        const page = parseInt($(this).data("page"));
         if (page && page !== currentPage) {
           currentPage = page;
           loadOrdersData();
@@ -391,43 +444,43 @@
     });
 
     // Export CSV button handler
-    $('#wasp-order-export-btn').on('click', function(e) {
+    $("#wasp-order-export-btn").on("click", function (e) {
       e.preventDefault();
-      
+
       // Disable button during export
       const $btn = $(this);
       const originalText = $btn.text();
-      $btn.prop('disabled', true).text('Exporting...');
-      
+      $btn.prop("disabled", true).text("Exporting...");
+
       // Create a form dynamically to submit the export request
-      const form = document.createElement('form');
-      form.method = 'POST';
+      const form = document.createElement("form");
+      form.method = "POST";
       form.action = waspInvOrderAjax.ajax_url;
-      form.style.display = 'none';
-      
+      form.style.display = "none";
+
       // Add form fields
       const fields = {
-        action: 'export_orders_csv',
+        action: "export_orders_csv",
         nonce: waspInvOrderAjax.nonce,
         search: currentSearch,
-        status_filter: currentStatusFilter
+        status_filter: currentStatusFilter,
       };
-      
+
       for (const key in fields) {
-        const input = document.createElement('input');
-        input.type = 'hidden';
+        const input = document.createElement("input");
+        input.type = "hidden";
         input.name = key;
         input.value = fields[key];
         form.appendChild(input);
       }
-      
+
       document.body.appendChild(form);
       form.submit();
       document.body.removeChild(form);
-      
+
       // Re-enable button after a short delay
-      setTimeout(function() {
-        $btn.prop('disabled', false).text(originalText);
+      setTimeout(function () {
+        $btn.prop("disabled", false).text(originalText);
       }, 1000);
     });
 
