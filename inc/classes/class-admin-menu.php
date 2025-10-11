@@ -410,9 +410,9 @@ class Admin_Menu {
         $where_values = [];
 
         if ( !empty( $search ) ) {
-            $where_conditions[] = "(item_number LIKE %s OR customer_number LIKE %s OR site_name LIKE %s OR location_code LIKE %s)";
+            $where_conditions[] = "(item_number LIKE %s OR shop LIKE %s OR customer_number LIKE %s OR site_name LIKE %s OR location_code LIKE %s)";
             $search_term = '%' . $wpdb->esc_like( $search ) . '%';
-            $where_values = array_merge( $where_values, [ $search_term, $search_term, $search_term, $search_term ] );
+            $where_values = array_merge( $where_values, [ $search_term, $search_term, $search_term, $search_term, $search_term ] );
         }
 
         if ( !empty( $status_filter ) ) {
@@ -541,9 +541,9 @@ class Admin_Menu {
         $where_values = [];
 
         if ( !empty( $search ) ) {
-            $where_conditions[] = "(item_number LIKE %s OR customer_number LIKE %s OR site_name LIKE %s OR location_code LIKE %s)";
+            $where_conditions[] = "(item_number LIKE %s OR shop LIKE %s OR customer_number LIKE %s OR site_name LIKE %s OR location_code LIKE %s)";
             $search_term = '%' . $wpdb->esc_like( $search ) . '%';
-            $where_values = array_merge( $where_values, [ $search_term, $search_term, $search_term, $search_term ] );
+            $where_values = array_merge( $where_values, [ $search_term, $search_term, $search_term, $search_term, $search_term ] );
         }
 
         if ( !empty( $status_filter ) ) {
@@ -578,6 +578,7 @@ class Admin_Menu {
             'Item Number',
             'Cost',
             'Date Acquired',
+            'Shop',
             'Customer Number',
             'Site Name',
             'Location Code',
@@ -605,6 +606,7 @@ class Admin_Menu {
                 $row['item_number'] ?? '',
                 $row['cost'] ?? '',
                 $row['date_acquired'] ?? '',
+                $row['shop'] ?? '',
                 $row['customer_number'] ?? '',
                 $row['site_name'] ?? '',
                 $row['location_code'] ?? '',
