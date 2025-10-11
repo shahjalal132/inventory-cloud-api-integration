@@ -53,6 +53,12 @@ class Plugin_Activator {
 
         require_once ABSPATH . 'wp-admin/includes/upgrade.php';
         dbDelta( $sql );
+
+        // Add shop column after date_acquired if it doesn't exist
+        $column_exists = $wpdb->get_results( "SHOW COLUMNS FROM $table_name LIKE 'shop'" );
+        if ( empty( $column_exists ) ) {
+            $wpdb->query( "ALTER TABLE $table_name ADD COLUMN shop VARCHAR(255) NULL AFTER date_acquired" );
+        }
     }
 
     public static function create_sync_wasp_woo_orders_table() {
