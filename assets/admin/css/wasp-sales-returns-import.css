@@ -571,7 +571,7 @@ input[type="file"] {
   cursor: help;
 }
 
-.wasp-export-btn {
+.wasp-export-btn, .wasp-delete-btn {
     width: 150px;
     background:#ffffff;
     color: #135e96;
@@ -587,10 +587,16 @@ input[type="file"] {
     border: 1px solid #135e96;
 }
 
-.wasp-export-btn:hover{
+.wasp-export-btn:hover, .wasp-delete-btn:hover{
   background: #135e96;
   color: #ffffff;
   border: 1px solid #ffffff;
+}
+
+.wasp-delete-btn{
+  background: orange;
+  color: #ffffff;
+  border: 1px solid orange;
 }
 
 /* Message column specific styling */
