@@ -138,3 +138,54 @@ use BOILERPLATE\Inc\Enums\Status_Enums;
         </div>
     </div>
 </div>
+
+<!-- Delete Modal -->
+<div class="wasp-delete-modal" id="wasp-delete-modal" style="display: none;">
+    <div class="wasp-delete-modal-overlay" id="wasp-delete-modal-overlay"></div>
+    <div class="wasp-delete-modal-content">
+        <div class="wasp-delete-modal-header">
+            <h2>Delete Completed Items</h2>
+            <button class="wasp-delete-modal-close" id="wasp-delete-modal-close">&times;</button>
+        </div>
+        <div class="wasp-delete-modal-actions">
+            <button class="wasp-delete-modal-btn wasp-delete-modal-select-all" id="wasp-delete-select-all">
+                Select All
+            </button>
+            <button class="wasp-delete-modal-btn wasp-delete-modal-delete-all" id="wasp-delete-all-btn">
+                Delete All
+            </button>
+            <button class="wasp-delete-modal-btn wasp-delete-modal-delete-selected" id="wasp-delete-selected-btn">
+                Delete Selected
+            </button>
+        </div>
+        <div class="wasp-delete-modal-body">
+            <div class="wasp-delete-modal-table-wrapper">
+                <table class="wasp-delete-modal-table">
+                    <thead>
+                        <tr>
+                            <th><input type="checkbox" id="wasp-delete-checkbox-all"></th>
+                            <th>ID</th>
+                            <th>Item Number</th>
+                            <th>Cost</th>
+                            <th>Date Acquired</th>
+                            <th>Shop</th>
+                            <th>Customer Number</th>
+                            <th>Site Name</th>
+                            <th>Location Code</th>
+                            <th>Quantity</th>
+                            <th>Type</th>
+                            <th>Status</th>
+                            <th>Message</th>
+                        </tr>
+                    </thead>
+                    <tbody id="wasp-delete-modal-tbody">
+                        <!-- Dynamic content will be loaded here -->
+                    </tbody>
+                </table>
+            </div>
+        </div>
+        <div class="wasp-delete-modal-footer">
+            <p class="wasp-delete-modal-info" id="wasp-delete-modal-info">Loading...</p>
+        </div>
+    </div>
+</div>

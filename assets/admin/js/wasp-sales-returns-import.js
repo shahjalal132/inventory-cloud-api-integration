@@ -524,6 +524,249 @@
       }, 1000);
     });
 
+    // ==============================
+    // Delete Modal Functionality
+    // ==============================
+
+    const $deleteModal = $("#wasp-delete-modal");
+    const $deleteModalOverlay = $("#wasp-delete-modal-overlay");
+    const $deleteModalClose = $("#wasp-delete-modal-close");
+    const $deleteBtn = $("#wasp-sales-return-delete-btn");
+    const $deleteModalTbody = $("#wasp-delete-modal-tbody");
+    const $deleteModalInfo = $("#wasp-delete-modal-info");
+    const $deleteCheckboxAll = $("#wasp-delete-checkbox-all");
+    const $deleteSelectAllBtn = $("#wasp-delete-select-all");
+    const $deleteAllBtn = $("#wasp-delete-all-btn");
+    const $deleteSelectedBtn = $("#wasp-delete-selected-btn");
+
+    let completedItems = [];
+
+    // Open delete modal
+    $deleteBtn.on("click", function () {
+      openDeleteModal();
+    });
+
+    // Close modal handlers
+    $deleteModalClose.on("click", closeDeleteModal);
+    $deleteModalOverlay.on("click", closeDeleteModal);
+
+    // Open modal and load completed items
+    function openDeleteModal() {
+      $deleteModal.fadeIn(300);
+      $deleteModalInfo.text("Loading completed items...");
+      $deleteModalTbody.html(
+        '<tr><td colspan="13" style="text-align: center; padding: 20px;">Loading...</td></tr>'
+      );
+      loadCompletedItems();
+    }
+
+    // Close modal
+    function closeDeleteModal() {
+      $deleteModal.fadeOut(300);
+      completedItems = [];
+      $deleteCheckboxAll.prop("checked", false);
+    }
+
+    // Load completed items from server
+    function loadCompletedItems() {
+      $.ajax({
+        url: waspInvAjax.ajax_url,
+        type: "POST",
+        data: {
+          action: "fetch_completed_sales_returns",
+          nonce: waspInvAjax.nonce,
+        },
+        success: function (response) {
+          if (response.success) {
+            completedItems = response.data.items;
+            renderDeleteModalItems(completedItems);
+            updateDeleteModalInfo();
+          } else {
+            $deleteModalTbody.html(
+              '<tr><td colspan="13" style="text-align: center; padding: 20px; color: red;">Error loading items</td></tr>'
+            );
+            $deleteModalInfo.text("Error loading items");
+          }
+        },
+        error: function () {
+          $deleteModalTbody.html(
+            '<tr><td colspan="13" style="text-align: center; padding: 20px; color: red;">Error loading items</td></tr>'
+          );
+          $deleteModalInfo.text("Error loading items");
+        },
+      });
+    }
+
+    // Render items in modal
+    function renderDeleteModalItems(items) {
+      if (items.length === 0) {
+        $deleteModalTbody.html(
+          '<tr><td colspan="13" style="text-align: center; padding: 20px;">No completed items found</td></tr>'
+        );
+        return;
+      }
+
+      let html = "";
+      items.forEach(function (row) {
+        const statusClass = getStatusClass(row.status);
+        const apiMessage = extractErrorMessage(row.api_response);
+        const message = row.message || "";
+        const errorMessage = apiMessage || message;
+
+        html += `
+          <tr data-id="${row.id}">
+            <td><input type="checkbox" class="delete-item-checkbox" value="${
+              row.id
+            }"></td>
+            <td>${row.id}</td>
+            <td>${row.item_number || ""}</td>
+            <td>£${parseFloat(row.cost || 0).toFixed(2)}</td>
+            <td>${formatDate(row.date_acquired)}</td>
+            <td>${row.shop || ""}</td>
+            <td>${row.customer_number || ""}</td>
+            <td>${row.site_name || ""}</td>
+            <td>${row.location_code || ""}</td>
+            <td>${
+              row.type === "RETURN"
+                ? "-" + (row.quantity || "")
+                : row.quantity || ""
+            }</td>
+            <td>${row.type || ""}</td>
+            <td>
+              <span class="wasp-data-table-status ${statusClass}">${
+          row.status || ""
+        }</span>
+            </td>
+            <td>${errorMessage || ""}</td>
+          </tr>
+        `;
+      });
+
+      $deleteModalTbody.html(html);
+    }
+
+    // Update modal info
+    function updateDeleteModalInfo() {
+      const total = completedItems.length;
+      const selected = $(".delete-item-checkbox:checked").length;
+
+      if (selected > 0) {
+        $deleteModalInfo.text(
+          `${selected} of ${total} items selected for deletion`
+        );
+      } else {
+        $deleteModalInfo.text(`Total completed items: ${total}`);
+      }
+    }
+
+    // Select all checkbox in header
+    $deleteCheckboxAll.on("change", function () {
+      const isChecked = $(this).prop("checked");
+      $(".delete-item-checkbox").prop("checked", isChecked);
+      $(".wasp-delete-modal-table tbody tr").toggleClass("selected", isChecked);
+      updateDeleteModalInfo();
+    });
+
+    // Individual checkbox change
+    $(document).on("change", ".delete-item-checkbox", function () {
+      const $row = $(this).closest("tr");
+      $row.toggleClass("selected", $(this).prop("checked"));
+
+      // Update "select all" checkbox state
+      const totalCheckboxes = $(".delete-item-checkbox").length;
+      const checkedCheckboxes = $(".delete-item-checkbox:checked").length;
+      $deleteCheckboxAll.prop(
+        "checked",
+        totalCheckboxes === checkedCheckboxes && totalCheckboxes > 0
+      );
+
+      updateDeleteModalInfo();
+    });
+
+    // Select All button
+    $deleteSelectAllBtn.on("click", function () {
+      $deleteCheckboxAll.prop("checked", true).trigger("change");
+    });
+
+    // Delete All button
+    $deleteAllBtn.on("click", function () {
+      if (completedItems.length === 0) {
+        alert("No items to delete");
+        return;
+      }
+
+      if (
+        !confirm(
+          `Are you sure you want to delete ALL ${completedItems.length} completed items? This action cannot be undone.`
+        )
+      ) {
+        return;
+      }
+
+      const allIds = completedItems.map((item) => item.id);
+      deleteItems(allIds);
+    });
+
+    // Delete Selected button
+    $deleteSelectedBtn.on("click", function () {
+      const selectedIds = $(".delete-item-checkbox:checked")
+        .map(function () {
+          return $(this).val();
+        })
+        .get();
+
+      if (selectedIds.length === 0) {
+        alert("Please select at least one item to delete");
+        return;
+      }
+
+      if (
+        !confirm(
+          `Are you sure you want to delete ${selectedIds.length} selected item(s)? This action cannot be undone.`
+        )
+      ) {
+        return;
+      }
+
+      deleteItems(selectedIds);
+    });
+
+    // Delete items via AJAX
+    function deleteItems(ids) {
+      // Disable buttons
+      $deleteAllBtn.prop("disabled", true).text("Deleting...");
+      $deleteSelectedBtn.prop("disabled", true).text("Deleting...");
+      $deleteSelectAllBtn.prop("disabled", true);
+
+      $.ajax({
+        url: waspInvAjax.ajax_url,
+        type: "POST",
+        data: {
+          action: "delete_sales_returns_items",
+          nonce: waspInvAjax.nonce,
+          ids: ids,
+        },
+        success: function (response) {
+          if (response.success) {
+            alert(response.data.message);
+            closeDeleteModal();
+            loadSalesReturnsData(); // Refresh main table
+          } else {
+            alert("Error: " + response.data.message);
+          }
+        },
+        error: function () {
+          alert("Error deleting items. Please try again.");
+        },
+        complete: function () {
+          // Re-enable buttons
+          $deleteAllBtn.prop("disabled", false).text("Delete All");
+          $deleteSelectedBtn.prop("disabled", false).text("Delete Selected");
+          $deleteSelectAllBtn.prop("disabled", false);
+        },
+      });
+    }
+
     // Load initial data
     loadSalesReturnsData();
   });

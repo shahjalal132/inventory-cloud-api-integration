@@ -46,6 +46,10 @@ class Admin_Menu {
         // Handle AJAX requests for CSV export
         add_action( 'wp_ajax_export_sales_returns_csv', [ $this, 'export_sales_returns_csv' ] );
         add_action( 'wp_ajax_export_orders_csv', [ $this, 'export_orders_csv' ] );
+        
+        // Handle AJAX requests for delete functionality
+        add_action( 'wp_ajax_fetch_completed_sales_returns', [ $this, 'fetch_completed_sales_returns' ] );
+        add_action( 'wp_ajax_delete_sales_returns_items', [ $this, 'delete_sales_returns_items' ] );
     }
 
     // Handle AJAX request to save options
@@ -748,6 +752,79 @@ class Admin_Menu {
         }
 
         return '';
+    }
+
+    /**
+     * Fetch completed sales returns items for delete modal
+     */
+    public function fetch_completed_sales_returns() {
+        check_ajax_referer( 'wasp_cloud_nonce', 'nonce' );
+
+        if ( !current_user_can( 'manage_options' ) ) {
+            wp_send_json_error( [ 'message' => 'Access denied.' ] );
+        }
+
+        global $wpdb;
+        $table = $wpdb->prefix . 'sync_sales_returns_data';
+
+        // Fetch only COMPLETED items
+        $sql = $wpdb->prepare( "SELECT * FROM $table WHERE status = %s ORDER BY id DESC", 'COMPLETED' );
+        $results = $wpdb->get_results( $sql, ARRAY_A );
+
+        wp_send_json_success( [
+            'items' => $results,
+            'count' => count( $results )
+        ] );
+    }
+
+    /**
+     * Delete sales returns items by IDs
+     */
+    public function delete_sales_returns_items() {
+        check_ajax_referer( 'wasp_cloud_nonce', 'nonce' );
+
+        if ( !current_user_can( 'manage_options' ) ) {
+            wp_send_json_error( [ 'message' => 'Access denied.' ] );
+        }
+
+        // Get and validate IDs
+        $ids = isset( $_POST['ids'] ) ? $_POST['ids'] : [];
+        
+        if ( empty( $ids ) || !is_array( $ids ) ) {
+            wp_send_json_error( [ 'message' => 'No items selected for deletion.' ] );
+        }
+
+        // Sanitize IDs
+        $ids = array_map( 'intval', $ids );
+        $ids = array_filter( $ids, function( $id ) {
+            return $id > 0;
+        });
+
+        if ( empty( $ids ) ) {
+            wp_send_json_error( [ 'message' => 'Invalid item IDs.' ] );
+        }
+
+        global $wpdb;
+        $table = $wpdb->prefix . 'sync_sales_returns_data';
+
+        // Create placeholders for prepared statement
+        $placeholders = implode( ',', array_fill( 0, count( $ids ), '%d' ) );
+        
+        // Delete only COMPLETED items with the given IDs (extra safety)
+        $sql = "DELETE FROM $table WHERE id IN ($placeholders) AND status = %s";
+        $params = array_merge( $ids, [ 'COMPLETED' ] );
+        $sql = $wpdb->prepare( $sql, $params );
+        
+        $deleted = $wpdb->query( $sql );
+
+        if ( $deleted === false ) {
+            wp_send_json_error( [ 'message' => 'Failed to delete items.' ] );
+        }
+
+        wp_send_json_success( [
+            'message' => sprintf( '%d item(s) deleted successfully.', $deleted ),
+            'deleted_count' => $deleted
+        ] );
     }
 
 }
