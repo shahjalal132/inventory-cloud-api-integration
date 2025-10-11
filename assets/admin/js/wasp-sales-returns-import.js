@@ -221,7 +221,7 @@
 
       // Show loading state
       $tableBody.html(
-        '<tr><td colspan="11" style="text-align: center; padding: 20px;">Loading...</td></tr>'
+        '<tr><td colspan="12" style="text-align: center; padding: 20px;">Loading...</td></tr>'
       );
 
       $.ajax({
@@ -242,13 +242,13 @@
             renderTableInfo(response.data.pagination);
           } else {
             $tableBody.html(
-              '<tr><td colspan="11" style="text-align: center; padding: 20px; color: red;">Error loading data</td></tr>'
+              '<tr><td colspan="12" style="text-align: center; padding: 20px; color: red;">Error loading data</td></tr>'
             );
           }
         },
         error: function () {
           $tableBody.html(
-            '<tr><td colspan="11" style="text-align: center; padding: 20px; color: red;">Error loading data</td></tr>'
+            '<tr><td colspan="12" style="text-align: center; padding: 20px; color: red;">Error loading data</td></tr>'
           );
         },
       });
@@ -276,7 +276,7 @@
 
       if (data.length === 0) {
         $tableBody.html(
-          '<tr><td colspan="11" style="text-align: center; padding: 20px;">No data found</td></tr>'
+          '<tr><td colspan="12" style="text-align: center; padding: 20px;">No data found</td></tr>'
         );
         return;
       }
@@ -299,6 +299,7 @@
               2
             )}</td>
             <td class="wasp-data-table-td">${formatDate(row.date_acquired)}</td>
+            <td class="wasp-data-table-td">${row.shop || ""}</td>
             <td class="wasp-data-table-td">${row.customer_number || ""}</td>
             <td class="wasp-data-table-td">${row.site_name || ""}</td>
             <td class="wasp-data-table-td">${row.location_code || ""}</td>

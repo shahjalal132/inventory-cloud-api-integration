@@ -107,6 +107,7 @@ use BOILERPLATE\Inc\Enums\Status_Enums;
                             <th class="wasp-data-table-th">Item Number</th>
                             <th class="wasp-data-table-th">Cost</th>
                             <th class="wasp-data-table-th">Date Acquired</th>
+                            <th class="wasp-data-table-th">Shop</th>
                             <th class="wasp-data-table-th">Customer Number</th>
                             <th class="wasp-data-table-th">Site Name</th>
                             <th class="wasp-data-table-th">Location Code</th>
