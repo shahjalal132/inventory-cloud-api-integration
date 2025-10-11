@@ -159,6 +159,7 @@ class Import_Sales_Returns_Data {
                 'item_number'     => $item_number,
                 'cost'            => $cost ?? 0,
                 'date_acquired'   => $date_acquired,
+                'shop'            => $customer,
                 'customer_number' => $customer_number,
                 'site_name'       => 'CLLC',
                 'location_code'   => 'CLLC',
@@ -260,6 +261,7 @@ class Import_Sales_Returns_Data {
             '%s', // item_number
             '%f', // cost
             '%s', // date_acquired
+            '%s', // shop
             '%s', // customer_number
             '%s', // site_name
             '%s', // location_code
