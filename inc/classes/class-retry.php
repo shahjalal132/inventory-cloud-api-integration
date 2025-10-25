@@ -20,7 +20,7 @@ class Retry extends Wasp_Rest_Api {
     public function __construct() {
         // Call parent constructor to initialize API credentials
         parent::__construct();
-        
+
         $this->setup_hooks();
     }
 
@@ -90,6 +90,14 @@ class Retry extends Wasp_Rest_Api {
      * Handle sales return retry endpoint
      */
     public function handle_sales_return_retry( $request ) {
+
+        // get limit from query param, default 10, max 100
+        $limit = intval( $request->get_param( 'limit' ) );
+        if ( $limit <= 0 )
+            $limit = 10;
+        if ( $limit > 100 )
+            $limit = 100;
+
         // Check if retry is enabled
         $is_enabled = get_option( 'wasp_sales_return_retry_enable', false );
 
@@ -100,7 +108,7 @@ class Retry extends Wasp_Rest_Api {
             ], 200 );
         }
 
-        return $this->process_sales_return_retry();
+        return $this->process_sales_return_retry( $limit );
     }
 
     /**
@@ -128,7 +136,7 @@ class Retry extends Wasp_Rest_Api {
         if ( empty( $failed_items ) ) {
             // Reset last processed ID when no more items found
             delete_option( 'wasp_order_retry_last_processed_id' );
-            
+
             return new \WP_REST_Response( [
                 'message' => 'No failed or ignored order items found.',
                 'count'   => 0,
@@ -161,7 +169,7 @@ class Retry extends Wasp_Rest_Api {
             // Validate item number (if not numeric, blank, or null, ignore it)
             if ( !is_numeric( $item->item_number ) || empty( $item->item_number ) ) {
                 $ignored_count++;
-                
+
                 // Track in retry table
                 $wpdb->insert(
                     $retry_table,
@@ -259,7 +267,7 @@ class Retry extends Wasp_Rest_Api {
                             ];
                         } else {
                             $error_count++;
-                            
+
                             $wpdb->insert(
                                 $retry_table,
                                 [
@@ -392,7 +400,7 @@ class Retry extends Wasp_Rest_Api {
             $http_status = 207;
         }
         if ( $success_count === 0 ) {
-            $http_status = 500;
+            $http_status = 422;
         }
 
         return new \WP_REST_Response( [
@@ -434,7 +442,7 @@ class Retry extends Wasp_Rest_Api {
         if ( empty( $failed_items ) ) {
             // Reset last processed ID when no more items found
             delete_option( 'wasp_sales_return_retry_last_processed_id' );
-            
+
             return new \WP_REST_Response( [
                 'message' => 'No failed or ignored sales return items found.',
                 'count'   => 0,
@@ -492,9 +500,6 @@ class Retry extends Wasp_Rest_Api {
                 ];
                 continue;
             }
-
-            // $this->put_program_logs( "Token: " . $this->token );
-            // $this->put_program_logs( "Item number: " . $item->item_number );
 
             // Get item details from API (following handle_prepare_sales_returns logic)
             $api_result = $this->get_item_details_api( $this->token, $item->item_number );
@@ -665,7 +670,7 @@ class Retry extends Wasp_Rest_Api {
             $http_status = 207; // Multi-Status (some succeeded, some failed)
         }
         if ( $success_count === 0 ) {
-            $http_status = 500; // All failed
+            $http_status = 422; // All failed
         }
 
         return new \WP_REST_Response( [
@@ -690,13 +695,13 @@ class Retry extends Wasp_Rest_Api {
         $retry_table         = $wpdb->prefix . 'sync_wasp_retry_items';
 
         // Orders stats
-        $orders_ignored       = $wpdb->get_var(
+        $orders_ignored = $wpdb->get_var(
             $wpdb->prepare( "SELECT COUNT(*) FROM $orders_table WHERE status = %s", Status_Enums::IGNORED->value )
         );
-        $orders_failed        = $wpdb->get_var(
+        $orders_failed  = $wpdb->get_var(
             $wpdb->prepare( "SELECT COUNT(*) FROM $orders_table WHERE status = %s", Status_Enums::FAILED->value )
         );
-        $orders_retried       = $wpdb->get_var(
+        $orders_retried = $wpdb->get_var(
             "SELECT COUNT(*) FROM $retry_table WHERE item_type = 'order' AND retry_count > 0"
         );
         // Count items that were successfully retried (status changed to READY or COMPLETED)
@@ -709,13 +714,13 @@ class Retry extends Wasp_Rest_Api {
         );
 
         // Sales returns stats
-        $sales_ignored       = $wpdb->get_var(
+        $sales_ignored = $wpdb->get_var(
             $wpdb->prepare( "SELECT COUNT(*) FROM $sales_returns_table WHERE status = %s", Status_Enums::IGNORED->value )
         );
-        $sales_failed        = $wpdb->get_var(
+        $sales_failed  = $wpdb->get_var(
             $wpdb->prepare( "SELECT COUNT(*) FROM $sales_returns_table WHERE status = %s", Status_Enums::FAILED->value )
         );
-        $sales_retried       = $wpdb->get_var(
+        $sales_retried = $wpdb->get_var(
             "SELECT COUNT(*) FROM $retry_table WHERE item_type = 'sales_return' AND retry_count > 0"
         );
         // Count items that were successfully retried (status changed to READY or COMPLETED)
@@ -827,7 +832,7 @@ class Retry extends Wasp_Rest_Api {
         check_ajax_referer( 'wasp-retry-nonce', 'nonce' );
 
         // Check user capabilities
-        if ( ! current_user_can( 'manage_options' ) ) {
+        if ( !current_user_can( 'manage_options' ) ) {
             wp_send_json_error( [ 'message' => 'Access denied. You do not have permission to perform this action.' ] );
         }
 
@@ -839,7 +844,7 @@ class Retry extends Wasp_Rest_Api {
         }
 
         // Validate table type
-        if ( ! in_array( $table_type, [ 'orders', 'sales_returns' ] ) ) {
+        if ( !in_array( $table_type, [ 'orders', 'sales_returns' ] ) ) {
             wp_send_json_error( [ 'message' => 'Invalid table type specified.' ] );
         }
 
@@ -847,17 +852,17 @@ class Retry extends Wasp_Rest_Api {
 
         // Determine table name
         if ( $table_type === 'orders' ) {
-            $table_name = $wpdb->prefix . 'sync_wasp_woo_orders_data';
+            $table_name   = $wpdb->prefix . 'sync_wasp_woo_orders_data';
             $display_name = 'Orders';
         } else {
-            $table_name = $wpdb->prefix . 'sync_sales_returns_data';
+            $table_name   = $wpdb->prefix . 'sync_sales_returns_data';
             $display_name = 'Sales Returns';
         }
 
         // Check if table exists
         $table_exists = $wpdb->get_var( $wpdb->prepare( "SHOW TABLES LIKE %s", $table_name ) );
 
-        if ( ! $table_exists ) {
+        if ( !$table_exists ) {
             wp_send_json_error( [ 'message' => "Table {$table_name} does not exist." ] );
         }
 
@@ -874,9 +879,9 @@ class Retry extends Wasp_Rest_Api {
             // Truncation failed
             $error_message = $wpdb->last_error ?: 'Unknown database error';
             $this->put_program_logs( "[ERROR] Failed to truncate table: {$table_name}. Error: {$error_message}" );
-            
-            wp_send_json_error( [ 
-                'message' => "Failed to truncate {$display_name} table. Database error: {$error_message}"
+
+            wp_send_json_error( [
+                'message' => "Failed to truncate {$display_name} table. Database error: {$error_message}",
             ] );
         }
 
@@ -894,9 +899,9 @@ class Retry extends Wasp_Rest_Api {
         }
 
         wp_send_json_success( [
-            'message' => "✅ {$display_name} table truncated successfully. {$count_before} records were permanently deleted.",
+            'message'         => "✅ {$display_name} table truncated successfully. {$count_before} records were permanently deleted.",
             'records_deleted' => intval( $count_before ),
-            'table_name' => $table_name,
+            'table_name'      => $table_name,
         ] );
     }
 
