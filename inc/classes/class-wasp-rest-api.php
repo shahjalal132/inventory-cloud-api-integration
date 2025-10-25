@@ -921,10 +921,7 @@ class Wasp_Rest_Api {
     /**
      * call the item inventory search API
      */
-    /**
-     * call the item inventory search API
-     */
-    private function get_item_details_api( $token, $item_number ) {
+    public function get_item_details_api( $token, $item_number ) {
         if ( empty( $token ) || empty( $item_number ) ) {
             return [
                 'status_code'   => 400,
