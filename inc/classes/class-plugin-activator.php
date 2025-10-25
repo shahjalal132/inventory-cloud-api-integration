@@ -86,4 +86,30 @@ class Plugin_Activator {
         dbDelta( $sql );
     }
 
+    public static function create_sync_wasp_retry_items_table() {
+        global $wpdb;
+        $table_name      = $wpdb->prefix . 'sync_wasp_retry_items';
+        $charset_collate = $wpdb->get_charset_collate();
+        $sql             = "CREATE TABLE IF NOT EXISTS $table_name (
+            id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
+            original_id BIGINT UNSIGNED NOT NULL,
+            item_type VARCHAR(50) NOT NULL COMMENT 'order or sales_return',
+            item_number VARCHAR(255) NOT NULL,
+            original_status VARCHAR(255) NOT NULL,
+            retry_status VARCHAR(255) NOT NULL DEFAULT 'PENDING',
+            retry_count INT DEFAULT 0,
+            last_retry_at TIMESTAMP NULL,
+            retry_message TEXT NULL,
+            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+            updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+            PRIMARY KEY (id),
+            INDEX idx_item_type (item_type),
+            INDEX idx_retry_status (retry_status),
+            INDEX idx_original_id (original_id)
+        ) $charset_collate;";
+
+        require_once ABSPATH . 'wp-admin/includes/upgrade.php';
+        dbDelta( $sql );
+    }
+
 }

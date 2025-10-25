@@ -111,9 +111,9 @@ class Enqueue_Assets {
             wp_enqueue_script( "wasp-retry-scripts", PLUGIN_ADMIN_ASSETS_DIR_URL . "/js/admin-retry.js", [ 'jquery' ], time(), true );
 
             // localize js
-            wp_localize_script( 'wasp-retry-scripts', 'waspRetryAjax', [
+            wp_localize_script( 'wasp-retry-scripts', 'wpRetryData', [
                 'ajax_url' => admin_url( 'admin-ajax.php' ),
-                'nonce'    => wp_create_nonce( 'wasp_cron_nonce' ),
+                'nonce'    => wp_create_nonce( 'wasp-retry-nonce' ),
             ] );
         }
 

@@ -52,4 +52,11 @@ class Plugin_Deactivator {
         $wpdb->query( $sql );
     }
 
+    public static function remove_sync_wasp_retry_items_table() {
+        global $wpdb;
+        $table_name = $wpdb->prefix . 'sync_wasp_retry_items';
+        $sql        = "DROP TABLE IF EXISTS $table_name;";
+        $wpdb->query( $sql );
+    }
+
 }

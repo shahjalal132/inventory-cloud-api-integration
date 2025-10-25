@@ -71,6 +71,7 @@ function wpb_plugin_activator() {
     Plugin_Activator::activate();
     Plugin_Activator::create_sync_sales_return_table();
     Plugin_Activator::create_sync_wasp_woo_orders_table();
+    Plugin_Activator::create_sync_wasp_retry_items_table();
 }
 
 // Register activation hook
@@ -85,6 +86,7 @@ function wpb_plugin_deactivator() {
     Plugin_Deactivator::deactivate();
     // Plugin_Deactivator::remove_sync_sales_return_table();
     // Plugin_Deactivator::remove_sync_wasp_woo_orders_table();
+    // Plugin_Deactivator::remove_sync_wasp_retry_items_table();
 }
 
 // Register deactivation hook
