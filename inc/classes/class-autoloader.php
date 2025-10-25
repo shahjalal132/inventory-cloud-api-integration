@@ -21,5 +21,6 @@ class Autoloader {
         Wasp_Rest_Api::get_instance();
         Order_Import::get_instance();
         Jobs::get_instance();
+        Retry::get_instance();
     }
 }

@@ -28,6 +28,9 @@ class Admin_Menu {
         // register cron jobs sub menu
         add_action( 'admin_menu', [ $this, 'wasp_cron_jobs_sub_menu_page' ] );
 
+        // register retry settings sub menu
+        add_action( 'admin_menu', [ $this, 'wasp_inventory_cloud_retry_settings_sub_menu_page' ] );
+
         // register inventory-cloud-options sub menu
         add_action( 'admin_menu', [ $this, 'wasp_inventory_cloud_settings_sub_menu_page' ] );
 
@@ -38,15 +41,15 @@ class Admin_Menu {
         add_action( 'wp_ajax_save_inventory_cloud_options', [ $this, 'save_inventory_cloud_options' ] );
         add_action( 'wp_ajax_instant_update_inventory', [ $this, 'instant_update_inventory_callback' ] );
         add_action( 'wp_ajax_run_wasp_endpoint', [ $this, 'run_wasp_endpoint' ] );
-        
+
         // Handle AJAX requests for table data
         add_action( 'wp_ajax_fetch_sales_returns_data', [ $this, 'fetch_sales_returns_data' ] );
         add_action( 'wp_ajax_fetch_orders_data', [ $this, 'fetch_orders_data' ] );
-        
+
         // Handle AJAX requests for CSV export
         add_action( 'wp_ajax_export_sales_returns_csv', [ $this, 'export_sales_returns_csv' ] );
         add_action( 'wp_ajax_export_orders_csv', [ $this, 'export_orders_csv' ] );
-        
+
         // Handle AJAX requests for delete functionality
         add_action( 'wp_ajax_fetch_completed_sales_returns', [ $this, 'fetch_completed_sales_returns' ] );
         add_action( 'wp_ajax_delete_sales_returns_items', [ $this, 'delete_sales_returns_items' ] );
@@ -137,6 +140,17 @@ class Admin_Menu {
         );
     }
 
+    public function wasp_inventory_cloud_retry_settings_sub_menu_page() {
+        add_submenu_page(
+            'wasp-settings',
+            'Retry Settings',
+            'Retry Settings',
+            'manage_options',
+            'wasp-retry-settings',
+            [ $this, 'wasp_retry_sub_menu_page_html' ]
+        );
+    }
+
     public function wasp_cron_jobs_sub_menu_page() {
         add_submenu_page(
             'wasp-settings',
@@ -149,63 +163,63 @@ class Admin_Menu {
     }
 
     private function get_api_endpoints() {
-        $site_url = site_url('/wp-json/atebol/v1/');
+        $site_url = site_url( '/wp-json/atebol/v1/' );
         return [
-            'server-status' => [
-                'url' => $site_url . 'server-status',
+            'server-status'                  => [
+                'url'         => $site_url . 'server-status',
                 'description' => 'Check if the server is up and running.',
-                'method' => 'GET'
+                'method'      => 'GET',
             ],
-            'insert-item-number-stock-db' => [
-                'url' => $site_url . 'insert-item-number-stock-db',
+            'insert-item-number-stock-db'    => [
+                'url'         => $site_url . 'insert-item-number-stock-db',
                 'description' => 'Sync all item numbers from Wasp to the local database.',
-                'method' => 'GET'
+                'method'      => 'GET',
             ],
-            'update-woo-product-stock' => [
-                'url' => $site_url . 'update-woo-product-stock',
+            'update-woo-product-stock'       => [
+                'url'         => $site_url . 'update-woo-product-stock',
                 'description' => 'Update WooCommerce product stock from the local database.',
-                'method' => 'GET'
+                'method'      => 'GET',
             ],
-            'prepare-sales-returns' => [
-                'url' => $site_url . 'prepare-sales-returns',
+            'prepare-sales-returns'          => [
+                'url'         => $site_url . 'prepare-sales-returns',
                 'description' => 'Prepare sales returns for import.',
-                'method' => 'GET'
+                'method'      => 'GET',
             ],
-            'prepare-woo-orders' => [
-                'url' => $site_url . 'prepare-woo-orders',
+            'prepare-woo-orders'             => [
+                'url'         => $site_url . 'prepare-woo-orders',
                 'description' => 'Prepare WooCommerce orders for import.',
-                'method' => 'GET'
+                'method'      => 'GET',
             ],
-            'import-sales-returns' => [
-                'url' => $site_url . 'import-sales-returns',
+            'import-sales-returns'           => [
+                'url'         => $site_url . 'import-sales-returns',
                 'description' => 'Import sales and returns into Wasp.',
-                'method' => 'GET'
+                'method'      => 'GET',
             ],
-            'import-woo-orders' => [
-                'url' => $site_url . 'import-woo-orders',
+            'import-woo-orders'              => [
+                'url'         => $site_url . 'import-woo-orders',
                 'description' => 'Import WooCommerce orders into Wasp.',
-                'method' => 'GET'
+                'method'      => 'GET',
             ],
-            'sales-returns-status' => [
-                'url' => $site_url . 'sales-returns-status',
+            'sales-returns-status'           => [
+                'url'         => $site_url . 'sales-returns-status',
                 'description' => 'Get the status summary of sales/returns sync.',
-                'method' => 'GET'
+                'method'      => 'GET',
             ],
-            'wasp-woo-orders-status' => [
-                'url' => $site_url . 'wasp-woo-orders-status',
+            'wasp-woo-orders-status'         => [
+                'url'         => $site_url . 'wasp-woo-orders-status',
                 'description' => 'Get the status summary of Woo orders sync.',
-                'method' => 'GET'
+                'method'      => 'GET',
             ],
             'remove-completed-sales-returns' => [
-                'url' => $site_url . 'remove-completed-sales-returns',
+                'url'         => $site_url . 'remove-completed-sales-returns',
                 'description' => 'Clean up old, completed sales/returns records.',
-                'method' => 'GET'
+                'method'      => 'GET',
             ],
-            'remove-completed-woo-orders' => [
-                'url' => $site_url . 'remove-completed-woo-orders',
+            'remove-completed-woo-orders'    => [
+                'url'         => $site_url . 'remove-completed-woo-orders',
                 'description' => 'Clean up old, completed Woo order records.',
-                'method' => 'GET'
-            ]
+                'method'      => 'GET',
+            ],
         ];
     }
 
@@ -230,13 +244,14 @@ class Admin_Menu {
                     <div class="wasp-form-group">
                         <label>Update Inventory from Wasp</label>
                         <div class="wasp-radio-group">
-                            <label><input type="radio" name="update-inventory" value="enable" <?= checked($update_inventory, 'enable'); ?>> Enable</label>
-                            <label><input type="radio" name="update-inventory" value="disable" <?= checked($update_inventory, 'disable'); ?>> Disable</label>
+                            <label><input type="radio" name="update-inventory" value="enable" <?= checked( $update_inventory, 'enable' ); ?>> Enable</label>
+                            <label><input type="radio" name="update-inventory" value="disable" <?= checked( $update_inventory, 'disable' ); ?>> Disable</label>
                         </div>
                     </div>
                     <div class="wasp-form-group">
                         <label for="inv-cloud-update_quantity">Products to Update</label>
-                        <input type="number" id="inv-cloud-update_quantity" name="update_quantity" value="<?= esc_attr($update_quantity) ?>" placeholder="e.g., 100">
+                        <input type="number" id="inv-cloud-update_quantity" name="update_quantity"
+                            value="<?= esc_attr( $update_quantity ) ?>" placeholder="e.g., 100">
                         <p class="description">Number of products to update per batch from Wasp.</p>
                     </div>
                 </div>
@@ -246,19 +261,23 @@ class Admin_Menu {
                     <h2>API Credentials</h2>
                     <div class="wasp-form-group">
                         <label for="inv-cloud-base-url">API Base URL</label>
-                        <input type="text" id="inv-cloud-base-url" name="api-base-url" value="<?= esc_attr($base_url) ?>" placeholder="https://atebol.waspinventorycloud.com">
+                        <input type="text" id="inv-cloud-base-url" name="api-base-url" value="<?= esc_attr( $base_url ) ?>"
+                            placeholder="https://atebol.waspinventorycloud.com">
                     </div>
                     <div class="wasp-form-group">
                         <label for="inv-cloud-token">Authorization Token</label>
-                        <input type="password" id="inv-cloud-token" name="api-token" value="<?= esc_attr($token) ?>" placeholder="Enter your API token">
+                        <input type="password" id="inv-cloud-token" name="api-token" value="<?= esc_attr( $token ) ?>"
+                            placeholder="Enter your API token">
                     </div>
                     <div class="wasp-form-group">
                         <label for="inv-cloud-api-username">API Username (Basic Auth)</label>
-                        <input type="text" id="inv-cloud-api-username" name="api-username" value="<?= esc_attr($api_username) ?>" placeholder="Enter API username">
+                        <input type="text" id="inv-cloud-api-username" name="api-username"
+                            value="<?= esc_attr( $api_username ) ?>" placeholder="Enter API username">
                     </div>
                     <div class="wasp-form-group">
                         <label for="inv-cloud-api-password">API Password (Basic Auth)</label>
-                        <input type="password" id="inv-cloud-api-password" name="api-password" value="<?= esc_attr($api_password) ?>" placeholder="Enter API password">
+                        <input type="password" id="inv-cloud-api-password" name="api-password"
+                            value="<?= esc_attr( $api_password ) ?>" placeholder="Enter API password">
                     </div>
                 </div>
             </div>
@@ -279,18 +298,20 @@ class Admin_Menu {
                         </tr>
                     </thead>
                     <tbody>
-                        <?php foreach ($api_endpoints as $endpoint): ?>
+                        <?php foreach ( $api_endpoints as $endpoint ) : ?>
                             <tr>
                                 <td class="endpoint-url">
-                                    <span class="endpoint-method"><?= esc_html($endpoint['method']) ?></span>
-                                    <code><?= esc_html(str_replace(site_url(), '', $endpoint['url'])) ?></code>
+                                    <span class="endpoint-method"><?= esc_html( $endpoint['method'] ) ?></span>
+                                    <code><?= esc_html( str_replace( site_url(), '', $endpoint['url'] ) ) ?></code>
                                 </td>
-                                <td><?= esc_html($endpoint['description']) ?></td>
+                                <td><?= esc_html( $endpoint['description'] ) ?></td>
                                 <td class="endpoint-actions">
-                                    <button class="button button-secondary run-endpoint-btn" data-url="<?= esc_url($endpoint['url']) ?>">
+                                    <button class="button button-secondary run-endpoint-btn"
+                                        data-url="<?= esc_url( $endpoint['url'] ) ?>">
                                         <span class="dashicons dashicons-controls-play"></span> Run
                                     </button>
-                                    <button class="button button-secondary copy-endpoint-btn" data-url="<?= esc_url($endpoint['url']) ?>">
+                                    <button class="button button-secondary copy-endpoint-btn"
+                                        data-url="<?= esc_url( $endpoint['url'] ) ?>">
                                         <span class="dashicons dashicons-admin-page"></span> Copy
                                     </button>
                                 </td>
@@ -319,6 +340,10 @@ class Admin_Menu {
         include_once PLUGIN_BASE_PATH . '/templates/menus/wasp-sales-return-import.php';
     }
 
+    public function wasp_retry_sub_menu_page_html() {
+        include_once PLUGIN_BASE_PATH . '/templates/menus/wasp-retry.php';
+    }
+
     public function wasp_cron_jobs_sub_menu_page_html() {
         include_once PLUGIN_BASE_PATH . '/templates/menus/wasp-cron-jobs.php';
     }
@@ -326,7 +351,7 @@ class Admin_Menu {
     public function run_wasp_endpoint() {
         check_ajax_referer( 'inv_cloud_nonce', 'nonce' );
 
-        if ( ! current_user_can( 'manage_options' ) ) {
+        if ( !current_user_can( 'manage_options' ) ) {
             wp_send_json_error( [ 'message' => 'Permission denied.' ], 403 );
         }
 
@@ -334,7 +359,7 @@ class Admin_Menu {
 
         $api_username = get_option( 'inv_cloud_api_username' );
         $api_password = get_option( 'inv_cloud_api_password' );
-        $headers = [];
+        $headers      = [];
         if ( $api_username && $api_password ) {
             $headers['Authorization'] = 'Basic ' . base64_encode( $api_username . ':' . $api_password );
         }
@@ -347,7 +372,7 @@ class Admin_Menu {
 
         if ( is_wp_error( $response ) ) {
             wp_send_json_error( [
-                'message' => $response->get_error_message()
+                'message' => $response->get_error_message(),
             ], 500 );
         } else {
             $body = wp_remote_retrieve_body( $response );
@@ -355,9 +380,9 @@ class Admin_Menu {
 
             if ( json_last_error() !== JSON_ERROR_NONE ) {
                 // If not JSON, return as plain text
-                wp_send_json_success( ['data' => $body, 'is_json' => false] );
+                wp_send_json_success( [ 'data' => $body, 'is_json' => false ] );
             }
-            wp_send_json_success( ['data' => $data, 'is_json' => true] );
+            wp_send_json_success( [ 'data' => $data, 'is_json' => true ] );
         }
     }
 
@@ -401,9 +426,9 @@ class Admin_Menu {
         $table = $wpdb->prefix . 'sync_sales_returns_data';
 
         // Get parameters
-        $page = intval( $_POST['page'] ?? 1 );
-        $per_page = intval( $_POST['per_page'] ?? 10 );
-        $search = sanitize_text_field( $_POST['search'] ?? '' );
+        $page          = intval( $_POST['page'] ?? 1 );
+        $per_page      = intval( $_POST['per_page'] ?? 10 );
+        $search        = sanitize_text_field( $_POST['search'] ?? '' );
         $status_filter = sanitize_text_field( $_POST['status_filter'] ?? '' );
 
         // Calculate offset
@@ -411,17 +436,17 @@ class Admin_Menu {
 
         // Build WHERE clause
         $where_conditions = [];
-        $where_values = [];
+        $where_values     = [];
 
         if ( !empty( $search ) ) {
             $where_conditions[] = "(item_number LIKE %s OR shop LIKE %s OR customer_number LIKE %s OR site_name LIKE %s OR location_code LIKE %s)";
-            $search_term = '%' . $wpdb->esc_like( $search ) . '%';
-            $where_values = array_merge( $where_values, [ $search_term, $search_term, $search_term, $search_term, $search_term ] );
+            $search_term        = '%' . $wpdb->esc_like( $search ) . '%';
+            $where_values       = array_merge( $where_values, [ $search_term, $search_term, $search_term, $search_term, $search_term ] );
         }
 
         if ( !empty( $status_filter ) ) {
             $where_conditions[] = "status = %s";
-            $where_values[] = $status_filter;
+            $where_values[]     = $status_filter;
         }
 
         $where_clause = !empty( $where_conditions ) ? 'WHERE ' . implode( ' AND ', $where_conditions ) : '';
@@ -434,24 +459,24 @@ class Admin_Menu {
         $total = $wpdb->get_var( $count_sql );
 
         // Get data
-        $data_sql = "SELECT * FROM $table $where_clause LIMIT %d OFFSET %d";
+        $data_sql    = "SELECT * FROM $table $where_clause LIMIT %d OFFSET %d";
         $data_values = array_merge( $where_values, [ $per_page, $offset ] );
-        $data_sql = $wpdb->prepare( $data_sql, $data_values );
-        $results = $wpdb->get_results( $data_sql, ARRAY_A );
+        $data_sql    = $wpdb->prepare( $data_sql, $data_values );
+        $results     = $wpdb->get_results( $data_sql, ARRAY_A );
 
         // Calculate pagination info
         $total_pages = ceil( $total / $per_page );
 
         wp_send_json_success( [
-            'data' => $results,
+            'data'       => $results,
             'pagination' => [
                 'current_page' => $page,
-                'per_page' => $per_page,
-                'total' => $total,
-                'total_pages' => $total_pages,
-                'has_next' => $page < $total_pages,
-                'has_prev' => $page > 1
-            ]
+                'per_page'     => $per_page,
+                'total'        => $total,
+                'total_pages'  => $total_pages,
+                'has_next'     => $page < $total_pages,
+                'has_prev'     => $page > 1
+            ],
         ] );
     }
 
@@ -469,9 +494,9 @@ class Admin_Menu {
         $table = $wpdb->prefix . 'sync_wasp_woo_orders_data';
 
         // Get parameters
-        $page = intval( $_POST['page'] ?? 1 );
-        $per_page = intval( $_POST['per_page'] ?? 10 );
-        $search = sanitize_text_field( $_POST['search'] ?? '' );
+        $page          = intval( $_POST['page'] ?? 1 );
+        $per_page      = intval( $_POST['per_page'] ?? 10 );
+        $search        = sanitize_text_field( $_POST['search'] ?? '' );
         $status_filter = sanitize_text_field( $_POST['status_filter'] ?? '' );
 
         // Calculate offset
@@ -479,17 +504,17 @@ class Admin_Menu {
 
         // Build WHERE clause
         $where_conditions = [];
-        $where_values = [];
+        $where_values     = [];
 
         if ( !empty( $search ) ) {
             $where_conditions[] = "(item_number LIKE %s OR customer_number LIKE %s OR site_name LIKE %s OR location_code LIKE %s)";
-            $search_term = '%' . $wpdb->esc_like( $search ) . '%';
-            $where_values = array_merge( $where_values, [ $search_term, $search_term, $search_term, $search_term ] );
+            $search_term        = '%' . $wpdb->esc_like( $search ) . '%';
+            $where_values       = array_merge( $where_values, [ $search_term, $search_term, $search_term, $search_term ] );
         }
 
         if ( !empty( $status_filter ) ) {
             $where_conditions[] = "status = %s";
-            $where_values[] = $status_filter;
+            $where_values[]     = $status_filter;
         }
 
         $where_clause = !empty( $where_conditions ) ? 'WHERE ' . implode( ' AND ', $where_conditions ) : '';
@@ -502,24 +527,24 @@ class Admin_Menu {
         $total = $wpdb->get_var( $count_sql );
 
         // Get data
-        $data_sql = "SELECT * FROM $table $where_clause LIMIT %d OFFSET %d";
+        $data_sql    = "SELECT * FROM $table $where_clause LIMIT %d OFFSET %d";
         $data_values = array_merge( $where_values, [ $per_page, $offset ] );
-        $data_sql = $wpdb->prepare( $data_sql, $data_values );
-        $results = $wpdb->get_results( $data_sql, ARRAY_A );
+        $data_sql    = $wpdb->prepare( $data_sql, $data_values );
+        $results     = $wpdb->get_results( $data_sql, ARRAY_A );
 
         // Calculate pagination info
         $total_pages = ceil( $total / $per_page );
 
         wp_send_json_success( [
-            'data' => $results,
+            'data'       => $results,
             'pagination' => [
                 'current_page' => $page,
-                'per_page' => $per_page,
-                'total' => $total,
-                'total_pages' => $total_pages,
-                'has_next' => $page < $total_pages,
-                'has_prev' => $page > 1
-            ]
+                'per_page'     => $per_page,
+                'total'        => $total,
+                'total_pages'  => $total_pages,
+                'has_next'     => $page < $total_pages,
+                'has_prev'     => $page > 1
+            ],
         ] );
     }
 
@@ -537,22 +562,22 @@ class Admin_Menu {
         $table = $wpdb->prefix . 'sync_sales_returns_data';
 
         // Get parameters for filtering
-        $search = sanitize_text_field( $_POST['search'] ?? '' );
+        $search        = sanitize_text_field( $_POST['search'] ?? '' );
         $status_filter = sanitize_text_field( $_POST['status_filter'] ?? '' );
 
         // Build WHERE clause (same as fetch_sales_returns_data)
         $where_conditions = [];
-        $where_values = [];
+        $where_values     = [];
 
         if ( !empty( $search ) ) {
             $where_conditions[] = "(item_number LIKE %s OR shop LIKE %s OR customer_number LIKE %s OR site_name LIKE %s OR location_code LIKE %s)";
-            $search_term = '%' . $wpdb->esc_like( $search ) . '%';
-            $where_values = array_merge( $where_values, [ $search_term, $search_term, $search_term, $search_term, $search_term ] );
+            $search_term        = '%' . $wpdb->esc_like( $search ) . '%';
+            $where_values       = array_merge( $where_values, [ $search_term, $search_term, $search_term, $search_term, $search_term ] );
         }
 
         if ( !empty( $status_filter ) ) {
             $where_conditions[] = "status = %s";
-            $where_values[] = $status_filter;
+            $where_values[]     = $status_filter;
         }
 
         $where_clause = !empty( $where_conditions ) ? 'WHERE ' . implode( ' AND ', $where_conditions ) : '';
@@ -565,19 +590,19 @@ class Admin_Menu {
         $results = $wpdb->get_results( $data_sql, ARRAY_A );
 
         // Generate CSV
-        $filename = 'sales-returns-' . date('Y-m-d-His') . '.csv';
-        
+        $filename = 'sales-returns-' . date( 'Y-m-d-His' ) . '.csv';
+
         // Set headers for CSV download
-        header('Content-Type: text/csv; charset=utf-8');
-        header('Content-Disposition: attachment; filename="' . $filename . '"');
-        header('Pragma: no-cache');
-        header('Expires: 0');
+        header( 'Content-Type: text/csv; charset=utf-8' );
+        header( 'Content-Disposition: attachment; filename="' . $filename . '"' );
+        header( 'Pragma: no-cache' );
+        header( 'Expires: 0' );
 
         // Create output stream
-        $output = fopen('php://output', 'w');
+        $output = fopen( 'php://output', 'w' );
 
         // Add CSV headers
-        fputcsv($output, [
+        fputcsv( $output, [
             'ID',
             'Item Number',
             'Cost',
@@ -589,23 +614,23 @@ class Admin_Menu {
             'Quantity',
             'Type',
             'Status',
-            'Message'
-        ]);
+            'Message',
+        ] );
 
         // Add data rows
-        foreach ($results as $row) {
+        foreach ( $results as $row ) {
             // Add negative sign to quantity if type is RETURN
             $quantity = $row['quantity'];
-            if (isset($row['type']) && $row['type'] === 'RETURN') {
+            if ( isset( $row['type'] ) && $row['type'] === 'RETURN' ) {
                 $quantity = '-' . $quantity;
             }
 
             // Extract error message from API response or use message field
-            $apiMessage = $this->extract_error_message_from_api_response($row['api_response'] ?? '');
-            $dbMessage = $row['message'] ?? '';
-            $errorMessage = !empty($apiMessage) ? $apiMessage : $dbMessage;
+            $apiMessage   = $this->extract_error_message_from_api_response( $row['api_response'] ?? '' );
+            $dbMessage    = $row['message'] ?? '';
+            $errorMessage = !empty( $apiMessage ) ? $apiMessage : $dbMessage;
 
-            fputcsv($output, [
+            fputcsv( $output, [
                 $row['id'],
                 $row['item_number'] ?? '',
                 $row['cost'] ?? '',
@@ -617,11 +642,11 @@ class Admin_Menu {
                 $quantity,
                 $row['type'] ?? '',
                 $row['status'] ?? '',
-                $errorMessage
-            ]);
+                $errorMessage,
+            ] );
         }
 
-        fclose($output);
+        fclose( $output );
         exit;
     }
 
@@ -639,22 +664,22 @@ class Admin_Menu {
         $table = $wpdb->prefix . 'sync_wasp_woo_orders_data';
 
         // Get parameters for filtering
-        $search = sanitize_text_field( $_POST['search'] ?? '' );
+        $search        = sanitize_text_field( $_POST['search'] ?? '' );
         $status_filter = sanitize_text_field( $_POST['status_filter'] ?? '' );
 
         // Build WHERE clause (same as fetch_orders_data)
         $where_conditions = [];
-        $where_values = [];
+        $where_values     = [];
 
         if ( !empty( $search ) ) {
             $where_conditions[] = "(item_number LIKE %s OR customer_number LIKE %s OR site_name LIKE %s OR location_code LIKE %s)";
-            $search_term = '%' . $wpdb->esc_like( $search ) . '%';
-            $where_values = array_merge( $where_values, [ $search_term, $search_term, $search_term, $search_term ] );
+            $search_term        = '%' . $wpdb->esc_like( $search ) . '%';
+            $where_values       = array_merge( $where_values, [ $search_term, $search_term, $search_term, $search_term ] );
         }
 
         if ( !empty( $status_filter ) ) {
             $where_conditions[] = "status = %s";
-            $where_values[] = $status_filter;
+            $where_values[]     = $status_filter;
         }
 
         $where_clause = !empty( $where_conditions ) ? 'WHERE ' . implode( ' AND ', $where_conditions ) : '';
@@ -667,19 +692,19 @@ class Admin_Menu {
         $results = $wpdb->get_results( $data_sql, ARRAY_A );
 
         // Generate CSV
-        $filename = 'woo-orders-' . date('Y-m-d-His') . '.csv';
-        
+        $filename = 'woo-orders-' . date( 'Y-m-d-His' ) . '.csv';
+
         // Set headers for CSV download
-        header('Content-Type: text/csv; charset=utf-8');
-        header('Content-Disposition: attachment; filename="' . $filename . '"');
-        header('Pragma: no-cache');
-        header('Expires: 0');
+        header( 'Content-Type: text/csv; charset=utf-8' );
+        header( 'Content-Disposition: attachment; filename="' . $filename . '"' );
+        header( 'Pragma: no-cache' );
+        header( 'Expires: 0' );
 
         // Create output stream
-        $output = fopen('php://output', 'w');
+        $output = fopen( 'php://output', 'w' );
 
         // Add CSV headers
-        fputcsv($output, [
+        fputcsv( $output, [
             'ID',
             'Item Number',
             'Customer Number',
@@ -689,17 +714,17 @@ class Admin_Menu {
             'Quantity',
             'Remove Date',
             'Status',
-            'Message'
-        ]);
+            'Message',
+        ] );
 
         // Add data rows
-        foreach ($results as $row) {
+        foreach ( $results as $row ) {
             // Extract error message from API response or use message field
-            $apiMessage = $this->extract_error_message_from_api_response($row['api_response'] ?? '');
-            $dbMessage = $row['message'] ?? '';
-            $errorMessage = !empty($apiMessage) ? $apiMessage : $dbMessage;
+            $apiMessage   = $this->extract_error_message_from_api_response( $row['api_response'] ?? '' );
+            $dbMessage    = $row['message'] ?? '';
+            $errorMessage = !empty( $apiMessage ) ? $apiMessage : $dbMessage;
 
-            fputcsv($output, [
+            fputcsv( $output, [
                 $row['id'],
                 $row['item_number'] ?? '',
                 $row['customer_number'] ?? '',
@@ -709,11 +734,11 @@ class Admin_Menu {
                 $row['quantity'] ?? '',
                 $row['remove_date'] ?? '',
                 $row['status'] ?? '',
-                $errorMessage
-            ]);
+                $errorMessage,
+            ] );
         }
 
-        fclose($output);
+        fclose( $output );
         exit;
     }
 
@@ -768,12 +793,12 @@ class Admin_Menu {
         $table = $wpdb->prefix . 'sync_sales_returns_data';
 
         // Fetch only COMPLETED items
-        $sql = $wpdb->prepare( "SELECT * FROM $table WHERE status = %s ORDER BY id DESC", 'COMPLETED' );
+        $sql     = $wpdb->prepare( "SELECT * FROM $table WHERE status = %s ORDER BY id DESC", 'COMPLETED' );
         $results = $wpdb->get_results( $sql, ARRAY_A );
 
         wp_send_json_success( [
             'items' => $results,
-            'count' => count( $results )
+            'count' => count( $results ),
         ] );
     }
 
@@ -789,16 +814,16 @@ class Admin_Menu {
 
         // Get and validate IDs
         $ids = isset( $_POST['ids'] ) ? $_POST['ids'] : [];
-        
+
         if ( empty( $ids ) || !is_array( $ids ) ) {
             wp_send_json_error( [ 'message' => 'No items selected for deletion.' ] );
         }
 
         // Sanitize IDs
         $ids = array_map( 'intval', $ids );
-        $ids = array_filter( $ids, function( $id ) {
+        $ids = array_filter( $ids, function ( $id ) {
             return $id > 0;
-        });
+        } );
 
         if ( empty( $ids ) ) {
             wp_send_json_error( [ 'message' => 'Invalid item IDs.' ] );
@@ -809,12 +834,12 @@ class Admin_Menu {
 
         // Create placeholders for prepared statement
         $placeholders = implode( ',', array_fill( 0, count( $ids ), '%d' ) );
-        
+
         // Delete only COMPLETED items with the given IDs (extra safety)
-        $sql = "DELETE FROM $table WHERE id IN ($placeholders) AND status = %s";
+        $sql    = "DELETE FROM $table WHERE id IN ($placeholders) AND status = %s";
         $params = array_merge( $ids, [ 'COMPLETED' ] );
-        $sql = $wpdb->prepare( $sql, $params );
-        
+        $sql    = $wpdb->prepare( $sql, $params );
+
         $deleted = $wpdb->query( $sql );
 
         if ( $deleted === false ) {
@@ -822,8 +847,8 @@ class Admin_Menu {
         }
 
         wp_send_json_success( [
-            'message' => sprintf( '%d item(s) deleted successfully.', $deleted ),
-            'deleted_count' => $deleted
+            'message'       => sprintf( '%d item(s) deleted successfully.', $deleted ),
+            'deleted_count' => $deleted,
         ] );
     }
 

@@ -102,6 +102,21 @@ class Enqueue_Assets {
                 'nonce'    => wp_create_nonce( 'wasp_cron_nonce' ),
             ] );
         }
+
+        if ( 'wasp-dashboard_page_wasp-retry-settings' === $page_now ) {
+            // enqueue css
+            wp_enqueue_style( "wasp-retry-style", PLUGIN_ADMIN_ASSETS_DIR_URL . "/css/admin-retry.css", [], time(), "all" );
+
+            // enqueue js
+            wp_enqueue_script( "wasp-retry-scripts", PLUGIN_ADMIN_ASSETS_DIR_URL . "/js/admin-retry.js", [ 'jquery' ], time(), true );
+
+            // localize js
+            wp_localize_script( 'wasp-retry-scripts', 'waspRetryAjax', [
+                'ajax_url' => admin_url( 'admin-ajax.php' ),
+                'nonce'    => wp_create_nonce( 'wasp_cron_nonce' ),
+            ] );
+        }
+
     }
 
     /**
