@@ -112,3 +112,66 @@ $sales_return_retry_enabled = get_option( 'wasp_sales_return_retry_enable', fals
         </div>
     </div>
 </div>
+
+<!-- Danger Zone - Truncate Tables -->
+<div class="wasp-danger-zone" style="margin-top: 50px;">
+    <h2 style="color: #dc3545; margin-bottom: 20px; border-bottom: 2px solid #dc3545; padding-bottom: 10px;">
+        ⚠️ Danger Zone
+    </h2>
+
+    <div class="truncate-table-section" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(400px, 1fr)); gap: 20px;">
+        
+        <!-- Truncate Orders Table -->
+        <div class="truncate-card danger-card">
+            <div class="truncate-card-header">
+                <h3 class="truncate-card-title">🗑️ Truncate Orders Table</h3>
+            </div>
+            
+            <div class="danger-warning">
+                <span class="dashicons dashicons-warning" style="color: #dc3545; font-size: 20px;"></span>
+                <div class="danger-info">
+                    <strong>⚠️ WARNING: This action is IRREVERSIBLE!</strong>
+                    <p>This will permanently delete ALL records from the <code>wp_sync_wasp_woo_orders_data</code> table.</p>
+                    <ul style="margin: 10px 0; padding-left: 20px; font-size: 13px;">
+                        <li>All order items will be removed</li>
+                        <li>All statuses (PENDING, READY, FAILED, IGNORED, COMPLETED) will be lost</li>
+                        <li>This operation cannot be undone</li>
+                        <li>Consider backing up the database first</li>
+                    </ul>
+                </div>
+            </div>
+
+            <button type="button" class="button button-danger truncate-btn" data-table="orders">
+                <span class="dashicons dashicons-trash"></span>
+                Truncate Orders Table
+            </button>
+        </div>
+
+        <!-- Truncate Sales Returns Table -->
+        <div class="truncate-card danger-card">
+            <div class="truncate-card-header">
+                <h3 class="truncate-card-title">🗑️ Truncate Sales Returns Table</h3>
+            </div>
+            
+            <div class="danger-warning">
+                <span class="dashicons dashicons-warning" style="color: #dc3545; font-size: 20px;"></span>
+                <div class="danger-info">
+                    <strong>⚠️ WARNING: This action is IRREVERSIBLE!</strong>
+                    <p>This will permanently delete ALL records from the <code>wp_sync_sales_returns_data</code> table.</p>
+                    <ul style="margin: 10px 0; padding-left: 20px; font-size: 13px;">
+                        <li>All sales return items will be removed</li>
+                        <li>All statuses (PENDING, READY, FAILED, IGNORED, COMPLETED) will be lost</li>
+                        <li>This operation cannot be undone</li>
+                        <li>Consider backing up the database first</li>
+                    </ul>
+                </div>
+            </div>
+
+            <button type="button" class="button button-danger truncate-btn" data-table="sales_returns">
+                <span class="dashicons dashicons-trash"></span>
+                Truncate Sales Returns Table
+            </button>
+        </div>
+
+    </div>
+</div>

@@ -324,6 +324,145 @@ input:checked + .slider:before {
     100% { transform: rotate(360deg); }
 }
 
+/* Danger Zone Styles */
+.wasp-danger-zone {
+    padding: 0 30px;
+    margin-bottom: 50px;
+}
+
+.truncate-card {
+    background: #fff;
+    border: 2px solid #dc3545;
+    border-radius: 8px;
+    padding: 20px;
+    box-shadow: 0 2px 8px rgba(220, 53, 69, 0.15);
+}
+
+.truncate-card-header {
+    margin-bottom: 15px;
+    padding-bottom: 10px;
+    border-bottom: 1px solid #f8d7da;
+}
+
+.truncate-card-title {
+    margin: 0;
+    font-size: 18px;
+    font-weight: 600;
+    color: #721c24;
+}
+
+.danger-warning {
+    display: flex;
+    gap: 15px;
+    background: #fff3cd;
+    border: 1px solid #ffc107;
+    border-radius: 6px;
+    padding: 15px;
+    margin-bottom: 20px;
+}
+
+.danger-warning .dashicons {
+    flex-shrink: 0;
+    margin-top: 2px;
+}
+
+.danger-info {
+    flex: 1;
+}
+
+.danger-info strong {
+    color: #721c24;
+    display: block;
+    margin-bottom: 8px;
+    font-size: 14px;
+}
+
+.danger-info p {
+    margin: 5px 0;
+    color: #856404;
+    font-size: 13px;
+    line-height: 1.5;
+}
+
+.danger-info code {
+    background: #fff;
+    padding: 2px 6px;
+    border-radius: 3px;
+    color: #e83e8c;
+    font-size: 12px;
+    border: 1px solid #dee2e6;
+}
+
+.danger-info ul {
+    list-style: disc;
+}
+
+.danger-info li {
+    color: #856404;
+    font-size: 13px;
+    line-height: 1.6;
+}
+
+/* Danger Button */
+.button-danger {
+    background: #dc3545 !important;
+    border-color: #dc3545 !important;
+    color: white !important;
+    padding: 10px 20px !important;
+    font-size: 14px !important;
+    font-weight: 600 !important;
+    border-radius: 4px !important;
+    transition: all 0.3s ease !important;
+    width: 100%;
+    display: flex !important;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+}
+
+.button-danger:hover {
+    background: #c82333 !important;
+    border-color: #bd2130 !important;
+    transform: translateY(-1px) !important;
+    box-shadow: 0 4px 8px rgba(220, 53, 69, 0.3) !important;
+}
+
+.button-danger:active {
+    transform: translateY(0) !important;
+}
+
+.button-danger:disabled {
+    background: #6c757d !important;
+    border-color: #6c757d !important;
+    cursor: not-allowed !important;
+    transform: none !important;
+    opacity: 0.65;
+}
+
+.button-danger .dashicons {
+    font-size: 18px;
+    width: 18px;
+    height: 18px;
+}
+
+/* Loading state for truncate button */
+.truncate-card.loading {
+    opacity: 0.7;
+    pointer-events: none;
+}
+
+.truncate-btn.loading::before {
+    content: '';
+    display: inline-block;
+    width: 16px;
+    height: 16px;
+    margin-right: 8px;
+    border: 2px solid transparent;
+    border-top: 2px solid white;
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+}
+
 /* Responsive Design */
 @media (max-width: 768px) {
     .wasp-retry-grid {
@@ -347,5 +486,13 @@ input:checked + .slider:before {
     
     .wasp-retry-toggle {
         justify-content: center;
+    }
+
+    .truncate-table-section {
+        grid-template-columns: 1fr !important;
+    }
+
+    .wasp-danger-zone {
+        padding: 0 15px;
     }
 } 

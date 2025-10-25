@@ -44,6 +44,9 @@ class Retry extends Wasp_Rest_Api {
 
         // AJAX handler for stats
         add_action( 'wp_ajax_get_retry_stats', [ $this, 'handle_get_retry_stats' ] );
+
+        // AJAX handler for truncate table
+        add_action( 'wp_ajax_truncate_table', [ $this, 'handle_truncate_table' ] );
     }
 
     /**
@@ -815,6 +818,86 @@ class Retry extends Wasp_Rest_Api {
         }
 
         wp_send_json_success( $response->data );
+    }
+
+    /**
+     * Handle truncate table AJAX
+     */
+    public function handle_truncate_table() {
+        check_ajax_referer( 'wasp-retry-nonce', 'nonce' );
+
+        // Check user capabilities
+        if ( ! current_user_can( 'manage_options' ) ) {
+            wp_send_json_error( [ 'message' => 'Access denied. You do not have permission to perform this action.' ] );
+        }
+
+        // Get table type from request
+        $table_type = isset( $_POST['table'] ) ? sanitize_text_field( $_POST['table'] ) : '';
+
+        if ( empty( $table_type ) ) {
+            wp_send_json_error( [ 'message' => 'Invalid table type.' ] );
+        }
+
+        // Validate table type
+        if ( ! in_array( $table_type, [ 'orders', 'sales_returns' ] ) ) {
+            wp_send_json_error( [ 'message' => 'Invalid table type specified.' ] );
+        }
+
+        global $wpdb;
+
+        // Determine table name
+        if ( $table_type === 'orders' ) {
+            $table_name = $wpdb->prefix . 'sync_wasp_woo_orders_data';
+            $display_name = 'Orders';
+        } else {
+            $table_name = $wpdb->prefix . 'sync_sales_returns_data';
+            $display_name = 'Sales Returns';
+        }
+
+        // Check if table exists
+        $table_exists = $wpdb->get_var( $wpdb->prepare( "SHOW TABLES LIKE %s", $table_name ) );
+
+        if ( ! $table_exists ) {
+            wp_send_json_error( [ 'message' => "Table {$table_name} does not exist." ] );
+        }
+
+        // Get count before truncation for confirmation
+        $count_before = $wpdb->get_var( "SELECT COUNT(*) FROM $table_name" );
+
+        // Log the action before truncation
+        $this->put_program_logs( "[DANGER] User " . wp_get_current_user()->user_login . " is truncating table: {$table_name} (Records: {$count_before})" );
+
+        // Perform truncation
+        $result = $wpdb->query( "TRUNCATE TABLE $table_name" );
+
+        if ( $result === false ) {
+            // Truncation failed
+            $error_message = $wpdb->last_error ?: 'Unknown database error';
+            $this->put_program_logs( "[ERROR] Failed to truncate table: {$table_name}. Error: {$error_message}" );
+            
+            wp_send_json_error( [ 
+                'message' => "Failed to truncate {$display_name} table. Database error: {$error_message}"
+            ] );
+        }
+
+        // Verify truncation
+        $count_after = $wpdb->get_var( "SELECT COUNT(*) FROM $table_name" );
+
+        // Log successful truncation
+        $this->put_program_logs( "[SUCCESS] Table {$table_name} truncated successfully. Records before: {$count_before}, Records after: {$count_after}" );
+
+        // Reset last processed ID options for retry tracking
+        if ( $table_type === 'orders' ) {
+            delete_option( 'wasp_order_retry_last_processed_id' );
+        } else {
+            delete_option( 'wasp_sales_return_retry_last_processed_id' );
+        }
+
+        wp_send_json_success( [
+            'message' => "✅ {$display_name} table truncated successfully. {$count_before} records were permanently deleted.",
+            'records_deleted' => intval( $count_before ),
+            'table_name' => $table_name,
+        ] );
     }
 
 }

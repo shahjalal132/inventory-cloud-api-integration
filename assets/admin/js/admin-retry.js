@@ -171,5 +171,86 @@
       loadRetryStats();
     }, 30000);
 
+    // Handle truncate table buttons
+    $('.truncate-btn').on('click', function () {
+      const $btn = $(this);
+      const table = $btn.data('table');
+      const $card = $btn.closest('.truncate-card');
+
+      // Determine table name for display
+      const tableName = table === 'orders' ? 'Orders' : 'Sales Returns';
+      const tableFullName = table === 'orders' 
+        ? 'wp_sync_wasp_woo_orders_data' 
+        : 'wp_sync_sales_returns_data';
+
+      // First confirmation
+      const firstConfirm = confirm(
+        '⚠️ DANGER: You are about to PERMANENTLY DELETE all records!\n\n' +
+        'Table: ' + tableFullName + '\n\n' +
+        'This will remove:\n' +
+        '• All ' + tableName.toLowerCase() + ' records\n' +
+        '• All statuses (PENDING, READY, FAILED, IGNORED, COMPLETED)\n' +
+        '• All API responses and messages\n\n' +
+        '❌ THIS ACTION CANNOT BE UNDONE! ❌\n\n' +
+        'Are you absolutely sure you want to continue?'
+      );
+
+      if (!firstConfirm) {
+        return; // User cancelled
+      }
+
+      // Second confirmation with typing requirement
+      const confirmText = 'DELETE ALL ' + tableName.toUpperCase();
+      const userInput = prompt(
+        '⚠️ FINAL CONFIRMATION REQUIRED ⚠️\n\n' +
+        'To confirm deletion, please type exactly:\n\n' +
+        confirmText + '\n\n' +
+        'This will permanently delete all records from the ' + tableName.toLowerCase() + ' table.'
+      );
+
+      if (userInput !== confirmText) {
+        if (userInput !== null) {
+          // User didn't cancel but typed wrong text
+          alert('❌ Confirmation text did not match. Operation cancelled for your safety.');
+        }
+        return; // User cancelled or typed wrong text
+      }
+
+      // User confirmed twice, proceed with truncation
+      $btn.prop('disabled', true).addClass('loading');
+      $btn.html('<span class="dashicons dashicons-update-alt"></span> Truncating...');
+      $card.addClass('loading');
+
+      $.ajax({
+        url: ajaxurl,
+        type: 'POST',
+        data: {
+          action: 'truncate_table',
+          table: table,
+          nonce: wpRetryData.nonce
+        },
+        success: function (response) {
+          if (response.success) {
+            showNotice('success', response.data.message);
+            
+            // Reload stats after truncation
+            setTimeout(function () {
+              loadRetryStats();
+            }, 1000);
+          } else {
+            showNotice('error', response.data.message || 'Failed to truncate table.');
+          }
+        },
+        error: function (xhr, status, error) {
+          showNotice('error', 'An error occurred: ' + error);
+        },
+        complete: function () {
+          $btn.prop('disabled', false).removeClass('loading');
+          $btn.html('<span class="dashicons dashicons-trash"></span> Truncate ' + tableName + ' Table');
+          $card.removeClass('loading');
+        }
+      });
+    });
+
   });
 })(jQuery);
