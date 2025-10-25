@@ -1,0 +1,351 @@
+/* WASP Cron Jobs Styles */
+
+.wasp-my-50{
+    margin-top: 50px !important;
+    margin-bottom: 50px !important;
+}
+
+.retry-header h1{
+    text-align: center;
+    margin-top: 30px;
+}
+
+.wasp-retry-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
+    gap: 20px;
+    padding: 0 30px;
+}
+
+.wasp-retry-card {
+    background: #fff;
+    border: 1px solid #ddd;
+    border-radius: 8px;
+    padding: 20px;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    transition: all 0.3s ease;
+}
+
+.wasp-retry-card:hover {
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
+    transform: translateY(-2px);
+}
+
+.wasp-retry-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 15px;
+    padding-bottom: 15px;
+    border-bottom: 1px solid #eee;
+}
+
+.wasp-retry-title {
+    margin: 0;
+    font-size: 18px;
+    font-weight: 600;
+    color: #333;
+}
+
+.wasp-retry-status {
+    padding: 4px 12px;
+    border-radius: 20px;
+    font-size: 12px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.wasp-retry-status.enabled {
+    background: #d4edda;
+    color: #155724;
+    border: 1px solid #c3e6cb;
+}
+
+.wasp-retry-status.disabled {
+    background: #f8d7da;
+    color: #721c24;
+    border: 1px solid #f5c6cb;
+}
+
+.wasp-retry-details {
+    margin-bottom: 20px;
+}
+
+.wasp-retry-description {
+    color: #666;
+    line-height: 1.5;
+    margin-bottom: 10px;
+}
+
+.wasp-retry-next-run {
+    font-size: 13px;
+    color: #888;
+    margin: 0;
+}
+
+.wasp-retry-controls {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 15px;
+}
+
+.wasp-retry-toggle {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.toggle-label {
+    font-size: 14px;
+    font-weight: 500;
+    color: #555;
+}
+
+/* Switch Toggle */
+.switch {
+    position: relative;
+    display: inline-block;
+    width: 50px;
+    height: 24px;
+}
+
+.switch input {
+    opacity: 0;
+    width: 0;
+    height: 0;
+}
+
+.slider {
+    position: absolute;
+    cursor: pointer;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-color: #ccc;
+    transition: .4s;
+    border-radius: 24px;
+}
+
+.slider:before {
+    position: absolute;
+    content: "";
+    height: 18px;
+    width: 18px;
+    left: 3px;
+    bottom: 3px;
+    background-color: white;
+    transition: .4s;
+    border-radius: 50%;
+}
+
+input:checked + .slider {
+    background-color: #2196F3;
+}
+
+input:focus + .slider {
+    box-shadow: 0 0 1px #2196F3;
+}
+
+input:checked + .slider:before {
+    transform: translateX(26px);
+}
+
+.run-now-btn {
+    background: #28a745 !important;
+    border-color: #28a745 !important;
+    color: white !important;
+    padding: 8px 16px !important;
+    font-size: 13px !important;
+    border-radius: 4px !important;
+    transition: all 0.3s ease !important;
+}
+
+.run-now-btn:hover {
+    background: #218838 !important;
+    border-color: #1e7e34 !important;
+    transform: translateY(-1px) !important;
+}
+
+.run-now-btn:disabled {
+    background: #6c757d !important;
+    border-color: #6c757d !important;
+    cursor: not-allowed !important;
+    transform: none !important;
+}
+
+/* Information Section */
+.wasp-retry-info {
+    background: #f8f9fa;
+    border: 1px solid #e9ecef;
+    border-radius: 8px;
+    padding: 20px;
+    margin-top: 30px;
+}
+
+.wasp-retry-info h3 {
+    margin-top: 0;
+    color: #333;
+    font-size: 18px;
+}
+
+.wasp-retry-info ul {
+    margin: 0;
+    padding-left: 20px;
+}
+
+.wasp-retry-info li {
+    margin-bottom: 8px;
+    color: #666;
+    line-height: 1.5;
+}
+
+.wasp-retry-info strong {
+    color: #333;
+}
+
+/* Development Notice */
+.wasp-dev-notice {
+    background: #fff3cd;
+    border: 1px solid #ffeaa7;
+    border-radius: 8px;
+    padding: 20px;
+    margin-bottom: 20px;
+    color: #856404;
+}
+
+.wasp-dev-notice h3 {
+    margin-top: 0;
+    color: #856404;
+    font-size: 18px;
+}
+
+.wasp-dev-notice h4 {
+    color: #856404;
+    font-size: 16px;
+    margin: 15px 0 10px 0;
+}
+
+.wasp-dev-notice p {
+    margin: 8px 0;
+    color: #856404;
+}
+
+.wasp-dev-notice ul {
+    margin: 10px 0;
+    padding-left: 20px;
+}
+
+.wasp-dev-notice li {
+    margin-bottom: 5px;
+    color: #856404;
+}
+
+.wasp-dev-actions {
+    margin-top: 15px;
+    display: flex;
+    gap: 10px;
+    flex-wrap: wrap;
+}
+
+.wasp-dev-actions .button {
+    background: #856404 !important;
+    border-color: #856404 !important;
+    color: white !important;
+}
+
+.wasp-dev-actions .button:hover {
+    background: #6c5204 !important;
+    border-color: #6c5204 !important;
+}
+
+/* Production Mode */
+.wasp-production-mode {
+    background: #e3f2fd;
+    border: 1px solid #bbdefb;
+    border-radius: 8px;
+    padding: 20px;
+    margin-bottom: 20px;
+    color: #1565c0;
+}
+
+.wasp-production-mode h3 {
+    margin-top: 0;
+    color: #1565c0;
+    font-size: 18px;
+}
+
+.wasp-production-toggle {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+    margin: 15px 0;
+}
+
+.wasp-production-description {
+    margin: 10px 0 0 0;
+    font-size: 14px;
+    line-height: 1.5;
+    color: #1565c0;
+}
+
+.wasp-production-description strong {
+    color: #0d47a1;
+}
+
+/* Loading States */
+.wasp-retry-card.loading {
+    opacity: 0.7;
+    pointer-events: none;
+}
+
+.wasp-retry-card.loading .run-now-btn {
+    position: relative;
+}
+
+.wasp-retry-card.loading .run-now-btn::after {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: 16px;
+    height: 16px;
+    margin: -8px 0 0 -8px;
+    border: 2px solid transparent;
+    border-top: 2px solid white;
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+    .wasp-retry-grid {
+        grid-template-columns: 1fr;
+    }
+    
+    .wasp-retry-card {
+        padding: 15px;
+    }
+    
+    .wasp-retry-header {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 10px;
+    }
+    
+    .wasp-retry-controls {
+        flex-direction: column;
+        align-items: stretch;
+    }
+    
+    .wasp-retry-toggle {
+        justify-content: center;
+    }
+} 
