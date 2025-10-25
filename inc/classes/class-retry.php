@@ -17,16 +17,10 @@ class Retry extends Wasp_Rest_Api {
     // use Singleton;
     // use Program_Logs;
 
-    private $api_base_url;
-    private $token;
-    private $timeout = 60;
-
     public function __construct() {
-
-        // get api credentials
-        $this->api_base_url = get_option( 'inv_cloud_base_url' ) ?? '';
-        $this->token        = get_option( 'inv_cloud_token' );
-
+        // Call parent constructor to initialize API credentials
+        parent::__construct();
+        
         $this->setup_hooks();
     }
 
@@ -435,6 +429,8 @@ class Retry extends Wasp_Rest_Api {
             )
         );
 
+        // $this->put_program_logs( "Failed items: " . json_encode( $failed_items ) );
+
         if ( empty( $failed_items ) ) {
             // Reset last processed ID when no more items found
             delete_option( 'wasp_sales_return_retry_last_processed_id' );
@@ -497,8 +493,12 @@ class Retry extends Wasp_Rest_Api {
                 continue;
             }
 
+            // $this->put_program_logs( "Token: " . $this->token );
+            // $this->put_program_logs( "Item number: " . $item->item_number );
+
             // Get item details from API (following handle_prepare_sales_returns logic)
             $api_result = $this->get_item_details_api( $this->token, $item->item_number );
+            // $this->put_program_logs( "API response for item number {$item->item_number}: " . json_encode( $api_result ) );
 
             if ( $api_result['result'] === 'success' ) {
                 $response_data = json_decode( $api_result['api_response'], true );

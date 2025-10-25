@@ -11,11 +11,11 @@ class Wasp_Rest_Api {
     use Singleton;
     use Program_Logs;
 
-    private $api_base_url;
-    private $transaction_remove_api_path = '/public-api/transactions/item/remove';
-    private $transaction_add_api_path = '/public-api/transactions/item/add';
-    private $token;
-    private $timeout = 60;
+    protected $api_base_url;
+    protected $transaction_remove_api_path = '/public-api/transactions/item/remove';
+    protected $transaction_add_api_path = '/public-api/transactions/item/add';
+    protected $token;
+    protected $timeout = 60;
     public function __construct() {
 
         // get api credentials
