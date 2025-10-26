@@ -9,7 +9,7 @@ use BOILERPLATE\Inc\Cleanup_Scheduler;
  * Author:      Shah Jalal
  * Author URI:  https://github.com/shahjalal132
  * Description: Update inventory in woocommerce and store bidirectionally
- * Version:     3.0.0
+ * Version:     3.1.0
  * text-domain: inventory-cloud
  * Domain Path: /languages
  * 
