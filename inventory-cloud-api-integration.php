@@ -1,5 +1,7 @@
 <?php
 
+use BOILERPLATE\Inc\Cleanup_Scheduler;
+
 /**
  *  
  * Plugin Name: Inventory Cloud API Integration
@@ -59,7 +61,7 @@ if ( !defined( 'PLUGIN_LIBS_DIR_URL' ) ) {
 require_once PLUGIN_BASE_PATH . '/loader.php';
 
 // Ensure enum is loaded
-class_exists('BOILERPLATE\Inc\Enums\Status_Enums');
+class_exists( 'BOILERPLATE\Inc\Enums\Status_Enums' );
 require_once PLUGIN_BASE_PATH . '/inc/helpers/autoloader.php';
 
 /**
@@ -72,6 +74,7 @@ function wpb_plugin_activator() {
     Plugin_Activator::create_sync_sales_return_table();
     Plugin_Activator::create_sync_wasp_woo_orders_table();
     Plugin_Activator::create_sync_wasp_retry_items_table();
+    Cleanup_Scheduler::get_instance()->maybe_schedule_weekly_cleanup();
 }
 
 // Register activation hook
@@ -87,6 +90,7 @@ function wpb_plugin_deactivator() {
     // Plugin_Deactivator::remove_sync_sales_return_table();
     // Plugin_Deactivator::remove_sync_wasp_woo_orders_table();
     // Plugin_Deactivator::remove_sync_wasp_retry_items_table();
+    Cleanup_Scheduler::get_instance()->clear_scheduled_event();
 }
 
 // Register deactivation hook

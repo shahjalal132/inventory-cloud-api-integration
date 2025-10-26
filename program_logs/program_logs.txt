@@ -1,0 +1,2 @@
+✅ Weekly cleanup completed for table: wp_sync_wasp_retry_items - 2025-10-26 07:08:20
+

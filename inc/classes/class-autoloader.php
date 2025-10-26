@@ -22,5 +22,6 @@ class Autoloader {
         Order_Import::get_instance();
         Jobs::get_instance();
         Retry::get_instance();
+        Cleanup_Scheduler::get_instance();
     }
 }
