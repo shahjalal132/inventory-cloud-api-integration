@@ -114,7 +114,7 @@ $sales_return_retry_enabled = get_option( 'wasp_sales_return_retry_enable', fals
 </div>
 
 <!-- Danger Zone - Truncate Tables -->
-<div class="wasp-danger-zone" style="margin-top: 50px;">
+<div class="wasp-danger-zone" style="margin-top: 100px;">
     <h2 style="color: #dc3545; margin-bottom: 20px; border-bottom: 2px solid #dc3545; padding-bottom: 10px;">
         ⚠️ Danger Zone
     </h2>

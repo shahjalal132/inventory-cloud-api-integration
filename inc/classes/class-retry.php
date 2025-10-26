@@ -198,6 +198,24 @@ class Retry extends Wasp_Rest_Api {
             // Get item details from API (following handle_prepare_woo_orders logic)
             $api_result = $this->get_item_details_api( $this->token, $item->item_number );
 
+            // if api result is error update the message column with error_message value and continue
+            if ( $api_result['result'] === 'error' ) {
+                // update message column
+                $wpdb->update(
+                    $source_table,
+                    [ 'message' => $api_result['error_message'] ],
+                    [ 'id' => $item->id ]
+                );
+
+                $results[] = [
+                    'item_id'       => $item->id,
+                    'item_number'   => $item->item_number,
+                    'result'        => 'error',
+                    'error_message' => $api_result['error_message'],
+                ];
+                continue;
+            }
+
             if ( $api_result['result'] === 'success' ) {
                 // Extract api response data
                 $response_data = json_decode( $api_result['api_response'], true );
@@ -328,7 +346,7 @@ class Retry extends Wasp_Rest_Api {
                     }
                 } else {
                     // No item data found in API response — update status to FAILED
-                    $wpdb->update( $source_table, [ 'status' => Status_Enums::FAILED->value ], [ 'id' => $item->id ] );
+                    $wpdb->update( $source_table, [ 'status' => Status_Enums::FAILED->value, 'message' => 'No data found from api for this item' ], [ 'id' => $item->id ] );
 
                     $error_count++;
 
@@ -505,8 +523,33 @@ class Retry extends Wasp_Rest_Api {
             $api_result = $this->get_item_details_api( $this->token, $item->item_number );
             // $this->put_program_logs( "API response for item number {$item->item_number}: " . json_encode( $api_result ) );
 
+            // if api result is error update the message column with error_message value and continue
+            if ( $api_result['result'] === 'error' ) {
+                // update message column
+                $wpdb->update(
+                    $source_table,
+                    [ 'message' => $api_result['error_message'] ],
+                    [ 'id' => $item->id ]
+                );
+
+                $results[] = [
+                    'item_id'       => $item->id,
+                    'item_number'   => $item->item_number,
+                    'result'        => 'error',
+                    'error_message' => $api_result['error_message'],
+                ];
+                continue;
+            }
+
             if ( $api_result['result'] === 'success' ) {
                 $response_data = json_decode( $api_result['api_response'], true );
+
+                // update the api response column
+                $wpdb->update(
+                    $source_table,
+                    [ 'api_response' => $api_result['api_response'] ],
+                    [ 'id' => $item->id ]
+                );
 
                 // The item may be multiple location and site name. CLLC priority first.
                 $site_name     = '';
@@ -598,7 +641,7 @@ class Retry extends Wasp_Rest_Api {
                     }
                 } else {
                     // Update status to ERROR
-                    $wpdb->update( $source_table, [ 'status' => Status_Enums::FAILED->value ], [ 'id' => $item->id ] );
+                    $wpdb->update( $source_table, [ 'status' => Status_Enums::FAILED->value, 'message' => 'No data found from api for this item' ], [ 'id' => $item->id ] );
 
                     $error_count++;
 
@@ -786,7 +829,24 @@ class Retry extends Wasp_Rest_Api {
     public function handle_instant_order_retry() {
         check_ajax_referer( 'wasp-retry-nonce', 'nonce' );
 
-        $response = $this->process_order_retry();
+        global $wpdb;
+        $orders_table = $wpdb->prefix . 'sync_wasp_woo_orders_data';
+
+        // Get total number of IGNORED and FAILED items in orders table
+        $limit = (int) $wpdb->get_var(
+            $wpdb->prepare(
+                "SELECT COUNT(*) FROM {$orders_table} WHERE status IN (%s, %s)",
+                Status_Enums::IGNORED->value,
+                Status_Enums::FAILED->value
+            )
+        );
+
+        // If no failed or ignored items, return early
+        if ( $limit <= 0 ) {
+            wp_send_json_success( [ 'message' => 'No failed or ignored orders found.' ] );
+        }
+
+        $response = $this->process_order_retry( $limit );
 
         if ( is_wp_error( $response ) ) {
             wp_send_json_error( [ 'message' => $response->get_error_message() ] );
@@ -801,7 +861,24 @@ class Retry extends Wasp_Rest_Api {
     public function handle_instant_sales_return_retry() {
         check_ajax_referer( 'wasp-retry-nonce', 'nonce' );
 
-        $response = $this->process_sales_return_retry();
+        global $wpdb;
+        $sales_returns_table = $wpdb->prefix . 'sync_sales_returns_data';
+
+        // Get total number of IGNORED and FAILED items in sales returns table
+        $limit = (int) $wpdb->get_var(
+            $wpdb->prepare(
+                "SELECT COUNT(*) FROM {$sales_returns_table} WHERE status IN (%s, %s)",
+                Status_Enums::IGNORED->value,
+                Status_Enums::FAILED->value
+            )
+        );
+
+        // If no failed or ignored items, return early
+        if ( $limit <= 0 ) {
+            wp_send_json_success( [ 'message' => 'No failed or ignored sales return items found.' ] );
+        }
+
+        $response = $this->process_sales_return_retry( $limit );
 
         if ( is_wp_error( $response ) ) {
             wp_send_json_error( [ 'message' => $response->get_error_message() ] );
