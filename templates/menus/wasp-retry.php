@@ -19,6 +19,8 @@ $sales_return_retry_enabled = get_option( 'wasp_sales_return_retry_enable', fals
             </div>
         </div>
 
+        <div class="wasp-retry-orders-progress-bar progress-bar"></div>
+
         <div class="wasp-retry-details">
             <p class="wasp-retry-description"> Automatically retry FAILED and IGNORED items. </p>
         </div>
@@ -69,6 +71,8 @@ $sales_return_retry_enabled = get_option( 'wasp_sales_return_retry_enable', fals
                 <?php echo $sales_return_retry_enabled ? 'Enabled' : 'Disabled'; ?>
             </div>
         </div>
+
+        <div class="wasp-retry-sales-return-progress-bar progress-bar"></div>
 
         <div class="wasp-retry-details">
             <p class="wasp-retry-description"> Automatically retry FAILED and IGNORED items. </p>
