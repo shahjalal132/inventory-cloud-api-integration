@@ -71,13 +71,13 @@ curl --location 'https://royalties.6435cea4309176ad6a8aebb69ac8f99e-12591.sites.
 curl --location 'https://royalties.6435cea4309176ad6a8aebb69ac8f99e-12591.sites.k-hosting.co.uk/wp-json/atebol/v1/remove-completed-woo-orders'
 ```
 
-### 6. Retry Orders
+### 7. Retry Orders
 
 ```bash
 curl --location 'https://royalties.6435cea4309176ad6a8aebb69ac8f99e-12591.sites.k-hosting.co.uk/wp-json/atebol/v1/order-retry?limit=50'
 ```
 
-### 6. Retry Sales Returns
+### 8. Retry Sales Returns
 
 ```bash
 curl --location 'https://royalties.6435cea4309176ad6a8aebb69ac8f99e-12591.sites.k-hosting.co.uk/wp-json/atebol/v1/sales-return-retry?limit=50'
